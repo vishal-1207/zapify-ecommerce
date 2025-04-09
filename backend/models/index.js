@@ -1,20 +1,18 @@
-const Sequelize = require('sequelize');
-const sequelize = require('../config/database');
+const Sequelize = require("sequelize");
+const sequelize = require("../config/db");
 
 const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-
-db.User = require('./user.model')(sequelize, Sequelize);
-db.Product = require('./product.model')(sequelize, Sequelize);
-db.Category = require('./category.model')(sequelize, Sequelize);
-db.Cart = require('./cart.model')(sequelize, Sequelize);
-db.CartItem = require('./cartItem.model')(sequelize, Sequelize);
-db.Order = require('./order.model')(sequelize, Sequelize);
-db.OrderItem = require('./orderItem.model')(sequelize, Sequelize);
-
+db.User = require("./user.model")(sequelize, Sequelize);
+db.Product = require("./product.model")(sequelize, Sequelize);
+db.Category = require("./category.model")(sequelize, Sequelize);
+db.Cart = require("./cart.model")(sequelize, Sequelize);
+db.CartItem = require("./cartItem.model")(sequelize, Sequelize);
+db.Order = require("./order.model")(sequelize, Sequelize);
+db.OrderItem = require("./orderItem.model")(sequelize, Sequelize);
 
 db.User.hasOne(db.Cart);
 db.Cart.belongsTo(db.User);
