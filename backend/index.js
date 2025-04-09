@@ -1,15 +1,26 @@
-const dotenv = require('dotenv');
-const express = require('express');
+const dotenv = require("dotenv");
+dotenv.config();
+
+const express = require("express");
+const db = require("./models/");
+const authRoutes = require("./routes/auth.routes");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-dotenv.config();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.send("Hello world.");
-})
+app.use("/api/auth", authRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Listening on port ${process.env.PORT}`);
-})
+app.get("/", (req, res, next) => {
+  res.send("Hello world.");
+  next();
+});
+
+db.sequelize.sync({ force: false }).then(() => {
+  console.log("Database synced...");
+  app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
+  });
+});
