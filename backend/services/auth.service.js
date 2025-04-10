@@ -1,6 +1,7 @@
 import db from "../models/index.js";
 import { Op } from "sequelize";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const User = db.User;
 
@@ -33,4 +34,41 @@ export const createUser = async (userData) => {
   });
 
   return newUser;
+};
+
+export const findUser = async (userData) => {
+  const { userid, password } = userData;
+  const user = await User.findOne({
+    where: {
+      [Op.or]: [{ username: userid }, { email: userid }],
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isMatch = bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("Invalid credentials");
+  }
+
+  const accessToken = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1d",
+    }
+  );
+
+  return {
+    accessToken,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
 };
