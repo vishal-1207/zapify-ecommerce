@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import { Op } from "sequelize";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { generateAccessToken } from "../utils/token.utils.js";
 
 const User = db.User;
 
@@ -54,13 +54,10 @@ export const findUser = async (userData) => {
     throw new Error("Invalid credentials");
   }
 
-  const accessToken = jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "1d",
-    }
-  );
+  const accessToken = await generateAccessToken({
+    id: user.id,
+    role: user.role,
+  });
 
   return {
     accessToken,
