@@ -15,19 +15,19 @@ export const generateAccessToken = async (userData) => {
   return accessToken;
 };
 
-export const generateRefreshToken = async (userData) => {
+export const generateRefreshToken = async (id, role) => {
   const tokenId = uuid4();
   const expiresAt = new Date(Date.now(+7 * 24 * 60 * 60 * 1000));
 
   const token = jwt.sign(
-    { tokenId, id: userData?.id, role: userData?.role },
+    { tokenId, id, role },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" }
   );
 
   await RefreshToken.create({
     tokenId,
-    userId: userData?.id,
+    userId: id,
     expiresAt,
   });
   return token;
