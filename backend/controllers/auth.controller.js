@@ -19,7 +19,7 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { accessToken, user } = await authService.findUser(req.body);
-    const refreshToken = await generateRefreshToken(user.id, user.role);
+    const refreshToken = await generateRefreshToken(user?.id, user?.role);
     res
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
