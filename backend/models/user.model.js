@@ -6,5 +6,12 @@ export default (sequelize, DataTypes) => {
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM("user", "admin"), defaultValue: "user" },
   });
+
+  User.prototype.toJSON = function () {
+    const user = { ...this.get() };
+    delete user.password;
+    return user;
+  };
+
   return User;
 };

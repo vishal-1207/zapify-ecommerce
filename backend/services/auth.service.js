@@ -33,7 +33,9 @@ export const createUser = async (userData) => {
     password: hashedPassword,
   });
 
-  return newUser;
+  return {
+    user: newUser,
+  };
 };
 
 export const findUser = async (userData) => {
