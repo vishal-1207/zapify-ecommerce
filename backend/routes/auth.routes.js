@@ -5,6 +5,7 @@ import {
   refreshTokenHander,
   register,
 } from "../controllers/auth.controller.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 import rateLimit from "express-rate-limit";
 
 const router = express.Router();
@@ -16,8 +17,9 @@ const refreshLimiter = rateLimit({
 });
 
 router.route("/register").post(register);
+router.route("/admin/login").post(login);
 router.route("/login").post(login);
 router.route("/access-token").post(refreshLimiter, refreshTokenHander);
-router.route("/logout").post(logout);
+router.route("/logout").post(authenticate, logout);
 
 export default router;
