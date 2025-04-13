@@ -9,7 +9,7 @@ export const generateAccessToken = async (userData) => {
     { id: userData?.id, role: userData?.role },
     process.env.JWT_SECRET,
     {
-      expiresIn: "15m",
+      expiresIn: "1h",
     }
   );
   return accessToken;
@@ -17,7 +17,7 @@ export const generateAccessToken = async (userData) => {
 
 export const generateRefreshToken = async (id, role) => {
   const tokenId = uuid4();
-  const expiresAt = new Date(Date.now(+7 * 24 * 60 * 60 * 1000));
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const token = jwt.sign(
     { tokenId, id, role },
