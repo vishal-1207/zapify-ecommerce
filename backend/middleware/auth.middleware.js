@@ -17,3 +17,10 @@ export const authenticate = async (req, res, next) => {
     res.status(403).json({ message: "Invalid or expire token." });
   }
 };
+
+export const isAdmin = async (req, res, next) => {
+  if (req.body.role !== "admin") {
+    return res.status(403).json({ message: "Access denied." });
+  }
+  next();
+};
