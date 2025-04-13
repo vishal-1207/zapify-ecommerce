@@ -24,7 +24,7 @@ export const createUser = async (userData) => {
     throw new Error(message);
   }
 
-  const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+  const saltRounds = parseInt(process.env.SALT_ROUNDS);
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   const newUser = await User.create({
