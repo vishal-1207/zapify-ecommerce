@@ -36,8 +36,11 @@ export const login = async (req, res) => {
 };
 
 export const refreshTokenHander = async (req, res) => {
-  const { refreshToken } = req.cookies.refreshToken;
   try {
+    const { refreshToken } = req.cookies.refreshToken || req.body.refreshToken;
+    if (!refreshToken) {
+      throw new Error(401, "Unauthorized access.");
+    }
     const payload = jwt.verfy(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
     const storedToken = await db.RefreshToken.findByPk(payload.tokenId);
@@ -47,7 +50,10 @@ export const refreshTokenHander = async (req, res) => {
 
     const accessToken = generateAccessToken(payload.userId);
     const newRefreshToken = await generateRefreshToken(payload.userId);
-    res.json({ accessToken, refreshToken: newRefreshToken });
+    res.json(
+      { accessToken, refreshToken: newRefreshToken },
+      { message: "Access token refreshed." }
+    );
   } catch (error) {
     res.status(403).json({ message: "Ivalid or expired token." });
   }
@@ -73,5 +79,21 @@ export const logout = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: "Logout failed." });
+  }
+};
+
+export const currentUserDetails = async (req, res) => {
+  try {
+    const user = await db.User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error." });
   }
 };
