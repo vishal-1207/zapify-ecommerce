@@ -1,6 +1,7 @@
+import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
-export const authenticate = async (req, res, next) => {
+export const authenticate = asyncHandler(async (req, res, next) => {
   try {
     const token =
       req.cookie?.accessToken ||
@@ -16,11 +17,11 @@ export const authenticate = async (req, res, next) => {
     console.log("Auth middleare error: ", error.message);
     res.status(403).json({ message: "Invalid or expire token." });
   }
-};
+});
 
-export const isAdmin = async (req, res, next) => {
+export const isAdmin = asyncHandler(async (req, res, next) => {
   if (req.body.role !== "admin") {
     return res.status(403).json({ message: "Access denied." });
   }
   next();
-};
+});
