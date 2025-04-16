@@ -9,7 +9,7 @@ export const generateAccessToken = async (userData) => {
     { id: userData?.id, role: userData?.role },
     process.env.JWT_SECRET,
     {
-      expiresIn: "1h",
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
   return accessToken;
@@ -22,7 +22,7 @@ export const generateRefreshToken = async (id, role) => {
   const token = jwt.sign(
     { tokenId, id, role },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
   );
 
   await RefreshToken.create({
