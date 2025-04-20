@@ -9,6 +9,8 @@ import cartItemModel from "./cartItem.model.js";
 import orderModel from "./order.model.js";
 import orderItemModel from "./orderItem.model.js";
 import refreshTokenModel from "./refreshToken.model.js";
+import mediaModel from "./media.model.js";
+import reviewModel from "./review.model.js";
 
 const db = {};
 
@@ -23,6 +25,8 @@ db.CartItem = cartItemModel(sequelize, Sequelize);
 db.Order = orderModel(sequelize, Sequelize);
 db.OrderItem = orderItemModel(sequelize, Sequelize);
 db.RefreshToken = refreshTokenModel(sequelize, Sequelize);
+db.Media = mediaModel(sequelize, Sequelize);
+db.Review = reviewModel(sequelize, Sequelize);
 
 db.Category.hasMany(db.Product, { foreignKey: "categoryId" });
 db.Product.belongsTo(db.Category, { foreignKey: "categoryId" });
@@ -47,5 +51,17 @@ db.OrderItem.belongsTo(db.Product, { foreignKey: "productId" });
 
 db.User.hasMany(db.RefreshToken, { foreignKey: "userId" });
 db.RefreshToken.belongsTo(db.User, { foreignKey: "userId" });
+
+db.Product.hasMany(db.Media, {
+  foreignKey: "associatedId",
+  scope: { associatedType: "product" },
+  as: "media",
+});
+
+db.Review.belongsTo(db.Product, { foreignKey: "productId", as: "product" });
+db.Review.hasMany(db.Media, {
+  foreignKey: "associatedId",
+  scope: { associatedType: "review", as: "media" },
+});
 
 export default db;
