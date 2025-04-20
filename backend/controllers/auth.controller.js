@@ -6,9 +6,15 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/token.utils.js";
+import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 
 export const register = asyncHandler(async (req, res) => {
   try {
+    const { error } = registerSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
     const user = await authService.createUser(req.body);
     res.status(201).json({ message: "User registered", user });
   } catch (err) {
@@ -19,6 +25,11 @@ export const register = asyncHandler(async (req, res) => {
 
 export const login = asyncHandler(async (req, res) => {
   try {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { accessToken, user } = await authService.findUser(req.body);
     const refreshToken = await generateRefreshToken(user?.id, user?.role);
     res
