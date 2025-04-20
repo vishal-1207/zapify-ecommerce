@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/products", productRoutes);
+app.use("/api/store", productRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello world.");
@@ -24,7 +24,7 @@ app.get("/", (req, res) => {
 
 app.use(errorHandler);
 
-db.sequelize.sync({ force: false }).then(() => {
+db.sequelize.sync({ force: false, alter: true }).then(() => {
   console.log("Database synced...");
   app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
