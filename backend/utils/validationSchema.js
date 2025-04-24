@@ -42,20 +42,36 @@ export const loginSchema = Joi.object({
 });
 
 export const productSchema = Joi.object({
-  name: Joi.string().min(10).required().messages({
+  name: Joi.string().trim().min(10).max(100).required().messages({
     "string.empty": "Product name is required.",
     "string.min": "Product name must be atleast 6 characters long.",
   }),
 
-  description: Joi.string().min(50).required().messages({
+  description: Joi.string().trim().max(1000).required().messages({
     "string.empty": "Description is required.",
     "string.min": "Description must be atleast 50 characters long.",
   }),
 
-  price: Joi.number().precision(2).required().messages({
+  price: Joi.number().positive().precision(2).required().messages({
     "number.base": "Price must be a valid number.",
     "number.empty": "Price is required.",
     "number.positive": "Price must be a positive value.",
     "number.precision": "Price can have a maximum of 2 decimal places.",
+  }),
+  stock: Joi.number().integer().positive().min(0).required().messages({
+    "number.base": "Price must be a valid number.",
+    "number.empty": "Price is required.",
+    "number.positive": "Price must be a positive value.",
+  }),
+  categoryId: Joi.number().integer().positive().required().messages({
+    "number.empty": "Category is required.",
+  }),
+});
+
+export const categorySchema = Joi.object({
+  name: Joi.string().trim().min(4).max(15).required().messages({
+    "string:empty": "Category name is required.",
+    "string.min": "Category name should be atleast 4 characters long.",
+    "string.max": "Category name cannot exceed 15 characters.",
   }),
 });
