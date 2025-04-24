@@ -6,4 +6,4 @@ const router = express.Router();
 
 router.route("/csrf-token", csrfProtection, csrfToken);
 
-export default tokenRoutes;
+export default router;
