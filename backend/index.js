@@ -1,5 +1,6 @@
 import db from "./models/index.js";
 import express from "express";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -11,6 +12,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
+app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,7 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("api/token", tokenRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/store", productRoutes);
+app.use("/api/products", productRoutes);
+// app.use("/api/categories");
 
 app.get("/", (req, res) => {
   res.send("Hello world.");
