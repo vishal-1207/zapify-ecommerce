@@ -1,4 +1,4 @@
-import generateCSRF from "../utils/csrf.utils.js";
+import { generateCSRF } from "../utils/csrf.utils.js";
 
 export const csrfToken = async (req, res) => {
   try {
