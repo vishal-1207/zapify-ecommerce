@@ -1,14 +1,22 @@
 import multer from "multer";
-import path from "path";
+import sanitize from "sanitize-filename";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "./uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname),
+  filename: (req, file, cb) => {
+    const sanitizedFilename = sanitize(file.originalname);
+    cb(null, `${Date.now()}_${sanitizedFilename}`);
+  },
 });
 
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (![".jpeg", ".png", ".jpg", ".mp4", ".mov"].includes(ext)) {
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "video/mp4",
+    "video/quicktime",
+  ];
+  if (!allowedTypes.includes(file.mimetype)) {
     return cb(new Error("Unsupported file type."), false);
   }
 
