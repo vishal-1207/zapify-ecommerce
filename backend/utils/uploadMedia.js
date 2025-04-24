@@ -1,4 +1,5 @@
 import cloudinary from "../config/cloudinary.js";
+import fs from "fs";
 
 const uploadToCloudinary = async (filepath, folder = "products") => {
   try {
@@ -6,6 +7,7 @@ const uploadToCloudinary = async (filepath, folder = "products") => {
       resource_type: "auto",
       folder,
     });
+    fs.unlinkSync(filepath);
     return result;
   } catch (err) {
     throw new Error("Cloudinary upload failed: " + err.message);
