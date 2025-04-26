@@ -21,6 +21,7 @@ const createAdmin = async () => {
     );
 
     const admin = await db.User.create({
+      fullname: process.env.ADMIN_FULLNAME,
       username: process.env.ADMIN_NAME,
       email: process.env.ADMIN_EMAIL,
       password: hashedPassword,
