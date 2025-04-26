@@ -7,86 +7,80 @@ import {
   generateRefreshToken,
 } from "../utils/token.utils.js";
 import { loginSchema, registerSchema } from "../utils/validationSchema.js";
+import ApiError from "../utils/ApiError.js";
 
 export const register = asyncHandler(async (req, res) => {
-  try {
-    const { error } = registerSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+  const value = await registerSchema.validateAsync(req.body, {
+    abortEarly: false,
+  });
 
-    const user = await authService.createUser(req.body);
-    res.status(201).json({ message: "User registered", user });
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
-  }
+  const { username, email, password } = value;
+  const user = await authService.createUser({ username, email, password });
+
+  res.status(201).json({ message: "User registered", user });
 });
 
 export const login = asyncHandler(async (req, res) => {
-  try {
-    const { error } = loginSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+  const { userId, password } = await loginSchema.validateAsync(req.body, {
+    abortEarly: false,
+  });
 
-    const { accessToken, user } = await authService.findUser(req.body);
-    const refreshToken = await generateRefreshToken(user?.id, user?.role);
-    res
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "Strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      })
-      .status(200)
-      .json({ message: "Login successfull", accessToken, user });
-  } catch (err) {
-    console.log(err);
-    res.status(401).json({ message: err.message });
-  }
-});
-
-export const refreshTokenHander = asyncHandler(async (req, res) => {
-  try {
-    const { refreshToken } = req.cookies.refreshToken || req.body.refreshToken;
-    if (!refreshToken) {
-      throw new Error(401, "Unauthorized access.");
-    }
-    const payload = jwt.verfy(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
-    const storedToken = await db.RefreshToken.findByPk(payload.tokenId);
-    if (!storedToken) throw new Error("Invalid refresh token");
-
-    await storedToken.destroy();
-
-    const accessToken = generateAccessToken(payload.userId);
-    await generateRefreshToken(payload.userId);
-    res.json({ accessToken }, { message: "Access token refreshed." });
-  } catch (error) {
-    res.status(403).json({ message: "Ivalid or expired token." });
-  }
-});
-
-export const logout = asyncHandler(async (req, res) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-
-    res.clearCookie("refreshToken", {
+  const { accessToken, user } = await authService.findUser({
+    userId,
+    password,
+  });
+  const refreshToken = await generateRefreshToken(user?.id, user?.role);
+  res
+    .cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "Strict",
-    });
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json({ message: "Login successfull", accessToken, user });
+});
 
-    const payload = await jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET
-    );
-    await db.RefreshToken.destroy({ where: { tokenId: payload.tokenId } });
-
-    res.status(200).json({ message: "Logged out successfully." });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: "Logout failed." });
+export const refreshTokenHander = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies.refreshToken || req.body.refreshToken;
+  if (!refreshToken) {
+    throw new ApiError(401, "Unauthorized access.");
   }
+  const payload = jwt.verfy(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+  const storedToken = await db.RefreshToken.findByPk(payload.tokenId);
+  if (!storedToken) throw new Error("Invalid refresh token");
+
+  await storedToken.destroy();
+
+  const accessToken = generateAccessToken(payload.userId);
+  await generateRefreshToken(payload.userId);
+  res.json({ accessToken }, { message: "Access token refreshed." });
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError(400, "Refresh token not found.");
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  });
+
+  const payload = await jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+
+  if (!payload) {
+    throw new ApiError(401, "Invalid or expired refresh token.");
+  }
+
+  await db.RefreshToken.destroy({ where: { tokenId: payload.tokenId } });
+
+  res.status(200).json({ message: "Logged out successfully." });
 });
