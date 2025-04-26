@@ -2,6 +2,7 @@ import db from "../models/index.js";
 import { Op } from "sequelize";
 import bcrypt from "bcrypt";
 import { generateAccessToken } from "../utils/token.utils.js";
+import ApiError from "../utils/ApiError.js";
 
 const User = db.User;
 
@@ -20,8 +21,7 @@ export const createUser = async (userData) => {
         ? "Username is already taken."
         : "Email is already registered.";
 
-    console.error();
-    throw new Error(message);
+    throw new ApiError(409, message);
   }
 
   const saltRounds = parseInt(process.env.SALT_ROUNDS);
@@ -39,21 +39,22 @@ export const createUser = async (userData) => {
 };
 
 export const findUser = async (userData) => {
-  const { userid, password } = userData;
+  console.log({ ...userData });
+  const { userId, password } = userData;
   const user = await User.findOne({
     where: {
-      [Op.or]: [{ username: userid }, { email: userid }],
+      [Op.or]: [{ username: userId }, { email: userId }],
     },
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new ApiError(404, "User not found");
   }
 
-  const isMatch = bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const accessToken = await generateAccessToken({
