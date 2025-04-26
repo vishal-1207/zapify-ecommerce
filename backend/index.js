@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
-app.use("api/token", tokenRoutes);
+app.use("/api/token", tokenRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
 // app.use("/api/categories");
@@ -29,9 +29,18 @@ app.get("/", (req, res) => {
 
 app.use(errorHandler);
 
-db.sequelize.sync({ force: false, alter: true }).then(() => {
-  console.log("Database synced...");
-  app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
-  });
-});
+const startServer = async () => {
+  try {
+    await db.sequelize.sync({ force: true, alter: true });
+    console.log("Database synced...");
+
+    app.listen(PORT, () => {
+      console.log(`Listening on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to sync database:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
