@@ -7,7 +7,11 @@ const uploadToCloudinary = async (filepath, folder = "products") => {
       resource_type: "auto",
       folder,
     });
-    fs.unlinkSync(filepath);
+    try {
+      fs.unlinkSync(filepath);
+    } catch (unlinkErr) {
+      console.warn("Failed to delete temp file:", unlinkErr.message);
+    }
     return result;
   } catch (err) {
     throw new Error("Cloudinary upload failed: " + err.message);
