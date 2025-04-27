@@ -1,5 +1,6 @@
 import cloudinary from "../config/cloudinary.js";
 import fs from "fs";
+import ApiError from "./ApiError.js";
 
 const uploadToCloudinary = async (filepath, folder = "products") => {
   try {
@@ -14,7 +15,7 @@ const uploadToCloudinary = async (filepath, folder = "products") => {
     }
     return result;
   } catch (err) {
-    throw new Error("Cloudinary upload failed: " + err.message);
+    throw new ApiError(502, "Cloudinary upload failed: " + err.message);
   }
 };
 
