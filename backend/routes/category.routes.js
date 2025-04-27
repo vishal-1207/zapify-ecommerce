@@ -8,7 +8,9 @@ import { csrfProtection } from "../middleware/csrf.middleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getCategories);
-router.route("/").post(authenticate, isAdmin, csrfProtection, addCategory);
+router
+  .route("/")
+  .get(getCategories)
+  .post(authenticate, isAdmin, csrfProtection, addCategory);
 
 export default router;
