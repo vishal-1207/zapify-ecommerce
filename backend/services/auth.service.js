@@ -39,7 +39,6 @@ export const createUser = async (userData) => {
 };
 
 export const findUser = async (userData) => {
-  console.log({ ...userData });
   const { userId, password } = userData;
   const user = await User.findOne({
     where: {
