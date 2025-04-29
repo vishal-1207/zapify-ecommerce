@@ -5,9 +5,7 @@ export default (sequelize, DataTypes) => {
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
-    imageUrl: { type: DataTypes.STRING, allowNull: false },
-    productSlug: { type: DataTypes.STRING, allowNull: false },
-    categoryId: { type: DataTypes.INTEGER, allowNull: false },
+    productSlug: { type: DataTypes.STRING, allowNull: false, unique: true },
   });
   return Product;
 };
