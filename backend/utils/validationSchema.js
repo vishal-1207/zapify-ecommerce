@@ -4,13 +4,19 @@ import xss from "xss";
 const sanitize = (value) => xss(value);
 
 export const registerSchema = Joi.object({
+  fullname: Joi.string()
+    .required()
+    .custom(sanitize, "XSS Sanitization")
+    .messages({
+      "string.empty": "Name is required.",
+    }),
   username: Joi.string()
     .min(6)
     .required()
     .custom(sanitize, "XSS Sanitization")
     .messages({
-      "string.empty": "Name is required.",
-      "string.min": "Name must be atleast 6 characters long.",
+      "string.empty": "Username is required.",
+      "string.min": "Username must be atleast 6 characters long.",
     }),
   email: Joi.string()
     .email()
@@ -36,7 +42,7 @@ export const loginSchema = Joi.object({
       const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
       const isEmail = emailRegex.test(value);
 
-      const isUsername = /^[a-zA-Z]{5,}$/.test(value);
+      const isUsername = /^[a-zA-Z]{6,}$/.test(value);
 
       if (!isEmail && !isUsername) {
         return helpers.error("any.invalid");
