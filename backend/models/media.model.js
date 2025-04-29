@@ -4,8 +4,13 @@ export default (sequelize, DataTypes) => {
     publicId: { type: DataTypes.STRING, allowNull: false },
     url: { type: DataTypes.STRING, allowNull: false },
     fileType: { type: DataTypes.ENUM("image", "video"), allowNull: false },
+    tag: {
+      type: DataTypes.ENUM("thumbnail", "gallery"),
+      allowNull: false,
+      default: "gallery",
+    },
     associatedType: {
-      type: DataTypes.ENUM("product", "review"),
+      type: DataTypes.ENUM("product", "review", "category"),
       allowNull: false,
     },
     associatedId: { type: DataTypes.INTEGER, allowNull: false },
