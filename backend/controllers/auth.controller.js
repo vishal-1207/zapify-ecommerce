@@ -14,21 +14,29 @@ export const register = asyncHandler(async (req, res) => {
     abortEarly: false,
   });
 
-  const { username, email, password } = value;
-  const user = await authService.createUser({ username, email, password });
+  const { fullname, username, email, password } = value;
+  const user = await authService.createUser({
+    fullname,
+    username,
+    email,
+    password,
+  });
 
   res.status(201).json({ message: "User registered", user });
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { userId, password } = await loginSchema.validateAsync(req.body, {
+  const value = await loginSchema.validateAsync(req.body, {
     abortEarly: false,
   });
+
+  const { userId, password } = value;
 
   const { accessToken, user } = await authService.findUser({
     userId,
     password,
   });
+
   const refreshToken = await generateRefreshToken(user?.id, user?.role);
   res
     .cookie("refreshToken", refreshToken, {
