@@ -7,7 +7,7 @@ import ApiError from "../utils/ApiError.js";
 const User = db.User;
 
 export const createUser = async (userData) => {
-  const { username, email, password } = userData;
+  const { fullname, username, email, password } = userData;
 
   const existingUser = await User.findOne({
     where: {
@@ -27,15 +27,14 @@ export const createUser = async (userData) => {
   const saltRounds = parseInt(process.env.SALT_ROUNDS);
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  const newUser = await User.create({
+  const user = await User.create({
+    fullname,
     username,
     email,
     password: hashedPassword,
   });
 
-  return {
-    user: newUser,
-  };
+  return user;
 };
 
 export const findUser = async (userData) => {
