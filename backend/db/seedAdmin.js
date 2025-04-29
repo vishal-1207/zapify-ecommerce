@@ -16,7 +16,7 @@ const createAdmin = async () => {
     const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
     const hashedPassword = await bcrypt.hash(
-      process.env.ADMIN_EMAIL,
+      process.env.ADMIN_PASSWORD,
       saltRounds
     );
 
