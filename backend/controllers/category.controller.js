@@ -15,20 +15,17 @@ export const getCategories = async (req, res) => {
     .json({ message: "Categories fetched successfully.", categories });
 };
 
-export const getCategory = async (req, res) => {};
-
 export const addCategory = async (req, res) => {
-  const name = req.body;
-  const file = req.file;
-
+  const name = req.body.name;
+  const image = req.file;
   if (!name) {
     throw new ApiError(400, "Category name is required.");
   }
 
-  if (!file) {
+  if (!image) {
     throw new ApiError(400, "Category image is required.");
   }
 
-  const category = await createCategory({ name, file });
+  const category = await createCategory({ name, image });
   res.status(200).json({ message: "Category created successfully.", category });
 };
