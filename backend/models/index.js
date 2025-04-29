@@ -28,40 +28,171 @@ db.RefreshToken = refreshTokenModel(sequelize, Sequelize);
 db.Media = mediaModel(sequelize, Sequelize);
 db.Review = reviewModel(sequelize, Sequelize);
 
-db.Category.hasMany(db.Product, { foreignKey: "categoryId" });
-db.Product.belongsTo(db.Category, { foreignKey: "categoryId" });
+// Category <-> Product
 
-db.User.hasOne(db.Cart, { foreignKey: "userId" });
-db.Cart.belongsTo(db.User, { foreignKey: "userId" });
+db.Category.hasMany(db.Product, {
+  foreignKey: { name: "categoryId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.Product.belongsTo(db.Category, {
+  foreignKey: { name: "categoryId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
 
-db.Cart.hasMany(db.CartItem, { foreignKey: "cartId" });
-db.CartItem.belongsTo(db.Cart, { foreignKey: "cartId" });
+// User <-> Cart
 
-db.Product.hasMany(db.CartItem, { foreignKey: "productId" });
-db.CartItem.belongsTo(db.Product, { foreignKey: "productId" });
+db.User.hasOne(db.Cart, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.Cart.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
 
-db.User.hasMany(db.Order, { foreignKey: "userId" });
-db.Order.belongsTo(db.User, { foreignKey: "userId" });
+// Cart <-> CartItem
 
-db.Order.hasMany(db.OrderItem, { foreignKey: "orderId" });
-db.OrderItem.belongsTo(db.Order, { foreignKey: "orderId" });
+db.Cart.hasMany(db.CartItem, {
+  foreignKey: { name: "cartId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.CartItem.belongsTo(db.Cart, {
+  foreignKey: { name: "cartId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
 
-db.Product.hasMany(db.OrderItem, { foreignKey: "productId" });
-db.OrderItem.belongsTo(db.Product, { foreignKey: "productId" });
+// Product <-> CartItem
 
-db.User.hasMany(db.RefreshToken, { foreignKey: "userId" });
-db.RefreshToken.belongsTo(db.User, { foreignKey: "userId" });
+db.Product.hasMany(db.CartItem, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.CartItem.belongsTo(db.Product, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// User <-> Order
+
+db.User.hasMany(db.Order, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.Order.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// Order <-> OrderItem
+
+db.Order.hasMany(db.OrderItem, {
+  foreignKey: { name: "orderId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.OrderItem.belongsTo(db.Order, {
+  foreignKey: { name: "orderId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// Product <-> OrderItem
+
+db.Product.hasMany(db.OrderItem, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.OrderItem.belongsTo(db.Product, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// User <-> RefreshToken
+
+db.User.hasMany(db.RefreshToken, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.RefreshToken.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// Product <-> Review
+
+db.Product.hasMany(db.Review, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+db.Review.belongsTo(db.Product, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+  as: "product",
+});
+
+// Polymorphic Media associations
+
+// Product -> Media
 
 db.Product.hasMany(db.Media, {
   foreignKey: "associatedId",
+  constraints: false,
   scope: { associatedType: "product" },
   as: "media",
 });
 
-db.Review.belongsTo(db.Product, { foreignKey: "productId", as: "product" });
+// Category -> Media
+
+db.Category.hasMany(db.Media, {
+  foreignKey: "associatedId",
+  constraints: false,
+  scope: { associatedType: "category" },
+  as: "media",
+});
+
+// Review -> Media
+
 db.Review.hasMany(db.Media, {
   foreignKey: "associatedId",
-  scope: { associatedType: "review", as: "media" },
+  constraints: false,
+  scope: { associatedType: "review" },
+  as: "media",
+});
+
+// Media -> Product/Review/Category (inverse associations)
+
+db.Media.belongsTo(db.Product, {
+  foreignKey: "associatedId",
+  constraints: false,
+  as: "product",
+});
+
+db.Media.belongsTo(db.Review, {
+  foreignKey: "associatedId",
+  constraints: false,
+  as: "review",
+});
+
+db.Media.belongsTo(db.Category, {
+  foreignKey: "associatedId",
+  constraints: false,
+  as: "category",
 });
 
 export default db;
