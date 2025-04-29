@@ -10,8 +10,8 @@ export const authenticate = asyncHandler(async (req, res, next) => {
       return res.status(401).json({ message: "Access token missing." });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    req.user = { id: decoded.id, role: decoded.role };
     next();
   } catch (error) {
     console.log("Auth middleare error: ", error.message);
@@ -20,7 +20,7 @@ export const authenticate = asyncHandler(async (req, res, next) => {
 });
 
 export const isAdmin = asyncHandler(async (req, res, next) => {
-  if (req.body.role !== "admin") {
+  if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Access denied." });
   }
   next();
