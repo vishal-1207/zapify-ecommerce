@@ -1,4 +1,8 @@
-import { createCategory } from "../services/category.service.js";
+import {
+  createCategoryService,
+  deleteCategoryService,
+  updateCategoryService,
+} from "../services/category.service.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
 
@@ -15,6 +19,8 @@ export const getCategories = async (req, res) => {
     .json({ message: "Categories fetched successfully.", categories });
 };
 
+export const getcategoryProducts = async (req, res) => {};
+
 export const addCategory = async (req, res) => {
   const name = req.body.name;
   const image = req.file;
@@ -26,6 +32,27 @@ export const addCategory = async (req, res) => {
     throw new ApiError(400, "Category image is required.");
   }
 
-  const category = await createCategory({ name, image });
+  const category = await createCategoryService({ name, image });
   res.status(200).json({ message: "Category created successfully.", category });
+};
+
+export const updateCategory = async (req, res) => {
+  const name = req.body.name;
+  const id = req.params.id;
+  const image = req.file;
+
+  if (!name) {
+    throw new ApiError(400, "Category name is required");
+  }
+
+  const updatedCategory = await updateCategoryService({ id, name, image });
+  res
+    .status(200)
+    .json({ message: "Category updated successfully.", updatedCategory });
+};
+
+export const deleteCategory = async (req, res) => {
+  const { id } = req.params;
+  await deleteCategoryService(id);
+  res.status(200).json({ message: "Category deleted successfully." });
 };
