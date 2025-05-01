@@ -11,6 +11,7 @@ import orderItemModel from "./orderItem.model.js";
 import refreshTokenModel from "./refreshToken.model.js";
 import mediaModel from "./media.model.js";
 import reviewModel from "./review.model.js";
+import productSpecModel from "./productSpec.model.js";
 
 const db = {};
 
@@ -27,13 +28,12 @@ db.OrderItem = orderItemModel(sequelize, Sequelize);
 db.RefreshToken = refreshTokenModel(sequelize, Sequelize);
 db.Media = mediaModel(sequelize, Sequelize);
 db.Review = reviewModel(sequelize, Sequelize);
+db.ProductSpec = productSpecModel(sequelize, Sequelize);
 
 // Category <-> Product
 
 db.Category.hasMany(db.Product, {
   foreignKey: { name: "categoryId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.Product.belongsTo(db.Category, {
   foreignKey: { name: "categoryId", allowNull: false },
@@ -45,8 +45,6 @@ db.Product.belongsTo(db.Category, {
 
 db.User.hasOne(db.Cart, {
   foreignKey: { name: "userId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.Cart.belongsTo(db.User, {
   foreignKey: { name: "userId", allowNull: false },
@@ -58,8 +56,6 @@ db.Cart.belongsTo(db.User, {
 
 db.Cart.hasMany(db.CartItem, {
   foreignKey: { name: "cartId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.CartItem.belongsTo(db.Cart, {
   foreignKey: { name: "cartId", allowNull: false },
@@ -71,8 +67,6 @@ db.CartItem.belongsTo(db.Cart, {
 
 db.Product.hasMany(db.CartItem, {
   foreignKey: { name: "productId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.CartItem.belongsTo(db.Product, {
   foreignKey: { name: "productId", allowNull: false },
@@ -84,10 +78,19 @@ db.CartItem.belongsTo(db.Product, {
 
 db.User.hasMany(db.Order, {
   foreignKey: { name: "userId", allowNull: false },
+});
+db.Order.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
-db.Order.belongsTo(db.User, {
+
+// User <-> Review
+
+db.User.hasMany(db.Review, {
+  foreignKey: { name: "userId", allowNull: false },
+});
+db.Review.belongsTo(db.User, {
   foreignKey: { name: "userId", allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
@@ -97,8 +100,6 @@ db.Order.belongsTo(db.User, {
 
 db.Order.hasMany(db.OrderItem, {
   foreignKey: { name: "orderId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.OrderItem.belongsTo(db.Order, {
   foreignKey: { name: "orderId", allowNull: false },
@@ -110,8 +111,6 @@ db.OrderItem.belongsTo(db.Order, {
 
 db.Product.hasMany(db.OrderItem, {
   foreignKey: { name: "productId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.OrderItem.belongsTo(db.Product, {
   foreignKey: { name: "productId", allowNull: false },
@@ -123,11 +122,21 @@ db.OrderItem.belongsTo(db.Product, {
 
 db.User.hasMany(db.RefreshToken, {
   foreignKey: { name: "userId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.RefreshToken.belongsTo(db.User, {
   foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// Product <-> ProductSpec
+
+db.Product.hasMany(db.ProductSpec, {
+  foreignKey: { name: "productId", allowNull: false },
+});
+
+db.ProductSpec.belongsTo(db.Product, {
+  foreignKey: { name: "productId", allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
@@ -136,8 +145,6 @@ db.RefreshToken.belongsTo(db.User, {
 
 db.Product.hasMany(db.Review, {
   foreignKey: { name: "productId", allowNull: false },
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 db.Review.belongsTo(db.Product, {
   foreignKey: { name: "productId", allowNull: false },
@@ -159,7 +166,7 @@ db.Product.hasMany(db.Media, {
 
 // Category -> Media
 
-db.Category.hasMany(db.Media, {
+db.Category.hasOne(db.Media, {
   foreignKey: "associatedId",
   constraints: false,
   scope: { associatedType: "category" },
