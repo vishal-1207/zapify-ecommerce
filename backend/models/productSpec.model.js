@@ -4,4 +4,5 @@ export default (sequelize, DataTypes) => {
     key: { type: DataTypes.STRING, allowNull: false },
     value: { type: DataTypes.STRING, allowNull: false },
   });
+  return ProductSpec;
 };
