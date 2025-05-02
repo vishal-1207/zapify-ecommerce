@@ -30,3 +30,8 @@ export const upload = multer({
     fileSize: 100 * 1024 * 1024,
   },
 });
+
+export const uploadProductMedia = upload.fields([
+  { name: "thumbnail", maxCount: 1 },
+  { name: "gallery", maxCount: 10 },
+]);
