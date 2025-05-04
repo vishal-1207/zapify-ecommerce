@@ -6,10 +6,16 @@ export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
+    brand: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
     slug: { type: DataTypes.STRING, allowNull: false, unique: true },
+    categoryId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: "Category", key: "id" },
+    },
   });
 
   Product.beforeCreate(async (product, options) => {
