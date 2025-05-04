@@ -68,6 +68,10 @@ export const loginSchema = Joi.object({
 });
 
 export const productSchema = Joi.object({
+  categoryId: Joi.number().integer().positive().required().messages({
+    "number.empty": "Category is required.",
+  }),
+
   name: Joi.string()
     .trim()
     .min(10)
@@ -77,6 +81,14 @@ export const productSchema = Joi.object({
     .messages({
       "string.empty": "Product name is required.",
       "string.min": "Product name must be atleast 6 characters long.",
+    }),
+
+  brand: Joi.string()
+    .trim()
+    .required()
+    .custom(sanitize, "XSS Sanitization")
+    .messages({
+      "string.empty": "Brand name is required.",
     }),
 
   description: Joi.string()
@@ -96,14 +108,33 @@ export const productSchema = Joi.object({
     "number.positive": "Price must be a positive value.",
     "number.precision": "Price can have a maximum of 2 decimal places.",
   }),
+
   stock: Joi.number().integer().positive().min(0).required().messages({
     "number.base": "Price must be a valid number.",
     "number.empty": "Price is required.",
     "number.positive": "Price must be a positive value.",
   }),
-  categoryId: Joi.number().integer().positive().required().messages({
-    "number.empty": "Category is required.",
-  }),
+
+  specs: Joi.array()
+    .items(
+      Joi.object({
+        key: Joi.string()
+          .trim()
+          .required()
+          .custom(sanitize, "XSS Sanitization")
+          .messages({ "string.empty": "Specification is required." }),
+        value: Joi.string()
+          .trim()
+          .required()
+          .custom(sanitize, "XSS Sanitization")
+          .messages({
+            "string.empty": "Specification description is required.",
+          }),
+      })
+    )
+    .min(1)
+    .required()
+    .messages({ "array.min": "Atleast one specification is required." }),
 });
 
 export const categorySchema = Joi.object({
