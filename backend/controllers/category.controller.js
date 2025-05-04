@@ -19,8 +19,6 @@ export const getCategories = async (req, res) => {
     .json({ message: "Categories fetched successfully.", categories });
 };
 
-export const getcategoryProducts = async (req, res) => {};
-
 export const addCategory = async (req, res) => {
   const name = req.body.name;
   const image = req.file;

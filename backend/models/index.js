@@ -182,7 +182,7 @@ db.Review.hasMany(db.Media, {
   as: "media",
 });
 
-// Media -> Product/Review/Category (inverse associations)
+// Media -> Product/Review/Category
 
 db.Media.belongsTo(db.Product, {
   foreignKey: "associatedId",
