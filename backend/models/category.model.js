@@ -5,11 +5,14 @@ export default (sequelize, DataTypes) => {
   const Category = sequelize.define("Category", {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false, unique: true },
-    slug: { type: DataTypes.STRING, allowNull: false, unique: true },
+    slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
 
   Category.beforeCreate(async (category, options) => {
-    const baseSlug = slugify(category.name, { lower: true, strict: true });
+    const baseSlug = slugify(category.name, {
+      lower: true,
+      strict: true,
+    });
 
     const existing = await Category.findOne({ where: { slug: baseSlug } });
     if (existing) {
@@ -21,7 +24,10 @@ export default (sequelize, DataTypes) => {
 
   Category.beforeUpdate(async (category, options) => {
     if (category.changed("name")) {
-      const baseSlug = slugify(category.name, { lower: true, strict: true });
+      const baseSlug = slugify(category.name, {
+        lower: true,
+        strict: true,
+      });
 
       const existing = await Category.findOne({
         where: { slug: baseSlug, id: { [Op.ne]: category.id } },
