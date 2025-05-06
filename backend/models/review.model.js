@@ -8,7 +8,6 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         references: { model: "Products", key: "id" },
       },
-      userId: { type: DataTypes.INTEGER, allowNull: false },
       rating: { type: DataTypes.INTEGER, allowNull: false },
       comment: { type: DataTypes.TEXT, allowNull: true },
     },
