@@ -9,7 +9,7 @@ const Media = db.Media;
 const ProductSpec = db.ProductSpec;
 
 export const createProductService = async (data, files) => {
-  const { categoryId, name, description, price, stock, specs = [] } = data;
+  const { name, description, price, stock, specs = [] } = data;
 
   const transaction = await sequelize.transaction();
 
