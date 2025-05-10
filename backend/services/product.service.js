@@ -9,29 +9,39 @@ const Media = db.Media;
 const ProductSpec = db.ProductSpec;
 
 export const createProductService = async (data, files) => {
-  const { name, description, price, stock, specs = [] } = data;
+  const {
+    categoryId,
+    brand,
+    name,
+    description,
+    price,
+    stock,
+    specs = [],
+  } = data;
 
   const transaction = await sequelize.transaction();
+  let committed = false;
 
   try {
     const createdProduct = await Product.create(
-      { name, description, price, stock, categoryId },
+      { brand, name, description, price, stock, categoryId },
       { transaction }
     );
 
-    let thumbnail = null;
-    const thumbnailFile = files?.thumbnail?.[0];
-    if (thumbnailFile) {
+    let thumbnailImage = null;
+    const thumbnail = files.thumbnail;
+
+    if (thumbnail) {
       const thumbnailUpload = await uploadToCloudinary(
-        thumbnailFile.path,
+        thumbnail.path,
         process.env.CLOUDINARY_PRODUCT_FOLDER
       );
 
-      thumbnail = await Media.create(
+      thumbnailImage = await Media.create(
         {
           publicId: thumbnailUpload.public_id,
           url: thumbnailUpload.secure_url,
-          fileType: thumbnailUpload.secure_url,
+          fileType: thumbnailUpload.resource_type,
           tag: "thumbnail",
           associatedType: "product",
           associatedId: createdProduct.id,
@@ -40,7 +50,7 @@ export const createProductService = async (data, files) => {
       );
     }
 
-    let gallery = [];
+    let galleryImages = [];
     const galleryFiles = files?.gallery || [];
 
     if (galleryFiles.length > 0) {
@@ -52,7 +62,7 @@ export const createProductService = async (data, files) => {
       );
 
       const uploadResults = await Promise.all(uploadGalleryFiles);
-      gallery = await Promise.all(
+      galleryImages = await Promise.all(
         uploadResults.map((uploadResult) =>
           Media.create(
             {
@@ -79,14 +89,17 @@ export const createProductService = async (data, files) => {
       transaction,
     });
     await transaction.commit();
-    return { createdProduct, productSpecs, thumbnail, gallery };
+    committed = true;
+    return { createdProduct, productSpecs, thumbnailImage, galleryImages };
   } catch (error) {
-    await transaction.rollback();
+    if (!committed) await transaction.rollback();
+
+    console.error(error);
     throw new ApiError(500, "Failed to create product.");
   }
 };
 
-export const updateProductService = async (productId, data) => {
+export const updateProductService = async (productId, data, files) => {
   const {
     categoryId,
     name,
@@ -98,6 +111,7 @@ export const updateProductService = async (productId, data) => {
   } = data;
 
   const transaction = await sequelize.transaction();
+  let committed = false;
 
   try {
     const product = await Product.findByPk(productId, {
@@ -127,7 +141,7 @@ export const updateProductService = async (productId, data) => {
     // THUMBNAIL UPDATE LOGIC
 
     let updatedThumbnail = null;
-    if (files?.thumbnail) {
+    if (files.thumbnail) {
       const existingThumbnail = product.media.find(
         (m) => m.tag === "thumbnail"
       );
@@ -138,7 +152,7 @@ export const updateProductService = async (productId, data) => {
       }
 
       const uplaodThumbnail = await uploadToCloudinary(
-        files.thumbnail[0].path,
+        files.thumbnail.path,
         process.env.CLOUDINARY_PRODUCT_FOLDER
       );
 
@@ -204,7 +218,8 @@ export const updateProductService = async (productId, data) => {
 
     return { updatedProduct, updatedSpecs, updatedThumbnail, updatedGallery };
   } catch (error) {
-    await transaction.rollback();
+    console.error(error);
+    if (!committed) await transaction.rollback();
     throw new ApiError(500, "Failed to update product.");
   }
 };
