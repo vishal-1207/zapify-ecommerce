@@ -122,7 +122,6 @@ export const updateProductService = async (productId, data, files) => {
         },
         {
           model: ProductSpec,
-          as: "specs",
         },
       ],
     });
@@ -134,9 +133,9 @@ export const updateProductService = async (productId, data, files) => {
     if (description) product.description = description;
     if (price) product.price = price;
     if (stock) product.stock = stock;
-    if (categoryId) productId.categoryId = categoryId;
+    if (categoryId) product.categoryId = categoryId;
 
-    const updatedProduct = await Product.save({ transaction });
+    const updatedProduct = await product.save({ transaction });
 
     // THUMBNAIL UPDATE LOGIC
 
@@ -216,10 +215,54 @@ export const updateProductService = async (productId, data, files) => {
       updatedSpecs = await ProductSpec.bulkCreate(newSpecs, { transaction });
     }
 
+    await transaction.commit();
+    committed = true;
+
     return { updatedProduct, updatedSpecs, updatedThumbnail, updatedGallery };
   } catch (error) {
     console.error(error);
     if (!committed) await transaction.rollback();
     throw new ApiError(500, "Failed to update product.");
+  }
+};
+
+export const deleteProductService = async (productId) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const product = await Product.findByPk(productId, {
+      include: [{ model: Media, as: "media" }, { model: ProductSpec }],
+      transaction,
+    });
+
+    if (!product) {
+      throw new ApiError(400, "Product not found.");
+    }
+
+    if (product.media && product.media.length > 0) {
+      for (const media of product.media) {
+        if (media.publicId) {
+          await cloudinary.uploader.destroy(media.publicId, {
+            resource_type: media.fileType,
+          });
+        }
+
+        await media.destroy({ transaction });
+      }
+    }
+
+    if (product.ProductSpec && product.ProductSpec.length > 0) {
+      for (const spec of product.ProductSpec) {
+        await spec.destroy({ transaction });
+      }
+    }
+
+    await product.destroy({ transaction });
+    await transaction.commit();
+    return { message: "Product deleted successfully." };
+  } catch (error) {
+    console.error(error);
+    await transaction.rollback();
+    throw new ApiError(500, "Something went wrong.");
   }
 };
