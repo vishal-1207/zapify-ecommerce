@@ -1,6 +1,7 @@
 import db from "../models/index.js";
 import {
   createProductService,
+  deleteProductService,
   updateProductService,
 } from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
@@ -89,8 +90,6 @@ export const createProduct = async (req, res) => {
   });
 };
 
-//TODO: Setup update product controller and make necessary changes to controller/service to get logic correct
-
 export const updateProduct = async (req, res) => {
   const productId = parseInt(req.params.id, 10);
   if (isNaN(productId)) {
@@ -110,4 +109,8 @@ export const updateProduct = async (req, res) => {
   });
 };
 
-export const deleteProduct = async (req, res) => {};
+export const deleteProduct = async (req, res) => {
+  const productId = req.params.id;
+  const result = await deleteProductService(productId);
+  res.status(200).json({ message: result.message });
+};
