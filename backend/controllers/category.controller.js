@@ -50,7 +50,7 @@ export const updateCategory = async (req, res) => {
 };
 
 export const deleteCategory = async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id;
   await deleteCategoryService(id);
   res.status(200).json({ message: "Category deleted successfully." });
 };
