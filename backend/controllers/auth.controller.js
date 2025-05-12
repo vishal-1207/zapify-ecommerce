@@ -50,11 +50,11 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const refreshTokenHander = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.cookies.refreshToken || req.body.refreshToken;
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (!refreshToken) {
     throw new ApiError(401, "Unauthorized access.");
   }
-  const payload = jwt.verfy(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
   const storedToken = await db.RefreshToken.findByPk(payload.tokenId);
   if (!storedToken) throw new Error("Invalid refresh token");
@@ -62,8 +62,17 @@ export const refreshTokenHander = asyncHandler(async (req, res) => {
   await storedToken.destroy();
 
   const accessToken = generateAccessToken(payload.userId);
-  await generateRefreshToken(payload.userId);
-  res.json({ accessToken }, { message: "Access token refreshed." });
+  const newRefreshToken = await generateRefreshToken(payload.userId);
+
+  res
+    .cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json({ accessToken, message: "Access token refreshed." });
 });
 
 export const logout = asyncHandler(async (req, res) => {
@@ -79,10 +88,7 @@ export const logout = asyncHandler(async (req, res) => {
     sameSite: "Strict",
   });
 
-  const payload = await jwt.verify(
-    refreshToken,
-    process.env.REFRESH_TOKEN_SECRET
-  );
+  const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
   if (!payload) {
     throw new ApiError(401, "Invalid or expired refresh token.");
