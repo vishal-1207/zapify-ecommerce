@@ -12,6 +12,7 @@ import refreshTokenModel from "./refreshToken.model.js";
 import mediaModel from "./media.model.js";
 import reviewModel from "./review.model.js";
 import productSpecModel from "./productSpec.model.js";
+import brand from "./brand.model.js";
 
 const db = {};
 
@@ -29,6 +30,7 @@ db.RefreshToken = refreshTokenModel(sequelize, Sequelize);
 db.Media = mediaModel(sequelize, Sequelize);
 db.Review = reviewModel(sequelize, Sequelize);
 db.ProductSpec = productSpecModel(sequelize, Sequelize);
+db.Brand = brand(sequelize, Sequelize);
 
 // Category <-> Product
 
@@ -129,6 +131,17 @@ db.RefreshToken.belongsTo(db.User, {
   onUpdate: "CASCADE",
 });
 
+// Brand <-> Product
+
+db.Brand.hasMany(db.Product, {
+  foreignKey: { name: "brandId", allowNull: false },
+});
+
+db.Product.belongsTo(db.Brand, {
+  foreignKey: { name: "brandId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
 // Product <-> ProductSpec
 
 db.Product.hasMany(db.ProductSpec, {
