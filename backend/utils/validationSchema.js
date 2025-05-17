@@ -150,3 +150,30 @@ export const categorySchema = Joi.object({
       "string.max": "Category name cannot exceed 15 characters.",
     }),
 });
+
+const ALLOWED_SORT_FIELDS = ["createdAt", "price", "averageRating"];
+
+export const validateProductQuery = async (query) => {
+  const schema = Joi.object({
+    search: Joi.string().max(100).optional(),
+    categorySlug: Joi.string().optional(),
+    categoryId: Joi.number().integer().min(1).optional(),
+    brand: Joi.string().max(50).optional(),
+    inStock: Joi.boolean().optional(),
+    priceMin: Joi.number().min(0).optional(),
+    priceMax: Joi.number().min(0).optional(),
+    sortBy: Joi.string()
+      .valid(...ALLOWED_SORT_FIELDS)
+      .default("createdAt"),
+    order: Joi.string().valid("asc", "desc").default("desc"),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    page: Joi.number().integer().min(1).default(1),
+  });
+
+  const value = await schema.validateAsync(query, { abortEarly: false });
+
+  return {
+    ...value,
+    offset: (value.page - 1) * value.limit,
+  };
+};
