@@ -5,10 +5,11 @@ import {
 } from "../services/category.service.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const Category = db.Category;
 
-export const getCategories = async (req, res) => {
+export const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.findAll({
     attributes: ["id", "name", "imageUrl"],
     order: [["name", "ASC"]],
@@ -17,9 +18,9 @@ export const getCategories = async (req, res) => {
   res
     .status(200)
     .json({ message: "Categories fetched successfully.", categories });
-};
+});
 
-export const addCategory = async (req, res) => {
+export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
   if (!name) {
@@ -32,9 +33,9 @@ export const addCategory = async (req, res) => {
 
   const category = await createCategoryService({ name, image });
   res.status(200).json({ message: "Category created successfully.", category });
-};
+});
 
-export const updateCategory = async (req, res) => {
+export const updateCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const id = req.params.id;
   const image = req.file;
@@ -47,10 +48,10 @@ export const updateCategory = async (req, res) => {
   res
     .status(200)
     .json({ message: "Category updated successfully.", updatedCategory });
-};
+});
 
-export const deleteCategory = async (req, res) => {
+export const deleteCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
   await deleteCategoryService(id);
   res.status(200).json({ message: "Category deleted successfully." });
-};
+});
