@@ -5,6 +5,7 @@ import {
   updateProductService,
 } from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const Product = db.Product;
 const ProductSpec = db.ProductSpec;
@@ -72,11 +73,7 @@ const validateAndParseProductInput = (req, isUpdate = false) => {
   };
 };
 
-export const getProductsByCategory = async (req, res) => {};
-
-export const getProductsById = async (req, res) => {};
-
-export const createProduct = async (req, res) => {
+export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = validateAndParseProductInput(req);
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
     await createProductService(data, files);
@@ -88,9 +85,9 @@ export const createProduct = async (req, res) => {
     thumbnailImage,
     galleryImages,
   });
-};
+});
 
-export const updateProduct = async (req, res) => {
+export const updateProduct = asyncHandler(async (req, res) => {
   const productId = parseInt(req.params.id, 10);
   if (isNaN(productId)) {
     throw new ApiError(400, "Invalid product Id");
@@ -107,10 +104,10 @@ export const updateProduct = async (req, res) => {
     thumbnailImage: updatedThumbnail,
     galleryImages: updaterGallery,
   });
-};
+});
 
-export const deleteProduct = async (req, res) => {
+export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.id;
   const result = await deleteProductService(productId);
   res.status(200).json({ message: result.message });
-};
+});
