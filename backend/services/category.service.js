@@ -2,7 +2,6 @@ import db from "../models/index.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
-import slugify from "slugify";
 
 const Category = db.Category;
 const Media = db.Media;
