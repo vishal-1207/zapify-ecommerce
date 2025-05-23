@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
       default: "gallery",
     },
     associatedType: {
-      type: DataTypes.ENUM("product", "review", "category"),
+      type: DataTypes.ENUM("product", "review", "category", "brand"),
       allowNull: false,
     },
     associatedId: { type: DataTypes.INTEGER, allowNull: false },
