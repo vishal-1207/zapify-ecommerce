@@ -7,10 +7,6 @@ import {
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
-const Product = db.Product;
-const ProductSpec = db.ProductSpec;
-const Media = db.Media;
-
 const validateAndParseProductInput = (req, isUpdate = false) => {
   const {
     categoryId,
