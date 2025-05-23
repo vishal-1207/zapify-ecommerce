@@ -72,14 +72,6 @@ export const productSchema = Joi.object({
     "number.empty": "Category is required.",
   }),
 
-  brand: Joi.string()
-    .trim()
-    .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Brand name is required.",
-    }),
-
   name: Joi.string()
     .trim()
     .min(10)
