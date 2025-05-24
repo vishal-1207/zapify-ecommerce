@@ -7,7 +7,7 @@ import {
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
-const validateAndParseProductInput = (req, isUpdate = false) => {
+const parseProductInput = (req, isUpdate = false) => {
   const {
     categoryId,
     brand,
@@ -29,37 +29,20 @@ const validateAndParseProductInput = (req, isUpdate = false) => {
     }
   }
 
-  if (!isUpdate && !categoryId)
-    throw new ApiError(400, "Category is required.");
-  if (!brand) throw new ApiError(400, "Product brand is required.");
-  if (!name) throw new ApiError(400, "Product name is required.");
-  if (!price) throw new ApiError(400, "Price is required.");
-  if (!stock) throw new ApiError(400, "Number of stock is required.");
-  if (parsedSpecs.length < 1)
-    throw new ApiError(400, "At least one specification is required.");
-  if (!thumbnail && !isUpdate)
-    throw new ApiError(400, "Product thumbnail is required.");
-  if ((!gallery || gallery.length < 1) && !isUpdate)
-    throw new ApiError(400, "At least one product image is required.");
-
-  const parsedPrice = parseInt(price, 10);
-  const parsedStock = parseInt(stock, 10);
-  const parsedCategoryId = parseInt(categoryId, 10);
-
-  if (isNaN(parsedPrice) || parsedPrice <= 0)
-    throw new ApiError(400, "Price must be a valid positive number.");
-
-  if (isNaN(parsedStock) || parsedStock <= 0)
-    throw new ApiError(400, "Stock must be a valid positive number.");
+  if (!isUpdate) {
+    if (!thumbnail) throw new ApiError(400, "Product thumbnail is required.");
+    if (!gallery || gallery.length < 1)
+      throw new ApiError(400, "At least one product image is required.");
+  }
 
   return {
     data: {
-      categoryId: parsedCategoryId,
+      categoryId: parseInt(categoryId, 10),
       brand,
       name,
       description,
-      price: parsedPrice,
-      stock: parsedStock,
+      price: parseInt(price, 10),
+      stock: parseInt(stock, 10),
       specs: parsedSpecs,
     },
     files: {
@@ -70,7 +53,7 @@ const validateAndParseProductInput = (req, isUpdate = false) => {
 };
 
 export const createProduct = asyncHandler(async (req, res) => {
-  const { data, files } = validateAndParseProductInput(req);
+  const { data, files } = parseProductInput(req);
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
     await createProductService(data, files);
 
@@ -85,11 +68,9 @@ export const createProduct = asyncHandler(async (req, res) => {
 
 export const updateProduct = asyncHandler(async (req, res) => {
   const productId = parseInt(req.params.id, 10);
-  if (isNaN(productId)) {
-    throw new ApiError(400, "Invalid product Id");
-  }
+  if (isNaN(productId)) throw new ApiError(400, "Invalid product Id");
 
-  const { data, files } = validateAndParseProductInput(req, true);
+  const { data, files } = parseProductInput(req, true);
   const { updatedProduct, updatedSpecs, updatedThumbnail, updaterGallery } =
     await updateProductService(productId, data, files);
 
