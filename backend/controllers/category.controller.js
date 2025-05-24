@@ -23,13 +23,6 @@ export const getCategories = asyncHandler(async (req, res) => {
 export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
-  if (!name) {
-    throw new ApiError(400, "Category name is required.");
-  }
-
-  if (!image) {
-    throw new ApiError(400, "Category image is required.");
-  }
 
   const category = await createCategoryService({ name, image });
   res.status(200).json({ message: "Category created successfully.", category });
@@ -39,10 +32,6 @@ export const updateCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const id = req.params.id;
   const image = req.file;
-
-  if (!name) {
-    throw new ApiError(400, "Category name is required");
-  }
 
   const updatedCategory = await updateCategoryService({ id, name, image });
   res
