@@ -6,7 +6,6 @@ export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
-    brand: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
@@ -14,7 +13,7 @@ export default (sequelize, DataTypes) => {
   });
 
   Product.beforeCreate(async (product, options) => {
-    const baseSlug = await slugify(product.name, { lower: true, strict: true });
+    const baseSlug = slugify(product.name, { lower: true, strict: true });
     let finalSlug = `${baseSlug}-${nanoid(6)}`;
     const exists = await Product.findOne({ where: { slug: finalSlug } });
     if (exists) {
@@ -26,7 +25,7 @@ export default (sequelize, DataTypes) => {
 
   Product.beforeUpdate(async (product, options) => {
     if (product.changed("name")) {
-      const baseSlug = await slugify(product.name, {
+      const baseSlug = slugify(product.name, {
         lower: true,
         strict: true,
       });
