@@ -6,7 +6,6 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/token.utils.js";
-import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 import ApiError from "../utils/ApiError.js";
 
 export const register = asyncHandler(async (req, res) => {
