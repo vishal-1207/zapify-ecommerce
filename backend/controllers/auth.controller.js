@@ -10,11 +10,7 @@ import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 import ApiError from "../utils/ApiError.js";
 
 export const register = asyncHandler(async (req, res) => {
-  const value = await registerSchema.validateAsync(req.body, {
-    abortEarly: false,
-  });
-
-  const { fullname, username, email, password } = value;
+  const { fullname, username, email, password } = req.body;
   const user = await authService.createUser({
     fullname,
     username,
@@ -26,11 +22,7 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const value = await loginSchema.validateAsync(req.body, {
-    abortEarly: false,
-  });
-
-  const { userId, password } = value;
+  const { userId, password } = req.body;
 
   const { accessToken, user } = await authService.findUser({
     userId,
