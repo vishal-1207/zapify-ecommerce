@@ -1,4 +1,3 @@
-import db from "../models/index.js";
 import {
   createProductService,
   deleteProductService,
