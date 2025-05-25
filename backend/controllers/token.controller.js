@@ -1,6 +1,7 @@
 import { generateCSRF } from "../utils/csrf.utils.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-export const csrfToken = async (req, res) => {
+export const csrfToken = asyncHandler(async (req, res) => {
   try {
     const { secret, token } = await generateCSRF();
 
@@ -28,4 +29,4 @@ export const csrfToken = async (req, res) => {
       error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
-};
+});
