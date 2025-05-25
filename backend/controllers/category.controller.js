@@ -3,7 +3,6 @@ import {
   deleteCategoryService,
   updateCategoryService,
 } from "../services/category.service.js";
-import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
