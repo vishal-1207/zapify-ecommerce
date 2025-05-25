@@ -8,6 +8,8 @@ import {
 import { authenticate, isAdmin } from "../middleware/auth.middleware";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import { brandSchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
 
@@ -18,6 +20,7 @@ router
     authenticate,
     isAdmin,
     csrfProtection,
+    validate(brandSchema),
     upload.single("image"),
     addBrand
   );
@@ -27,6 +30,7 @@ router.put(
   authenticate,
   isAdmin,
   csrfProtection,
+  validate(brandSchema),
   upload.single("image"),
   updateBrand
 );
