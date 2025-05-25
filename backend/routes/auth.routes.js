@@ -8,6 +8,8 @@ import {
 import { authenticate } from "../middleware/auth.middleware.js";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
 
@@ -17,8 +19,10 @@ const refreshLimiter = rateLimit({
   message: "Too many requests.",
 });
 
-router.route("/register").post(csrfProtection, register);
-router.route("/admin/login").post(csrfProtection, login);
+router
+  .route("/register")
+  .post(csrfProtection.bind, validate(registerSchema), register);
+router.route("/admin/login").post(csrfProtection, validate(loginSchema), login);
 router.route("/login").post(csrfProtection, login);
 router
   .route("/access-token")
