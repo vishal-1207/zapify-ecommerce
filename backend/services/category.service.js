@@ -6,6 +6,7 @@ import cloudinary from "../config/cloudinary.js";
 const Category = db.Category;
 const Media = db.Media;
 
+// CREATE CATEGORY SERVICE
 export const createCategoryService = async (data) => {
   const { name, image } = data;
   const existingCategory = await Category.findOne({
@@ -37,6 +38,7 @@ export const createCategoryService = async (data) => {
   return { category, media };
 };
 
+// UPDATE CATEGORY SERVICE
 export const updateCategoryService = async (data) => {
   const { id, name, image } = data;
 
@@ -84,6 +86,7 @@ export const updateCategoryService = async (data) => {
   return { category, media };
 };
 
+// DELETE CATEGORY SERVICE
 export const deleteCategoryService = async (data) => {
   const id = data;
 
