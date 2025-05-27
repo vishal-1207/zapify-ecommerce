@@ -55,7 +55,7 @@ export const findUser = async (userData) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const accessToken = await generateAccessToken({
+  const accessToken = generateAccessToken({
     id: user.id,
     role: user.role,
   });
