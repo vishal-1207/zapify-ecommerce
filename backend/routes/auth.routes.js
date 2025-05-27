@@ -22,8 +22,11 @@ const refreshLimiter = rateLimit({
 router
   .route("/register")
   .post(csrfProtection.bind, validate(registerSchema), register);
+
 router.route("/admin/login").post(csrfProtection, validate(loginSchema), login);
+
 router.route("/login").post(csrfProtection, login);
+
 router
   .route("/access-token")
   .post(csrfProtection, refreshLimiter, refreshTokenHander);
