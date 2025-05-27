@@ -6,6 +6,7 @@ export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
+    model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.FLOAT, allowNull: false },
     stock: { type: DataTypes.INTEGER, defaultValue: 0 },
