@@ -8,6 +8,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 const Category = db.Category;
 
+// GET CATEGORIES
 export const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.findAll({
     attributes: ["id", "name", "imageUrl"],
@@ -19,6 +20,7 @@ export const getCategories = asyncHandler(async (req, res) => {
     .json({ message: "Categories fetched successfully.", categories });
 });
 
+// ADD CATEGORY
 export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
@@ -27,6 +29,7 @@ export const addCategory = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Category created successfully.", category });
 });
 
+// UPDATE CATEGORY
 export const updateCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const id = req.params.id;
@@ -38,6 +41,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
     .json({ message: "Category updated successfully.", updatedCategory });
 });
 
+// DELETE CATEGORY
 export const deleteCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
   await deleteCategoryService(id);
