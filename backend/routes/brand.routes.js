@@ -1,11 +1,11 @@
 import express from "express";
 import {
-  addBrand,
+  createBrand,
   deleteBrand,
   getBrands,
   updateBrand,
 } from "../controllers/brand.controller.js";
-import { authenticate, isAdmin } from "../middleware/auth.middleware";
+import { authenticate, isAdmin } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -22,11 +22,11 @@ router
     csrfProtection,
     validate(brandSchema),
     upload.single("image"),
-    addBrand
+    createBrand
   );
 
 router.put(
-  "/:id",
+  "/:id/edit",
   authenticate,
   isAdmin,
   csrfProtection,
@@ -34,6 +34,12 @@ router.put(
   upload.single("image"),
   updateBrand
 );
-router.delete("/:id", authenticate, isAdmin, csrfProtection, deleteBrand);
+router.delete(
+  "/:id/delete",
+  authenticate,
+  isAdmin,
+  csrfProtection,
+  deleteBrand
+);
 
 export default router;
