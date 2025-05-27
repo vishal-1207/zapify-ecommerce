@@ -5,6 +5,8 @@ const sanitize = (value) => xss(value);
 
 export const registerSchema = Joi.object({
   fullname: Joi.string()
+    .min(3)
+    .pattern(/^[a-zA-Z\s]+$/)
     .required()
     .custom(sanitize, "XSS Sanitization")
     .messages({
@@ -12,6 +14,7 @@ export const registerSchema = Joi.object({
     }),
   username: Joi.string()
     .min(6)
+    .pattern(/^[a-zA-Z0-9_]+$/)
     .required()
     .custom(sanitize, "XSS Sanitization")
     .messages({
@@ -42,7 +45,7 @@ export const loginSchema = Joi.object({
       const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
       const isEmail = emailRegex.test(value);
 
-      const isUsername = /^[a-zA-Z]{6,}$/.test(value);
+      const isUsername = /^[a-zA-Z0-9_]+$/.test(value);
 
       if (!isEmail && !isUsername) {
         return helpers.error("any.invalid");
@@ -81,6 +84,15 @@ export const productSchema = Joi.object({
     .messages({
       "string.empty": "Product name is required.",
       "string.min": "Product name must be atleast 6 characters long.",
+    }),
+
+  model: Joi.string()
+    .trim()
+    .max(30)
+    .optional()
+    .custom(sanitize, "XSS Sanitization")
+    .messages({
+      "string.max": "Model name cannot exceed 30 characters.",
     }),
 
   description: Joi.string()
@@ -132,6 +144,7 @@ export const productSchema = Joi.object({
 export const categorySchema = Joi.object({
   name: Joi.string()
     .trim()
+    .pattern(/^[a-zA-Z\s]+$/)
     .min(4)
     .max(15)
     .required()
@@ -140,6 +153,21 @@ export const categorySchema = Joi.object({
       "string.empty": "Category name is required.",
       "string.min": "Category name should be atleast 4 characters long.",
       "string.max": "Category name cannot exceed 15 characters.",
+    }),
+});
+
+export const brandSchema = Joi.object({
+  name: Joi.string()
+    .trim()
+    .pattern(/^[a-zA-Z]+$/)
+    .min(2)
+    .max(25)
+    .required()
+    .custom(sanitize, "XSS Sanitization")
+    .messages({
+      "string.empty": "Brand name is required.",
+      "string.min": "Brand name should be atleast 2 characters long.",
+      "string.max": "Brand name cannot exceed 25 characters.",
     }),
 });
 
