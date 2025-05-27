@@ -7,17 +7,21 @@ import {
   deleteProduct,
   updateProduct,
 } from "../controllers/product.controller.js";
+import { validate } from "../middleware/validate.middleware.js";
+import { productSchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
 
-// router.route("/").get();
-// router.route("/product/:slug").get();
+//TODO: Add methods to get products by category and by ID for user and admin respectively.
 
-// router.route("/id/:id").get(isAdmin);
+// router.route("/category/:slug/products").get(getProductsByCategory);
+// router.route("/category/:id/products").get(getProductsByCategoryId);
+
 router.route("/").post(
   authenticate,
   isAdmin,
   csrfProtection,
+  validate(productSchema),
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
@@ -25,18 +29,20 @@ router.route("/").post(
   createProduct
 );
 
+router.route("/edit/:id").put(
+  authenticate,
+  isAdmin,
+  csrfProtection,
+  validate(productSchema),
+  upload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "gallery", maxCount: 10 },
+  ]),
+  updateProduct
+);
+
 router
-  .route("/id/:id")
-  .put(
-    authenticate,
-    isAdmin,
-    csrfProtection,
-    upload.fields([
-      { name: "thumbnail", maxCount: 1 },
-      { name: "gallery", maxCount: 10 },
-    ]),
-    updateProduct
-  )
+  .route("/:id")
   .delete(authenticate, isAdmin, csrfProtection, deleteProduct);
 
 export default router;
