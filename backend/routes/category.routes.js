@@ -8,6 +8,8 @@ import {
 import { authenticate, isAdmin } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import { categorySchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
 
@@ -18,22 +20,24 @@ router
     authenticate,
     isAdmin,
     csrfProtection,
+    validate(categorySchema),
     upload.single("image"),
     addCategory
   );
 
 router
-  .route("/edit/:id")
+  .route("/:id/edit")
   .put(
     authenticate,
     isAdmin,
     csrfProtection,
+    validate(categorySchema),
     upload.single("image"),
     updateCategory
   );
 
 router
-  .route("/:id")
+  .route("/:id/delete")
   .delete(authenticate, isAdmin, csrfProtection, deleteCategory);
 
 export default router;
