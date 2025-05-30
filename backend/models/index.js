@@ -168,6 +168,15 @@ db.Review.belongsTo(db.Product, {
 
 // Polymorphic Media associations
 
+// Brand -> Media
+
+db.Brand.hasOne(db.Media, {
+  foreignKey: "associatedId",
+  constraints: false,
+  scope: { associatedType: "brand" },
+  as: "media",
+});
+
 // Product -> Media
 
 db.Product.hasMany(db.Media, {
@@ -195,7 +204,13 @@ db.Review.hasMany(db.Media, {
   as: "media",
 });
 
-// Media -> Product/Review/Category
+// Media -> Brand/Product/Review/Category
+
+db.Media.belongsTo(db.Brand, {
+  foreignKey: "associatedId",
+  constraints: false,
+  as: "brand",
+});
 
 db.Media.belongsTo(db.Product, {
   foreignKey: "associatedId",
