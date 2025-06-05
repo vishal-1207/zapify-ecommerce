@@ -92,7 +92,7 @@ export const updateBrandService = async (id, data, file) => {
       process.env.CLOUDINARY_BRAND_FOLDER
     );
 
-    media = await Media.create({
+    const media = await Media.create({
       publicId: uploadResult.public_id,
       url: uploadResult.secure_url,
       fileType: uploadResult.resource_type,
@@ -101,6 +101,32 @@ export const updateBrandService = async (id, data, file) => {
       associatedId: category.id,
     });
 
-    return brand;
+    return { brand, media };
   }
+};
+
+export const deleteBrandService = async (id) => {
+  const brand = await Brand.findByPk(id);
+
+  if (!brand) {
+    throw new ApiError(404, "Brand not found.");
+  }
+
+  const media = await Media.findOne({
+    where: {
+      associatedType: "brand",
+      associatedId: id,
+    },
+  });
+
+  if (media) {
+    if (media.publicId) {
+      await cloudinary.uploader.destroy(media.publicId, {
+        resource_type: media.fileType || "image",
+      });
+    }
+  }
+
+  await media?.destroy();
+  await brand.destroy();
 };
