@@ -5,17 +5,6 @@ import uploadToCloudinary from "../utils/cloudinary.util.js";
 const Brand = db.Brand;
 const Media = db.Media;
 
-// GET BRAND SERVICE
-export const getBrandService = async (id) => {
-  try {
-    const brand = await Brand.findByPk(id);
-    if (!brand) throw new ApiError(404, "Brand not found");
-    return brand;
-  } catch (error) {
-    throw new ApiError(500, "Error fetching brand");
-  }
-};
-
 export const addBrandService = async (data, file) => {
   const { name, description } = data;
   const logo = file.path;
