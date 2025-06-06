@@ -1,6 +1,7 @@
 import {
   addBrandService,
   updateBrandService,
+  deleteBrandService,
 } from "../services/brand.service.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
@@ -12,6 +13,16 @@ export const getBrands = asyncHandler(async (req, res) => {
   const brands = await Brand.findAll({
     attributes: ["id", "name", "description"],
     order: [["name", "ASC"]],
+    include: [
+      {
+        model: Media,
+        as: "media",
+        attributes: ["id", "publicId", "url", "fileType", "tag"],
+        where: {
+          associatedType: "brand",
+        },
+      },
+    ],
   });
 
   if (!brands || brands.length === 0) {
@@ -44,4 +55,8 @@ export const updateBrand = asyncHandler(async (req, res) => {
     .json({ message: "Brand updated successfully.", brand: updatedBrand });
 });
 
-export const deleteBrand = asyncHandler(async (req, res) => {});
+export const deleteBrand = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await deleteBrandService(id);
+  res.status(200).json({ message: "Brand deleted successfully." });
+});
