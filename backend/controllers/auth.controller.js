@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import * as authService from "../services/auth.service.js";
+import { createUser, findUser } from "../services/auth.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import {
@@ -10,7 +10,7 @@ import ApiError from "../utils/ApiError.js";
 
 export const register = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
-  const user = await authService.createUser({
+  const user = await createUser({
     fullname,
     username,
     email,
@@ -23,12 +23,12 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { userId, password } = req.body;
 
-  const { accessToken, user } = await authService.findUser({
+  const { accessToken, user } = await findUser({
     userId,
     password,
   });
 
-  const refreshToken = await generateRefreshToken(user?.id, user?.role);
+  const refreshToken = await generateRefreshToken(user.id, user.role);
   res
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
