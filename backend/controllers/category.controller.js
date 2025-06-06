@@ -7,12 +7,23 @@ import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const Category = db.Category;
+const Media = db.Media;
 
 // GET CATEGORIES
 export const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.findAll({
-    attributes: ["id", "name", "imageUrl"],
+    attributes: ["id", "name"],
     order: [["name", "ASC"]],
+    include: [
+      {
+        model: Media,
+        as: "media",
+        attributes: ["id", "publicId", "url", "fileType", "tag"],
+        where: {
+          associatedType: "category",
+        },
+      },
+    ],
   });
 
   res
