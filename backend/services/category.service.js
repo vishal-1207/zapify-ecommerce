@@ -7,8 +7,10 @@ const Category = db.Category;
 const Media = db.Media;
 
 // CREATE CATEGORY SERVICE
-export const createCategoryService = async (data) => {
-  const { name, image } = data;
+export const createCategoryService = async (data, file) => {
+  const name = data;
+  const image = file.path;
+
   const existingCategory = await Category.findOne({
     where: { name },
   });
@@ -18,7 +20,7 @@ export const createCategoryService = async (data) => {
   }
 
   const uploadResult = await uploadToCloudinary(
-    image.path,
+    image,
     process.env.CLOUDINARY_CATEGORY_FOLDER
   );
 
@@ -39,8 +41,10 @@ export const createCategoryService = async (data) => {
 };
 
 // UPDATE CATEGORY SERVICE
-export const updateCategoryService = async (data) => {
-  const { id, name, image } = data;
+
+export const updateCategoryService = async (data, file) => {
+  const { id, name } = data;
+  const image = file;
 
   const category = await Category.findByPk(id, {
     include: {
