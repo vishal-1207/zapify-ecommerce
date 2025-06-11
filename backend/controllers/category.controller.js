@@ -36,7 +36,7 @@ export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
 
-  const category = await createCategoryService({ name, image });
+  const category = await createCategoryService(name, image);
   res.status(200).json({ message: "Category created successfully.", category });
 });
 
@@ -44,9 +44,9 @@ export const addCategory = asyncHandler(async (req, res) => {
 export const updateCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const id = req.params.id;
-  const image = req.file;
+  const image = req.file ? req.file.path : null;
 
-  const updatedCategory = await updateCategoryService({ id, name, image });
+  const updatedCategory = await updateCategoryService({ id, name }, image);
   res
     .status(200)
     .json({ message: "Category updated successfully.", updatedCategory });
