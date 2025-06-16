@@ -171,6 +171,17 @@ export const brandSchema = Joi.object({
     }),
 });
 
+export const userSettingsSchema = Joi.object({
+  language: Joi.string().optional(),
+  theme: Joi.string().valid("light", "dark").optional(),
+  timezone: Joi.string().optional(),
+  emailNotifications: Joi.boolean().optional(),
+  smsNotifications: Joi.boolean().optional(),
+  twoFactorEnabled: Joi.boolean().optional(),
+  loginAlerts: Joi.boolean().optional(),
+  dataSharingConsent: Joi.boolean().optional(),
+});
+
 const ALLOWED_SORT_FIELDS = ["createdAt", "price", "averageRating"];
 
 export const validateProductQuery = async (query) => {
