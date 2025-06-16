@@ -13,6 +13,7 @@ import mediaModel from "./media.model.js";
 import reviewModel from "./review.model.js";
 import productSpecModel from "./productSpec.model.js";
 import brand from "./brand.model.js";
+import userSettings from "./settings.model.js";
 
 const db = {};
 
@@ -31,6 +32,7 @@ db.Media = mediaModel(sequelize, Sequelize);
 db.Review = reviewModel(sequelize, Sequelize);
 db.ProductSpec = productSpecModel(sequelize, Sequelize);
 db.Brand = brand(sequelize, Sequelize);
+db.UserSettings = userSettings(sequelize, Sequelize);
 
 // Category <-> Product
 
@@ -126,6 +128,16 @@ db.User.hasMany(db.RefreshToken, {
   foreignKey: { name: "userId", allowNull: false },
 });
 db.RefreshToken.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// User <-> User Settings
+db.User.hasOne(db.UserSettings, {
+  foreignKey: { name: "userId", allowNull: false },
+});
+db.UserSettings.belongsTo(db.User, {
   foreignKey: { name: "userId", allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
