@@ -43,4 +43,6 @@ export const updateUserProfile = async (userId, profileData) => {
   }
 
   await user.save();
+
+  return user;
 };
