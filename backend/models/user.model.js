@@ -4,8 +4,22 @@ export default (sequelize, DataTypes) => {
     fullname: { type: DataTypes.STRING, allowNull: false },
     username: { type: DataTypes.STRING, allowNull: false, unique: true },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: { type: DataTypes.STRING, allowNull: false },
-    role: { type: DataTypes.ENUM("user", "admin"), defaultValue: "user" },
+    password: { type: DataTypes.STRING, allowNull: true },
+    roles: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: ["user"],
+    },
+    provider: {
+      type: DataTypes.ENUM("local", "google", "github"),
+      defaultValue: "local",
+    },
+
+    providerId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
   });
 
   User.prototype.toJSON = function () {
