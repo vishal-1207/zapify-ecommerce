@@ -14,6 +14,7 @@ import reviewModel from "./review.model.js";
 import productSpecModel from "./productSpec.model.js";
 import brand from "./brand.model.js";
 import userSettings from "./settings.model.js";
+import sellerProfile from "./sellerProfile.model.js";
 
 const db = {};
 
@@ -33,6 +34,7 @@ db.Review = reviewModel(sequelize, Sequelize);
 db.ProductSpec = productSpecModel(sequelize, Sequelize);
 db.Brand = brand(sequelize, Sequelize);
 db.UserSettings = userSettings(sequelize, Sequelize);
+db.SellerProfile = sellerProfile(sequelize, Sequelize);
 
 // Category <-> Product
 
@@ -139,6 +141,17 @@ db.User.hasOne(db.UserSettings, {
 });
 db.UserSettings.belongsTo(db.User, {
   foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// User <-> SellerProfile
+db.User.hasOne(db.SellerProfile, {
+  foreignKey: { name: userId, allowNull: false },
+});
+
+db.SellerProfile.belongsTo(db.User, {
+  foreignKey: { name: userId, allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
