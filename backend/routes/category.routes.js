@@ -20,8 +20,8 @@ router
     authenticate,
     isAdmin,
     csrfProtection,
-    validate(categorySchema),
     upload.single("image"),
+    validate(categorySchema),
     addCategory
   );
 
@@ -31,8 +31,8 @@ router
     authenticate,
     isAdmin,
     csrfProtection,
-    validate(categorySchema),
     upload.single("image"),
+    validate(categorySchema),
     updateCategory
   );
 

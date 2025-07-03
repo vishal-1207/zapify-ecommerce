@@ -20,8 +20,8 @@ router
     authenticate,
     isAdmin,
     csrfProtection,
-    validate(brandSchema),
     upload.single("image"),
+    validate(brandSchema),
     createBrand
   );
 
@@ -30,8 +30,8 @@ router.put(
   authenticate,
   isAdmin,
   csrfProtection,
-  validate(brandSchema),
   upload.single("image"),
+  validate(brandSchema),
   updateBrand
 );
 router.delete(

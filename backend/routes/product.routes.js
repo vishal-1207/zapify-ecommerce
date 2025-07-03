@@ -21,11 +21,11 @@ router.route("/").post(
   authenticate,
   isAdmin,
   csrfProtection,
-  validate(productSchema),
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
   ]),
+  validate(productSchema),
   createProduct
 );
 
@@ -33,11 +33,11 @@ router.route("/edit/:id").put(
   authenticate,
   isAdmin,
   csrfProtection,
-  validate(productSchema),
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
   ]),
+  validate(productSchema),
   updateProduct
 );
 
