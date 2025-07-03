@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Cart = sequelize.define("Cart", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
   });
   return Cart;
 };

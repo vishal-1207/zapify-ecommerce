@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Media = sequelize.define("Media", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
     publicId: { type: DataTypes.STRING, allowNull: false },
     url: { type: DataTypes.STRING, allowNull: false },
     fileType: { type: DataTypes.ENUM("image", "video"), allowNull: false },

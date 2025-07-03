@@ -1,10 +1,9 @@
 export default (sequelize, DataTypes) => {
   const UserSettings = sequelize.define("settings", {
     id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
-      autoIncrement: true,
     },
     language: { type: DataTypes.STRING, allowNull: false, defaultValue: "en" },
     theme: { type: DataTypes.STRING, allowNull: false, defaultValue: "light" },

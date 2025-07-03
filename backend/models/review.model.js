@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const Review = sequelize.define(
     "Review",
     {
-      id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+      id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
       productId: {
         type: DataTypes.INTEGER,
         allowNull: false,

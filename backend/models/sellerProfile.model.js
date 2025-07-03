@@ -1,10 +1,9 @@
 export default (sequelize, DataTypes) => {
   const SellerProfile = sequelize.define("SellerProfile", {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
     },
     storeName: { type: DataTypes.SRTING, allowNull: false },
     bio: { type: DataTypes.TEXT, allowNull: true },
@@ -13,8 +12,8 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       validate: { isUrl: true },
     },
-    contactNumber: { type: DataTypes.STRING, allowNull: true },
-    address: { type: DataTypes.TEXT, allowNull: true },
+    contactNumber: { type: DataTypes.STRING, allowNull: false },
+    address: { type: DataTypes.TEXT, allowNull: false },
     isVerified: { type: DataTypes.BOOLEAN, allowNull: false },
     verficationStatus: {
       type: DataTypes.ENUM("pending", "verified", "rejected"),

@@ -4,7 +4,7 @@ import slugify from "slugify";
 
 export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
