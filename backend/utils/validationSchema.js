@@ -171,6 +171,25 @@ export const brandSchema = Joi.object({
     }),
 });
 
+//TODO: implement joi schema validation for seller profile
+export const sellerProfileSchema = Joi.object({
+  storeName: Joi.string().min(3).max(50).required().messages({
+    "string.empty": "Store name is required.",
+    "string.min": "Store name must be at least 3 characters.",
+    "string.max": "Store name must not exceed 50 characters.",
+  }),
+  bio: Joi.string().max(500).optional().allow(""),
+  website: Joi.string().uri().optional().allow("").messages({
+    "website.uri": "Website must be a valid URL.",
+  }),
+  contactNumber: Joi.string()
+    .pattern(/^[\d+\-\s()]{6,17}$/)
+    .optional()
+    .allow("")
+    .messages({ "string.base": "Contact number format is invalid." }),
+  address: Joi.string().max(300).optional().allow(""),
+});
+
 export const userSettingsSchema = Joi.object({
   language: Joi.string().optional(),
   theme: Joi.string().valid("light", "dark").optional(),
