@@ -1,27 +1,25 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
-import { User } from "../models"; // adjust if needed
-import dotenv from "dotenv";
-
-dotenv.config();
+import { User } from "../models/index.js";
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback",
+      callbackURL: process.env.GOOGLE_OAUTH_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         const user = await User.findOrCreate({
-          where: { googleId: profile.id },
+          where: { googleId: profile.id, providerId: profile.id },
           defaults: {
             email: profile.emails[0].value,
             username: profile.displayName,
-            avatar: profile.photos[0].value,
+            role: ["user"],
             provider: "google",
+            providerId: profile.id,
           },
         });
         done(null, user[0]);
@@ -37,17 +35,18 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "/api/auth/github/callback",
+      callbackURL: process.env.GITHUB_OAUTH_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         const user = await User.findOrCreate({
-          where: { githubId: profile.id },
+          where: { githubId: profile.id, providerId: profile.id },
           defaults: {
             email: profile.emails[0].value,
             username: profile.username,
-            avatar: profile.photos[0]?.value,
+            role: ["user"],
             provider: "github",
+            providerId: profile.id,
           },
         });
         done(null, user[0]);
