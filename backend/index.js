@@ -10,6 +10,8 @@ import categoryRoutes from "./routes/category.routes.js";
 import brandRoutes from "./routes/brand.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import tokenRoutes from "./routes/token.routes.js";
+import userSettingsRoutes from "./routes/settings.routes.js";
+import passport from "passport";
 
 const app = express();
 
@@ -19,6 +21,7 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
@@ -27,6 +30,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/brand", brandRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/settings", userSettingsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello world.");
