@@ -13,10 +13,10 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const user = await User.findOrCreate({
-          where: { googleId: profile.id, providerId: profile.id },
+          where: { provider: "google", providerId: profile.id },
           defaults: {
-            email: profile.emails[0].value,
             username: profile.displayName,
+            email: profile.emails[0].value,
             role: ["user"],
             provider: "google",
             providerId: profile.id,
@@ -40,7 +40,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const user = await User.findOrCreate({
-          where: { githubId: profile.id, providerId: profile.id },
+          where: { provider: "github", providerId: profile.id },
           defaults: {
             email: profile.emails[0].value,
             username: profile.username,
