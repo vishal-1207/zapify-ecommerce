@@ -15,7 +15,7 @@ passport.use(
         const user = await User.findOrCreate({
           where: { provider: "google", providerId: profile.id },
           defaults: {
-            username: profile.displayName,
+            fullname: profile.displayName,
             email: profile.emails[0].value,
             role: ["user"],
             provider: "google",
@@ -42,8 +42,8 @@ passport.use(
         const user = await User.findOrCreate({
           where: { provider: "github", providerId: profile.id },
           defaults: {
+            fullname: profile.displayName,
             email: profile.emails[0].value,
-            username: profile.username,
             role: ["user"],
             provider: "github",
             providerId: profile.id,
