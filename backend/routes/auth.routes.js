@@ -11,6 +11,7 @@ import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 import passport from "passport";
+import { socialCallbackHandler } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
