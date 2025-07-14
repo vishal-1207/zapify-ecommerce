@@ -1,8 +1,10 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
+//Authenticate Middleware
 export const authenticate = asyncHandler(async (req, res, next) => {
   try {
+    //Checking if access token exists in cookie or header. If missing
     const token =
       req.cookie?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
@@ -11,17 +13,10 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, role: decoded.role };
+    req.user = { id: decoded.id, roles: decoded.roles };
     next();
   } catch (error) {
     console.log("Auth middleware error: ", error.message);
     res.status(403).json({ message: "Invalid or expired token." });
   }
-});
-
-export const isAdmin = asyncHandler(async (req, res, next) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied." });
-  }
-  next();
 });
