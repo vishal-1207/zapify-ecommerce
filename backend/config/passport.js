@@ -2,7 +2,9 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { User } from "../models/index.js";
+import { generateUniqueName } from "../utils/passport.util.js";
 
+//Google Passport Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -12,12 +14,14 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        const generatedUsername = await generateUniqueName();
         const user = await User.findOrCreate({
           where: { provider: "google", providerId: profile.id },
           defaults: {
             fullname: profile.displayName,
+            username: generatedUsername,
             email: profile.emails[0].value,
-            role: ["user"],
+            roles: ["user"],
             provider: "google",
             providerId: profile.id,
           },
@@ -30,6 +34,7 @@ passport.use(
   )
 );
 
+//Github Passport Strategy
 passport.use(
   new GitHubStrategy(
     {
@@ -39,12 +44,14 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        const generatedUsername = generateUniqueName();
         const user = await User.findOrCreate({
           where: { provider: "github", providerId: profile.id },
           defaults: {
             fullname: profile.displayName,
+            username: generatedUsername,
             email: profile.emails[0].value,
-            role: ["user"],
+            roles: ["user"],
             provider: "github",
             providerId: profile.id,
           },
