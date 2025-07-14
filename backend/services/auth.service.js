@@ -7,6 +7,7 @@ import setTokensInCookies from "../utils/setTokensInCookies.js";
 
 const User = db.User;
 
+//Create User Service
 export const createUser = async (userData, res) => {
   const { fullname, username, email, password } = userData;
 
@@ -45,6 +46,7 @@ export const createUser = async (userData, res) => {
   return { user, accessToken: tokens.accessToken };
 };
 
+//Find User Service
 export const findUser = async (userData, res) => {
   const { userId, password } = userData;
   const user = await User.findOne({

@@ -1,7 +1,9 @@
-export const authrorizeRoles = (...roles) => {
+export const authrorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    const userRole = req.user?.role || [];
-    const hasPermission = roles.some((role) => userRole.includes(role));
+    const userRoles = Array.isArray(req.user?.roles)
+      ? req.user.roles
+      : [req.user?.roles];
+    const hasPermission = allowedRoles.some((role) => userRoles.includes(role));
     if (!hasPermission) {
       return res.status(403).json({
         message:
