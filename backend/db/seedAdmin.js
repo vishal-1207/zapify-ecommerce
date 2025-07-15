@@ -25,7 +25,7 @@ const createAdmin = async () => {
       username: process.env.ADMIN_NAME,
       email: process.env.ADMIN_EMAIL,
       password: hashedPassword,
-      role: "admin",
+      roles: "admin",
     });
 
     console.log("Admin created successfully.", admin.toJSON());
