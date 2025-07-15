@@ -14,7 +14,11 @@ export default (sequelize, DataTypes) => {
     },
     contactNumber: { type: DataTypes.STRING, allowNull: false },
     address: { type: DataTypes.TEXT, allowNull: false },
-    isVerified: { type: DataTypes.BOOLEAN, allowNull: false },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     verficationStatus: {
       type: DataTypes.ENUM("pending", "verified", "rejected"),
       defaultValue: "pending",
