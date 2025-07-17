@@ -23,6 +23,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM("pending", "verified", "rejected"),
       defaultValue: "pending",
     },
+    slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
 
   return SellerProfile;
