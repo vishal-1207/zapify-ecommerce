@@ -6,31 +6,41 @@ import {
   register,
 } from "../controllers/auth.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import rateLimit from "express-rate-limit";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { loginSchema, registerSchema } from "../utils/validationSchema.js";
+import {
+  loginSchema,
+  registerSchema,
+  sellerProfileSchema,
+} from "../utils/validationSchema.js";
 import passport from "passport";
 import { socialCallbackHandler } from "../controllers/auth.controller.js";
+import { registerSellerProfile } from "../controllers/seller.controller.js";
+import { limiter } from "../utils/rateLimiter.util.js";
 
 const router = express.Router();
-
-const refreshLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: "Too many requests.",
-});
 
 //Register route
 router
   .route("/register")
-  .post(csrfProtection.bind, validate(registerSchema), register);
-//TODO: complete seller registation
-router.route("/seller/register");
+  .post(csrfProtection, validate(registerSchema), limiter, register);
 
-//Login routes
-router.route("/admin/login").post(csrfProtection, validate(loginSchema), login);
-router.route("/login").post(csrfProtection, login);
+//TODO: complete seller registation
+router.route(
+  "/seller/register",
+  csrfProtection,
+  validate(sellerProfileSchema),
+  limiter,
+  registerSellerProfile
+);
+
+//Login routes for admin and user
+router
+  .route("/admin/login")
+  .post(csrfProtection, validate(loginSchema), limiter, login);
+router
+  .route("/login")
+  .post(csrfProtection, validate(loginSchema), limiter, login);
 
 //Social auth routes
 router
@@ -54,9 +64,7 @@ router
     socialCallbackHandler
   );
 
-router
-  .route("/access-token")
-  .post(csrfProtection, refreshLimiter, refreshTokenHander);
+router.route("/access-token").post(csrfProtection, limiter, refreshTokenHander);
 router.route("/logout").post(authenticate, csrfProtection, logout);
 
 export default router;
