@@ -8,14 +8,9 @@ import {
 import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import {
-  loginSchema,
-  registerSchema,
-  sellerProfileSchema,
-} from "../utils/validationSchema.js";
+import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 import passport from "passport";
 import { socialCallbackHandler } from "../controllers/auth.controller.js";
-import { registerSellerProfile } from "../controllers/seller.controller.js";
 import { limiter } from "../utils/rateLimiter.util.js";
 
 const router = express.Router();
@@ -24,15 +19,6 @@ const router = express.Router();
 router
   .route("/register")
   .post(csrfProtection, validate(registerSchema), limiter, register);
-
-//TODO: complete seller registation
-router.route(
-  "/seller/register",
-  csrfProtection,
-  validate(sellerProfileSchema),
-  limiter,
-  registerSellerProfile
-);
 
 //Login routes for admin and user
 router
