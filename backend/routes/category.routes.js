@@ -5,11 +5,12 @@ import {
   getCategories,
   updateCategory,
 } from "../controllers/category.controller.js";
-import { authenticate, isAdmin } from "../middleware/auth.middleware.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { categorySchema } from "../utils/validationSchema.js";
+import { authrorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router
   .get(getCategories)
   .post(
     authenticate,
-    isAdmin,
+    authrorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
@@ -29,7 +30,7 @@ router
   .route("/:id/edit")
   .put(
     authenticate,
-    isAdmin,
+    authrorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
@@ -38,6 +39,11 @@ router
 
 router
   .route("/:id/delete")
-  .delete(authenticate, isAdmin, csrfProtection, deleteCategory);
+  .delete(
+    authenticate,
+    authrorizeRoles("admin"),
+    csrfProtection,
+    deleteCategory
+  );
 
 export default router;
