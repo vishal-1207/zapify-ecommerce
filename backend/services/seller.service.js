@@ -6,31 +6,31 @@ import ApiError from "../utils/ApiError.js";
 const User = db.User;
 const SellerProfile = db.SellerProfile;
 
+const findStore = async (storeName) => {
+  const slug = slugify(storeName, {
+    replacement: "-",
+    lower: true,
+    strict: true,
+    trim: true,
+  });
+
+  const existingSeller = await SellerProfile.findOne({
+    where: { slug },
+  });
+
+  return { slug, existingSeller };
+};
+
 export const registerSellerService = async (data, optional) => {
   const t = sequelize.transaction();
   try {
     const { storeName, contactNumber, address, userId } = data;
     const { bio, website } = optional;
 
-    const normalizedStoreName = storeName.trim();
-    const slug = slugify(normalizedStoreName, { lower: true, strict: true });
-    const existingSellerProfile = await SellerProfile.findOne({
-      where: sequelize.where(
-        sequelize.fn("LOWER", sequelize.col("storeName")),
-        normalizedStoreName
-      ),
-    });
+    const { slug, existingSeller } = await findStore(storeName);
 
-    if (existingSellerProfile) {
-      throw new ApiError(400, "Seller profile already exists.");
-    }
-
-    const existingStoreName = await SellerProfile.findOne({
-      where: { storeName },
-    });
-
-    if (existingStoreName)
-      throw new ApiError(400, "Store name already in use.");
+    if (existingSeller)
+      throw new ApiError(400, `Store ${existingSeller} already exists.`);
 
     const seller = await SellerProfile.create(
       {
@@ -55,4 +55,35 @@ export const registerSellerService = async (data, optional) => {
   } catch (err) {
     await t.rollback();
   }
+};
+
+export const updateSellerService = async (data, optional) => {
+  const { storeName, contactNumber, address, slug } = data;
+  const { bio, website } = optional;
+
+  const existingSeller = await SellerProfile.findOne({ where: { slug } });
+
+  if (!existingSeller) {
+    throw new ApiError(404, `Store ${storeName} not found.`);
+  }
+
+  let newSlug = "";
+  if (existingSeller.storeName !== storeName) {
+    newSlug = slugify(storeName, {
+      replacement: "-",
+      lower: true,
+      strict: true,
+      trim: true,
+    });
+  }
+
+  existingSeller.storeName = storeName;
+  existingSeller.contactNumber = contactNumber;
+  existingSeller.address = address;
+  existingSeller.slug = newSlug === "" ? slug : newSlug;
+  existingSeller.bio = bio;
+  existingSeller.website = website;
+
+  await existingSeller.save();
+  return existingSeller;
 };
