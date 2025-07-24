@@ -30,12 +30,11 @@ export const updateSellerProfile = asyncHandler(async (req, res) => {
     website = null,
   } = req.body;
 
-  const userId = req.user.id;
+  const slug = req.params.slug;
 
-  const data = { storeName, contactNumber, address, userId };
+  const data = { storeName, contactNumber, address, slug };
   const optional = { bio, website };
 
-  //TODO: complete update seller profile service
   const updatedSeller = await updateSellerService(data, optional);
 
   res.status(201).json({
