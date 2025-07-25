@@ -13,7 +13,7 @@ const uploadToCloudinary = async (filepath, folder = "products") => {
     try {
       fs.unlinkSync(absolutePath);
     } catch (unlinkErr) {
-      console.warn("Failed to delete temp file:", unlinkErr.message);
+      console.warn("Failed to delete temporary file:", unlinkErr.message);
     }
     return result;
   } catch (err) {
