@@ -15,6 +15,7 @@ import productSpecModel from "./productSpec.model.js";
 import brand from "./brand.model.js";
 import userSettings from "./settings.model.js";
 import sellerProfile from "./sellerProfile.model.js";
+import wishList from "./wishlist.model.js";
 
 const db = {};
 
@@ -35,9 +36,9 @@ db.ProductSpec = productSpecModel(sequelize, Sequelize);
 db.Brand = brand(sequelize, Sequelize);
 db.UserSettings = userSettings(sequelize, Sequelize);
 db.SellerProfile = sellerProfile(sequelize, Sequelize);
+db.WishList = wishList(sequelize, Sequelize);
 
 // Category <-> Product
-
 db.Category.hasMany(db.Product, {
   foreignKey: { name: "categoryId", allowNull: false },
 });
@@ -47,8 +48,39 @@ db.Product.belongsTo(db.Category, {
   onUpdate: "CASCADE",
 });
 
-// User <-> Cart
+// WishList <-> User
+db.User.hasMany(db.WishList, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+});
+db.User.belongsToMany(db.Product, {
+  through: db.WishList,
+  foreignKey: "userId",
+  otherKey: "productId",
+  as: "wishListedProducts",
+});
+db.WishList.belongsTo(db.User, {
+  foreignKey: { name: "userId", allowNull: false },
+  onDelete: "CASCADE",
+});
 
+// WishList <-> Product
+db.Product.hasMany(db.WishList, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+});
+db.Product.belongsToMany(db.User, {
+  through: db.WishList,
+  foreignKey: "productId",
+  otherKey: "userId",
+  as: "wishListedByUsers",
+});
+db.WishList.belongsTo(db.Product, {
+  foreignKey: { name: "productId", allowNull: false },
+  onDelete: "CASCADE",
+});
+
+// User <-> Cart
 db.User.hasOne(db.Cart, {
   foreignKey: { name: "userId", allowNull: false },
 });
@@ -59,7 +91,6 @@ db.Cart.belongsTo(db.User, {
 });
 
 // Cart <-> CartItem
-
 db.Cart.hasMany(db.CartItem, {
   foreignKey: { name: "cartId", allowNull: false },
 });
@@ -70,7 +101,6 @@ db.CartItem.belongsTo(db.Cart, {
 });
 
 // Product <-> CartItem
-
 db.Product.hasMany(db.CartItem, {
   foreignKey: { name: "productId", allowNull: false },
 });
@@ -81,7 +111,6 @@ db.CartItem.belongsTo(db.Product, {
 });
 
 // User <-> Order
-
 db.User.hasMany(db.Order, {
   foreignKey: { name: "userId", allowNull: false },
 });
@@ -92,7 +121,6 @@ db.Order.belongsTo(db.User, {
 });
 
 // User <-> Review
-
 db.User.hasMany(db.Review, {
   foreignKey: { name: "userId", allowNull: false },
 });
@@ -103,7 +131,6 @@ db.Review.belongsTo(db.User, {
 });
 
 // Order <-> OrderItem
-
 db.Order.hasMany(db.OrderItem, {
   foreignKey: { name: "orderId", allowNull: false },
 });
@@ -114,7 +141,6 @@ db.OrderItem.belongsTo(db.Order, {
 });
 
 // Product <-> OrderItem
-
 db.Product.hasMany(db.OrderItem, {
   foreignKey: { name: "productId", allowNull: false },
 });
@@ -125,7 +151,6 @@ db.OrderItem.belongsTo(db.Product, {
 });
 
 // User <-> RefreshToken
-
 db.User.hasMany(db.RefreshToken, {
   foreignKey: { name: "userId", allowNull: false },
 });
@@ -157,7 +182,6 @@ db.SellerProfile.belongsTo(db.User, {
 });
 
 // Brand <-> Product
-
 db.Brand.hasMany(db.Product, {
   foreignKey: { name: "brandId", allowNull: false },
 });
@@ -167,8 +191,8 @@ db.Product.belongsTo(db.Brand, {
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
-// Product <-> ProductSpec
 
+// Product <-> ProductSpec
 db.Product.hasMany(db.ProductSpec, {
   foreignKey: { name: "productId", allowNull: false },
 });
@@ -180,7 +204,6 @@ db.ProductSpec.belongsTo(db.Product, {
 });
 
 // Product <-> Review
-
 db.Product.hasMany(db.Review, {
   foreignKey: { name: "productId", allowNull: false },
 });
@@ -194,7 +217,6 @@ db.Review.belongsTo(db.Product, {
 // Polymorphic Media associations
 
 // Brand -> Media
-
 db.Brand.hasOne(db.Media, {
   foreignKey: "associatedId",
   constraints: false,
@@ -203,7 +225,6 @@ db.Brand.hasOne(db.Media, {
 });
 
 // Product -> Media
-
 db.Product.hasMany(db.Media, {
   foreignKey: "associatedId",
   constraints: false,
@@ -212,7 +233,6 @@ db.Product.hasMany(db.Media, {
 });
 
 // Category -> Media
-
 db.Category.hasOne(db.Media, {
   foreignKey: "associatedId",
   constraints: false,
@@ -221,7 +241,6 @@ db.Category.hasOne(db.Media, {
 });
 
 // Review -> Media
-
 db.Review.hasMany(db.Media, {
   foreignKey: "associatedId",
   constraints: false,
@@ -230,7 +249,6 @@ db.Review.hasMany(db.Media, {
 });
 
 // Media -> Brand/Product/Review/Category
-
 db.Media.belongsTo(db.Brand, {
   foreignKey: "associatedId",
   constraints: false,
