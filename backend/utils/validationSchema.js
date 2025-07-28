@@ -171,7 +171,6 @@ export const brandSchema = Joi.object({
     }),
 });
 
-//TODO: implement joi schema validation for seller profile
 export const sellerProfileSchema = Joi.object({
   storeName: Joi.string().min(3).max(50).required().messages({
     "string.empty": "Store name is required.",
