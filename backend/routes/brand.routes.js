@@ -18,7 +18,7 @@ router
   .post(
     "/",
     authenticate,
-    isAdmin,
+    authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(brandSchema),
@@ -28,16 +28,17 @@ router
 router.put(
   "/:id/edit",
   authenticate,
-  isAdmin,
+  authorizeRoles("admin"),
   csrfProtection,
   upload.single("image"),
   validate(brandSchema),
   updateBrand
 );
+
 router.delete(
   "/:id/delete",
   authenticate,
-  isAdmin,
+  authorizeRoles("admin"),
   csrfProtection,
   deleteBrand
 );
