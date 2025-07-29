@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const Review = sequelize.define(
     "Review",

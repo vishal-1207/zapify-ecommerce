@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const RefreshToken = sequelize.define("RefreshToken", {
     tokenId: { type: DataTypes.UUID, defaultValue: UUIDV4, allowNull: false },

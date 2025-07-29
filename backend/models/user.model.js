@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
     id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },

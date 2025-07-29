@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const Media = sequelize.define("Media", {
     id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },

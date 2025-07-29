@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const CartItem = sequelize.define("CartItem", {
     id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },

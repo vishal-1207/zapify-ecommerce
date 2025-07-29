@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { Op } from "sequelize";
 import slugify from "slugify";
+import { UUIDV4 } from "sequelize";
 
 export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {

@@ -1,3 +1,5 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
   const SellerProfile = sequelize.define("SellerProfile", {
     id: {
