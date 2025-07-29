@@ -1,4 +1,4 @@
-export const authrorizeRoles = (...allowedRoles) => {
+export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     const userRoles = Array.isArray(req.user?.roles)
       ? req.user.roles
