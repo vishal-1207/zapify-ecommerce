@@ -1,5 +1,7 @@
+import { UUIDV4 } from "sequelize";
+
 export default (sequelize, DataTypes) => {
-  const UserSettings = sequelize.define("settings", {
+  const UserSettings = sequelize.define("UserSettings", {
     id: {
       type: DataTypes.UUID,
       defaultValue: UUIDV4,
@@ -33,4 +35,30 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
     },
   });
+
+  const SellerSettings = sequelize.define("SellerSettings", {
+    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    storeVisibility: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+    },
+    lowStockNotification: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+    },
+    salesReportEmail: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+    },
+    autoApproveReviews: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
+  });
+
+  return { UserSettings, SellerSettings };
 };
