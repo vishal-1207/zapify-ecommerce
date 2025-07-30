@@ -13,7 +13,7 @@ import mediaModel from "./media.model.js";
 import reviewModel from "./review.model.js";
 import productSpecModel from "./productSpec.model.js";
 import brand from "./brand.model.js";
-import userSettings from "./settings.model.js";
+import { userSettings, sellerSettings } from "./settings.model.js";
 import sellerProfile from "./sellerProfile.model.js";
 import wishList from "./wishlist.model.js";
 
@@ -35,6 +35,7 @@ db.Review = reviewModel(sequelize, Sequelize);
 db.ProductSpec = productSpecModel(sequelize, Sequelize);
 db.Brand = brand(sequelize, Sequelize);
 db.UserSettings = userSettings(sequelize, Sequelize);
+db.SellerSettings = sellerSettings(sequelize, Sequelize);
 db.SellerProfile = sellerProfile(sequelize, Sequelize);
 db.WishList = wishList(sequelize, Sequelize);
 
@@ -170,13 +171,23 @@ db.UserSettings.belongsTo(db.User, {
   onUpdate: "CASCADE",
 });
 
+// Seller <-> Seller Settings
+db.SellerProfile.hasOne(db.SellerSettings, {
+  foreignKey: { name: "sellerProfileId", allowNull: false },
+});
+db.SellerSettings.belongsTo(db.SellerProfile, {
+  foreignKey: { name: "sellerProfileId", allowNull: false },
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
 // User <-> SellerProfile
 db.User.hasOne(db.SellerProfile, {
-  foreignKey: { name: userId, allowNull: false },
+  foreignKey: { name: "userId", allowNull: false },
 });
 
 db.SellerProfile.belongsTo(db.User, {
-  foreignKey: { name: userId, allowNull: false },
+  foreignKey: { name: "userId", allowNull: false },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
