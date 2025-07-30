@@ -8,6 +8,7 @@ const ProductSpec = db.ProductSpec;
 const Category = db.Category;
 const Brand = db.Brand;
 
+// TODO: Complete get filtered products service for search functionalitys
 export const getFilteredProudcts = async (query) => {
   try {
     const {

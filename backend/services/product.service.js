@@ -3,15 +3,18 @@ import sequelize from "../config/db.js";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
+import { Op } from "sequelize";
 
 const Product = db.Product;
 const Media = db.Media;
 const ProductSpec = db.ProductSpec;
+const Category = db.Category;
+const Brand = db.Brand;
 
 export const createProductService = async (data, files) => {
   const {
     categoryId,
-    brand,
+    brandId,
     name,
     description,
     price,
@@ -24,7 +27,7 @@ export const createProductService = async (data, files) => {
 
   try {
     const createdProduct = await Product.create(
-      { brand, name, description, price, stock, categoryId },
+      { name, description, price, stock, categoryId, brandId },
       { transaction }
     );
 
@@ -102,8 +105,8 @@ export const createProductService = async (data, files) => {
 export const updateProductService = async (productId, data, files) => {
   const {
     categoryId,
+    brandId,
     name,
-    brand,
     description,
     price,
     stock,
@@ -129,7 +132,7 @@ export const updateProductService = async (productId, data, files) => {
     if (!product) throw new ApiError(404, "Product not found.");
 
     if (name) product.name = name;
-    if (brand) product.brand = brand;
+    if (brandId) product.brandId = brandId;
     if (description) product.description = description;
     if (price) product.price = price;
     if (stock) product.stock = stock;
@@ -138,7 +141,6 @@ export const updateProductService = async (productId, data, files) => {
     const updatedProduct = await product.save({ transaction });
 
     // THUMBNAIL UPDATE LOGIC
-
     let updatedThumbnail = null;
     if (files.thumbnail) {
       const existingThumbnail = product.media.find(
@@ -169,7 +171,6 @@ export const updateProductService = async (productId, data, files) => {
     }
 
     // GALLERY MEDIA UPDATE LOGIC
-
     let updatedGallery = null;
     if (files?.gallery && files.gallery.length > 0) {
       const existingGallery = product.media.filter((m) => m.tag === "gallery");
@@ -198,7 +199,6 @@ export const updateProductService = async (productId, data, files) => {
     }
 
     // SPECS UPDATE LOGIC
-
     let updatedSpecs = null;
     if (specs.length > 0) {
       await ProductSpec.destroy({
