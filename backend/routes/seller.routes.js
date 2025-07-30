@@ -10,8 +10,17 @@ import {
 } from "../controllers/seller.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { sellerProfileSchema } from "../utils/validationSchema.js";
+import { registerSellerProfile } from "../controllers/seller.controller.js";
 
 const router = express.Router();
+
+router.route(
+  "/profile/register",
+  csrfProtection,
+  validate(sellerProfileSchema),
+  limiter,
+  registerSellerProfile
+);
 
 router
   .route("/profile")
@@ -22,7 +31,7 @@ router
   .get(authenticate, authorizeRoles("seller"), getSellerAnalytics);
 
 router
-  .route("/profile/:id/edit")
+  .route("/:slug/edit/profile")
   .patch(
     authenticate,
     authorizeRoles("seller"),
@@ -32,7 +41,7 @@ router
   );
 
 router
-  .route("/profile/:id/delete")
+  .route("/:slug/delete/profile")
   .delete(
     authenticate,
     authorizeRoles("seller"),
