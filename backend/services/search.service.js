@@ -8,9 +8,10 @@ const Media = db.Media;
 const ProductSpec = db.ProductSpec;
 const Category = db.Category;
 const Brand = db.Brand;
+const Seller = db.SellerProfile;
+const Review = db.Review;
 
-// TODO: Complete get filtered products service for search functionality
-export const getFilteredProudcts = async (query) => {
+export const getFilteredProducts = async (query) => {
   try {
     const {
       search,
@@ -24,12 +25,19 @@ export const getFilteredProudcts = async (query) => {
       priceMax,
     } = query;
 
-    const allowedSortedBy = ["createdAt", "price", "name"];
+    const allowedSortedBy = [
+      "createdAt",
+      "price",
+      "name",
+      "popularity",
+      "relevance",
+    ];
     const sortBy = allowedSortedBy.includes(query.sortBy)
       ? query.sortBy
       : search
       ? "relevance"
       : "createdAt";
+
     const order = query.order?.toUpperCase() === "ASC" ? "ASC" : "DESC";
     const limit = parseInt(query.limit) || 10;
     const offset = parseInt(query.offset) || 0;
@@ -37,44 +45,100 @@ export const getFilteredProudcts = async (query) => {
     const options = {
       where: {},
       include: [],
-      replacements: {},
     };
 
-    if (search === "relevance") {
-      options.where = sequelize.literal(
-        "MATCH(name, description) AGAINST(:query IN BOOLEAN MODE)"
+    // SEARCH
+    if (sortBy === "relevance" && search) {
+      options.where = sequelize.where(
+        sequelize.literal("MATCH(name, description)"),
+        "AGAINST",
+        sequelize.literal(`(${sequelize.escape(search)} IN BOOLEAN MODE)`)
       );
-      options.replacements = { query: search };
-    } else {
+    } else if (search) {
       options.where.name = { [Op.like]: `%${search}%` };
     }
 
-    if (inStock === "true") options.where.stock = { [Op.gt]: 0 };
-    if (minRating)
-      options.where.averageRating = { [Op.gte]: parseFloat(minRating) };
+    // STOCK
+    if (inStock === "true") {
+      options.where.stock = { [Op.gt]: 0 };
+    }
 
+    // RATING
+    if (minRating) {
+      options.where.averageRating = { [Op.gte]: parseFloat(minRating) };
+    }
+
+    // PRICE RANGE
     if (priceMin || priceMax) {
       options.where.price = {};
-      if (priceMin) options.where.price = { [Op.gte]: parseFloat(priceMin) };
-      if (priceMax) options.where.price = { [Op.lte]: parseFloat(priceMax) };
+      if (priceMin) options.where.price[Op.gte] = parseFloat(priceMin);
+      if (priceMax) options.where.price[Op.lte] = parseFloat(priceMax);
     }
+
+    // CATEGORY
+    const categoryInclude = {
+      model: Category,
+      as: "category",
+    };
 
     if (categorySlug || categoryId) {
-      options.include.push({
-        model: Category,
-        where: categoryId ? { id: categoryId } : { slug: categorySlug },
-        required: true,
-      });
+      categoryInclude.where = categoryId
+        ? { id: categoryId }
+        : { slug: categorySlug };
+      categoryInclude.required = true;
     }
+
+    options.include.push(categoryInclude);
+
+    // BRAND
+    const brandInclude = {
+      model: Brand,
+      as: "brand",
+    };
 
     if (brand || brandId) {
-      options.include.push({
-        model: Brand,
-        where: brandId ? { id: brandId } : { name: brand },
-        required: true,
-      });
+      brandInclude.where = brandId ? { id: brandId } : { name: brand };
+      brandInclude.required = true;
     }
 
+    options.include.push(brandInclude);
+
+    // MEDIA
+    options.include.push({
+      model: Media,
+      as: "media",
+      attributes: ["id", "url", "fileType", "tag"],
+    });
+
+    // SELLER
+    options.include.push({
+      model: Seller,
+      as: "seller",
+      attributes: ["id", "storeName"],
+    });
+
+    // PRODUCT SPECIFICATIONS
+    options.include.push({
+      model: ProductSpec,
+      as: "productSpecs",
+      attributes: ["id", "key", "value"],
+    });
+
+    // REVIEWS - TO BE IMPLEMENTED
+    // options.include.push({
+    //   model: Review,
+    //   as: "review",
+    //   attributes: ["id", "rating", "comment", "createdAt"],
+    //   include: [
+    //     {
+    //       model: User,
+    //       as: "reviewer",
+    //       attributes: ["id", "fullname"],
+    //     },
+    //   ],
+    // });
+
+    // SORTING
     const orderClause = [];
     if (sortBy === "popularity") {
       orderClause.push(["averageRating", order]);
@@ -84,6 +148,7 @@ export const getFilteredProudcts = async (query) => {
 
     options.order = orderClause;
 
+    // QUERY
     const { count, rows: products } = await Product.findAndCountAll({
       ...options,
       limit,
@@ -96,6 +161,7 @@ export const getFilteredProudcts = async (query) => {
       total: count,
       limit,
       offset,
+      hasMore: offset + limit < count,
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;
