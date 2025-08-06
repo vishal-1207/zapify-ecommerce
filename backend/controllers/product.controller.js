@@ -51,16 +51,6 @@ const parseProductInput = (req, isUpdate = false) => {
   };
 };
 
-//TODO: Implement the following functions
-/**
- * Different functions to handle product-fetching logic
- * based on category slug or category ID.
- */
-
-export const getProductsByCategory = asyncHandler(async (req, res) => {});
-
-export const getProductsByCategoryId = asyncHandler(async (req, res) => {});
-
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
