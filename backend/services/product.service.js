@@ -10,7 +10,40 @@ const Media = db.Media;
 const ProductSpec = db.ProductSpec;
 const Category = db.Category;
 const Brand = db.Brand;
+const Seller = db.SellerProfile;
 
+// FETCH PRODUCT DETAILS SERVICE
+export const getProductDetailsService = async (identifier) => {
+  const whereCondition = identifier.id
+    ? { id: identifier.id }
+    : { slug: identifier.slug };
+
+  const product = await Product.findOne({
+    where: whereCondition,
+    include: [
+      { model: Category, as: "category" },
+      { model: Brand, as: "brand" },
+      { model: Media, as: "media" },
+      { model: Seller, as: "seller" },
+      {
+        model: Review,
+        as: "reviews",
+        attributes: ["id", "rating", "comment", "createdAt"],
+        separate: true,
+        order: [["createdAt", "DESC"]],
+        include: [
+          {
+            model: User,
+            as: "reviewer",
+            attributes: ["id", "fullname"],
+          },
+        ],
+      },
+    ],
+  });
+};
+
+// CREATE PRODUCT SERVICE
 export const createProductService = async (data, files) => {
   const {
     categoryId,
@@ -102,6 +135,7 @@ export const createProductService = async (data, files) => {
   }
 };
 
+// UPDATE PRODUCT SERVICE
 export const updateProductService = async (productId, data, files) => {
   const {
     categoryId,
@@ -226,6 +260,7 @@ export const updateProductService = async (productId, data, files) => {
   }
 };
 
+// DELETE PRODUCT SERVICE
 export const deleteProductService = async (productId) => {
   const transaction = await sequelize.transaction();
 
