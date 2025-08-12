@@ -5,6 +5,7 @@ import { upload } from "../middleware/multer.middleware.js";
 import {
   createProduct,
   deleteProduct,
+  getProductDetails,
   updateProduct,
 } from "../controllers/product.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -13,10 +14,8 @@ import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-//TODO: Add methods to get products by category and by ID for user and admin respectively.
-
-router.route("/category/:slug/products").get(getProductsByCategory);
-router.route("/category/:id/products").get(getProductsByCategoryId);
+router.route("/:id").get(getProductDetails);
+router.route("/:slug").get(getProductDetails);
 
 router.route("/").post(
   authenticate,
