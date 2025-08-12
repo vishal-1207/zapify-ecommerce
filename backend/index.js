@@ -11,6 +11,7 @@ import brandRoutes from "./routes/brand.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import tokenRoutes from "./routes/token.routes.js";
 import userSettingsRoutes from "./routes/settings.routes.js";
+import searchRoutes from "./routes/search.routes.js";
 import passport from "passport";
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/api/brand", brandRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/settings", userSettingsRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello world.");
