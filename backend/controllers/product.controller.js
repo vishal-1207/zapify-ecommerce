@@ -51,6 +51,18 @@ const parseProductInput = (req, isUpdate = false) => {
   };
 };
 
+// GET PRODUCT DETAILS
+export const getProductDetails = asyncHandler(async (req, res) => {
+  const { id, slug } = req.params;
+  const identifier = id ? { id } : { slug };
+
+  const product = await getProductDetailsService(identifier);
+  return res
+    .status(200)
+    .json({ message: "Product details fetched successfully.", product });
+});
+
+// CREATE PRODUCT CONTROLLER
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
@@ -65,6 +77,7 @@ export const createProduct = asyncHandler(async (req, res) => {
   });
 });
 
+// UPDATE PRODUCT CONTROLLER
 export const updateProduct = asyncHandler(async (req, res) => {
   const productId = parseInt(req.params.id, 10);
   if (isNaN(productId)) throw new ApiError(400, "Invalid product Id");
@@ -82,6 +95,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   });
 });
 
+// DELETE PRODUCT CONTROLLER
 export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.id;
   const result = await deleteProductService(productId);
