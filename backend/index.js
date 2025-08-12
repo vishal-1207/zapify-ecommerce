@@ -28,8 +28,8 @@ app.use("/api/token", tokenRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/brand", brandRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/categories", categoryRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/category", categoryRoutes);
 app.use("/api/settings", userSettingsRoutes);
 
 app.get("/", (req, res) => {
