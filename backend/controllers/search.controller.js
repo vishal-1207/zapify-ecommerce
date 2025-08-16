@@ -1,24 +1,9 @@
 import getFilteredProducts from "../services/search.service.js";
 
-//TODO: Implement the following functions
-/**
- * Different functions to handle product-fetching logic
- * based on category slug or category ID.
- */
+export const getSearchResults = asyncHandler(async (req, res) => {
+  const queryParams = req.query;
 
-export const getProductsByCategory = asyncHandler(async (req, res) => {
-  const slug = req.params;
+  const data = await getFilteredProducts(queryParams);
 
-  if (!slug) {
-    throw new ApiError(400, "Category slug is required.");
-  }
-
-  const query = {
-    ...req.query,
-    categorySlug: slug,
-  };
-
-  const data = await getFilteredProducts(query);
+  res.status(200).json({ message: "Products fetched successfully.", data });
 });
-
-export const getProductsByCategoryId = asyncHandler(async (req, res) => {});
