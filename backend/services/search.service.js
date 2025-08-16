@@ -38,8 +38,10 @@ export const getFilteredProducts = async (query) => {
       ? "relevance"
       : "createdAt";
 
+    const MAX_LIMIT = 100;
+    const requestedLimit = parseInt(query.limit) || 10;
     const order = query.order?.toUpperCase() === "ASC" ? "ASC" : "DESC";
-    const limit = parseInt(query.limit) || 10;
+    const limit = Math.min(requestedLimit, MAX_LIMIT);
     const offset = parseInt(query.offset) || 0;
 
     const options = {
