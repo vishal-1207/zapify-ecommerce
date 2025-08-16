@@ -200,6 +200,28 @@ export const userSettingsSchema = Joi.object({
   dataSharingConsent: Joi.boolean().optional(),
 });
 
+export const productIdSchema = Joi.object({
+  id: Joi.integer().positive().required(),
+});
+
+export const productSlugSchema = Joi.object({
+  slug: Joi.string().trim().required(),
+});
+
+export const searchSchema = Joi.object({
+  search: Joi.string().trim().optional(),
+  categorySlug: Joi.string().trim().optional(),
+  brand: Joi.string().trim().optional(),
+  priceMin: Joi.number().min(0).optional(),
+  priceMax: Joi.number().positive().optional(),
+  sortBy: Joi.string()
+    .valid("createdAt", "price", "name", "popularity", "relevance")
+    .optional(),
+  order: Joi.string().uppercase().valid("ASC", "DESC").optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+  offset: Joi.number().integer().min(0).optional(),
+});
+
 const ALLOWED_SORT_FIELDS = ["createdAt", "price", "averageRating"];
 
 export const validateProductQuery = async (query) => {
