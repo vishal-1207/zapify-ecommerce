@@ -9,13 +9,17 @@ import {
   updateProduct,
 } from "../controllers/product.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { productSchema } from "../utils/validationSchema.js";
+import {
+  productIdSchema,
+  productSchema,
+  productSlugSchema,
+} from "../utils/validationSchema.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-router.route("/:id").get(getProductDetails);
-router.route("/:slug").get(getProductDetails);
+router.route("/:id").get(validate(productIdSchema), getProductDetails);
+router.route("/:slug").get(validate(productSlugSchema), getProductDetails);
 
 router.route("/").post(
   authenticate,
