@@ -2,9 +2,6 @@ import db from "../models/index.js";
 import { updateUserProfile } from "../services/user.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import bcrypt from "bcrypt";
-
-const User = db.User;
 
 export const currentUserDetails = asyncHandler(async (req, res) => {
   const user = await db.User.findByPk(req.user.id, {

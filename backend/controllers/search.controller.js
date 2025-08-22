@@ -1,4 +1,5 @@
-import getFilteredProducts from "../services/search.service.js";
+import { getFilteredProducts } from "../services/search.service.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 export const getSearchResults = asyncHandler(async (req, res) => {
   const queryParams = req.query;

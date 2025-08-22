@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 //Authenticate Middleware
 export const authenticate = asyncHandler(async (req, res, next) => {
   try {
-    //Checking if access token exists in cookie or header. If missing
     const token =
       req.cookie?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
