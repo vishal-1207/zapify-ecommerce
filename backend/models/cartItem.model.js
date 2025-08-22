@@ -1,9 +1,17 @@
-import { UUIDV4 } from "sequelize";
-
 export default (sequelize, DataTypes) => {
   const CartItem = sequelize.define("CartItem", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
   });
+
+  CartItem.associate = (models) => {
+    CartItem.belongsTo(models.Cart, { foreignKey: "cartId" });
+    CartItem.belongsTo(models.Product, { foreignKey: "productId" });
+  };
+
   return CartItem;
 };

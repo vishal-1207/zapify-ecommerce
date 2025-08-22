@@ -1,13 +1,11 @@
-import { UUIDV4 } from "sequelize";
-
 export default (sequelize, DataTypes) => {
   const SellerProfile = sequelize.define("SellerProfile", {
     id: {
       type: DataTypes.UUID,
-      defaultValue: UUIDV4,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    storeName: { type: DataTypes.SRTING, allowNull: false },
+    storeName: { type: DataTypes.STRING, allowNull: false },
     bio: { type: DataTypes.TEXT, allowNull: true },
     website: {
       type: DataTypes.STRING,
@@ -27,6 +25,13 @@ export default (sequelize, DataTypes) => {
     },
     slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
+
+  SellerProfile.associate = (models) => {
+    SellerProfile.belongsTo(models.User, { foreignKey: "userId" });
+    SellerProfile.hasOne(models.SellerSetting, {
+      foreignKey: "sellerProfileId",
+    });
+  };
 
   return SellerProfile;
 };

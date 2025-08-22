@@ -1,11 +1,14 @@
 import { nanoid } from "nanoid";
 import { Op } from "sequelize";
 import slugify from "slugify";
-import { UUIDV4 } from "sequelize";
 
 export default (sequelize, DataTypes) => {
   const Product = sequelize.define("Product", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
@@ -44,6 +47,28 @@ export default (sequelize, DataTypes) => {
       product.slug = finalSlug;
     }
   });
+
+  Product.associate = (models) => {
+    Product.belongsTo(models.Category, { foreignKey: "categoryId" });
+    Product.belongsTo(models.Brand, { foreignKey: "brandId" });
+    Product.hasMany(models.CartItem, { foreignKey: "productId" });
+    Product.hasMany(models.OrderItem, { foreignKey: "productId" });
+    Product.hasMany(models.ProductSpec, { foreignKey: "productId" });
+    Product.hasMany(models.Review, { foreignKey: "productId" });
+    Product.hasMany(models.Media, {
+      foreignKey: "associateId",
+      constraints: false,
+      scope: { associatedType: "product" },
+      as: "media",
+    });
+    Product.belongsTo(models.SellerProfile, { foreignKey: "sellerProfileId" });
+    Product.belongsTo(models.User, {
+      foreignKey: "productId",
+      through: "models.WishList",
+      otherKey: "userId",
+      as: "wishListedByUsers",
+    });
+  };
 
   return Product;
 };

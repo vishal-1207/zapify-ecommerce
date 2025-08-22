@@ -1,8 +1,10 @@
-import { UUIDV4 } from "sequelize";
-
 export default (sequelize, DataTypes) => {
   const Order = sequelize.define("Order", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     totalAmount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     status: {
       type: DataTypes.ENUM(
@@ -16,5 +18,11 @@ export default (sequelize, DataTypes) => {
       defaultValue: "pending",
     },
   });
+
+  Order.associate = (models) => {
+    Order.belongsTo(models.User, { foreignKey: "userId" });
+    Order.hasMany(models.OrderItem, { foreignKey: "orderId" });
+  };
+
   return Order;
 };

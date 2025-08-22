@@ -1,9 +1,16 @@
-import { UUIDV4 } from "sequelize";
-
 export default (sequelize, DataTypes) => {
   const WishList = sequelize.define("WishList", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
   });
+
+  WishList.associate = (models) => {
+    WishList.belongsTo(models.User, { foreignKey: "userId" });
+    WishList.belongsTo(models.Product, { foreignKey: "productId" });
+  };
 
   return WishList;
 };

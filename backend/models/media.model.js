@@ -1,8 +1,10 @@
-import { UUIDV4 } from "sequelize";
-
 export default (sequelize, DataTypes) => {
   const Media = sequelize.define("Media", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     publicId: { type: DataTypes.STRING, allowNull: false },
     url: { type: DataTypes.STRING, allowNull: false },
     fileType: { type: DataTypes.ENUM("image", "video"), allowNull: false },
@@ -17,5 +19,29 @@ export default (sequelize, DataTypes) => {
     },
     associatedId: { type: DataTypes.INTEGER, allowNull: false },
   });
+
+  Media.associate = (models) => {
+    Media.belongsTo(models.Brand, {
+      foreignKey: "associatedId",
+      constraints: false,
+      as: "brand",
+    });
+    Media.belongsTo(models.Product, {
+      foreignKey: "associatedId",
+      constraints: false,
+      as: "product",
+    });
+    Media.belongsTo(models.Review, {
+      foreignKey: "associatedId",
+      constraints: false,
+      as: "review",
+    });
+    Media.belongsTo(models.Category, {
+      foreignKey: "associatedId",
+      constraints: false,
+      as: "category",
+    });
+  };
+
   return Media;
 };
