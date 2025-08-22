@@ -10,7 +10,7 @@ import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { categorySchema } from "../utils/validationSchema.js";
-import { authrorizeRoles } from "../middleware/authorizeRoles.middleware.js";
+import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router
   .get(getCategories)
   .post(
     authenticate,
-    authrorizeRoles("admin"),
+    authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
@@ -30,7 +30,7 @@ router
   .route("/:id/edit")
   .put(
     authenticate,
-    authrorizeRoles("admin"),
+    authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
@@ -41,7 +41,7 @@ router
   .route("/:id/delete")
   .delete(
     authenticate,
-    authrorizeRoles("admin"),
+    authorizeRoles("admin"),
     csrfProtection,
     deleteCategory
   );
