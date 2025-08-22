@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const RefreshToken = db.RefreshToken;
 
-export default generateTokens = async ({ userId, roles }) => {
+const generateTokens = async ({ userId, roles }) => {
   const accessToken = jwt.sign({ userId, roles }, process.env.JWT_SECRET, {
     expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
   });
@@ -28,3 +28,5 @@ export default generateTokens = async ({ userId, roles }) => {
 
   return { accessToken, refreshToken };
 };
+
+export default generateTokens;
