@@ -201,7 +201,7 @@ export const userSettingsSchema = Joi.object({
 });
 
 export const productIdSchema = Joi.object({
-  id: Joi.integer().positive().required(),
+  id: Joi.number().integer().positive().required(),
 });
 
 export const productSlugSchema = Joi.object({
