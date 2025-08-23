@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
   User.associate = (models) => {
     User.hasOne(models.Cart, { foreignKey: "userId" });
     User.hasOne(models.SellerProfile, { foreignKey: "userId" });
-    User.hasOne(models.UserSetting, { foreignKey: "userId" });
+    User.hasOne(models.UserSettings, { foreignKey: "userId" });
     User.hasMany(models.Order, { foreignKey: "userId" });
     User.hasMany(models.Review, { foreignKey: "userId" });
     User.hasMany(models.RefreshToken, { foreignKey: "userId" });

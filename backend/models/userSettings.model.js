@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  const UserSetting = sequelize.define("UserSetting", {
+  const UserSettings = sequelize.define("UserSettings", {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -34,9 +34,9 @@ export default (sequelize, DataTypes) => {
     },
   });
 
-  UserSetting.associate = (models) => {
-    UserSetting.belongsTo(models.User, { foreignKey: "userId" });
+  UserSettings.associate = (models) => {
+    UserSettings.belongsTo(models.User, { foreignKey: "userId" });
   };
 
-  return UserSetting;
+  return UserSettings;
 };
