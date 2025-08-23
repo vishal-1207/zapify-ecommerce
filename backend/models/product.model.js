@@ -56,7 +56,7 @@ export default (sequelize, DataTypes) => {
     Product.hasMany(models.ProductSpec, { foreignKey: "productId" });
     Product.hasMany(models.Review, { foreignKey: "productId" });
     Product.hasMany(models.Media, {
-      foreignKey: "associateId",
+      foreignKey: "associatedId",
       constraints: false,
       scope: { associatedType: "product" },
       as: "media",
