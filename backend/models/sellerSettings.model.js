@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  const SellerSetting = sequelize.define("SellerSetting", {
+  const SellerSettings = sequelize.define("SellerSettings", {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -27,11 +27,11 @@ export default (sequelize, DataTypes) => {
     },
   });
 
-  SellerSetting.associate = (models) => {
-    SellerSetting.belongsTo(models.SellerProfile, {
+  SellerSettings.associate = (models) => {
+    SellerSettings.belongsTo(models.SellerProfile, {
       foreignKey: "sellerProfileId",
     });
   };
 
-  return SellerSetting;
+  return SellerSettings;
 };
