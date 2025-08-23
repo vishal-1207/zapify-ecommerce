@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
 
   SellerProfile.associate = (models) => {
     SellerProfile.belongsTo(models.User, { foreignKey: "userId" });
-    SellerProfile.hasOne(models.SellerSetting, {
+    SellerProfile.hasOne(models.SellerSettings, {
       foreignKey: "sellerProfileId",
     });
   };
