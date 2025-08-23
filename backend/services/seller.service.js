@@ -5,6 +5,7 @@ import ApiError from "../utils/ApiError.js";
 
 const User = db.User;
 const SellerProfile = db.SellerProfile;
+const SellerSettings = db.SellerSettings;
 
 const findStore = async (storeName) => {
   const slug = slugify(storeName, {
@@ -22,7 +23,7 @@ const findStore = async (storeName) => {
 };
 
 export const registerSellerService = async (data, optional) => {
-  const t = sequelize.transaction();
+  const transaction = sequelize.transaction();
   try {
     const { storeName, contactNumber, address, userId } = data;
     const { bio, website } = optional;
@@ -41,19 +42,24 @@ export const registerSellerService = async (data, optional) => {
         address,
         slug,
       },
-      { transaction: t }
+      { transaction }
     );
 
-    const user = await User.findByPk(userId, { transaction: t });
+    const user = await User.findByPk(userId, { transaction });
     const roles = new Set(user.roles);
     roles.add("seller");
     user.roles = Array.from(roles);
-    await user.save({ transaction: t });
+    await user.save({ transaction });
 
-    await t.commit();
+    await SellerSettings.create(
+      { sellerProfileId: seller.id },
+      { transaction }
+    );
+
+    await transaction.commit();
     return seller;
   } catch (err) {
-    await t.rollback();
+    await transaction.rollback();
   }
 };
 

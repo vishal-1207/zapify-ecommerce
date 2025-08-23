@@ -6,44 +6,61 @@ import ApiError from "../utils/ApiError.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
 
 const User = db.User;
+const UserSettings = db.UserSettings;
+const Cart = db.Cart;
 
 //Create User Service
 export const createUser = async (userData, res) => {
-  const { fullname, username, email, password } = userData;
+  const transaction = await db.sequelize.transaction();
+  try {
+    const { fullname, username, email, password } = userData;
 
-  const existingUser = await User.findOne({
-    where: {
-      [Op.or]: [{ username }, { email }],
-    },
-  });
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
 
-  if (existingUser) {
-    const message =
-      existingUser.username === username
-        ? "Username is already taken."
-        : "Email is already registered.";
+    if (existingUser) {
+      const message =
+        existingUser.username === username
+          ? "Username is already taken."
+          : "Email is already registered.";
 
-    throw new ApiError(409, message);
+      throw new ApiError(409, message);
+    }
+
+    const saltRounds = parseInt(process.env.SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const user = await User.create(
+      {
+        fullname,
+        username,
+        email,
+        password: hashedPassword,
+        roles: ["user"],
+        provider: "local",
+      },
+      { transaction }
+    );
+
+    await UserSettings.create({ userId: user.id }, { transaction });
+    await Cart.create({ userId: user.id }, { transaction });
+
+    const payload = { userId: user.id, roles: user.roles };
+    const tokens = generateTokens(payload);
+
+    setTokensInCookies(res, tokens);
+
+    await transaction.commit();
+
+    return { user, accessToken: tokens.accessToken };
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Registration failed, transaction rolled back: ", error);
+    throw new ApiError(500, "Could not register user.");
   }
-
-  const saltRounds = parseInt(process.env.SALT_ROUNDS);
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-  const user = await User.create({
-    fullname,
-    username,
-    email,
-    password: hashedPassword,
-    roles: ["user"],
-    provider: "local",
-  });
-
-  const payload = { userId: user.id, roles: user.roles };
-  const tokens = generateTokens(payload);
-
-  setTokensInCookies(res, tokens);
-
-  return { user, accessToken: tokens.accessToken };
 };
 
 //Find User Service
