@@ -10,7 +10,7 @@ const generateTokens = async ({ userId, roles }) => {
   });
 
   const tokenId = uuid4();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
   const refreshToken = jwt.sign(
     { tokenId, userId, roles },
     process.env.REFRESH_TOKEN_SECRET,
