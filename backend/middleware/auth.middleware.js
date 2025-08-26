@@ -1,5 +1,8 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
+import db from "../models/index.js";
+
+const User = db.User;
 
 //Authenticate Middleware
 export const authenticate = asyncHandler(async (req, res, next) => {
@@ -12,7 +15,12 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, roles: decoded.roles };
+
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    req.user = user;
     next();
   } catch (error) {
     console.log("Auth middleware error: ", error.message);
