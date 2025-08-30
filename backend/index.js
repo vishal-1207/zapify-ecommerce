@@ -28,9 +28,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/category", categoryRoutes);
 app.use("/api/brand", brandRoutes);
 app.use("/api/product", productRoutes);
-app.use("/api/category", categoryRoutes);
+// app.use("/api/cart", cartRoutes);
+// app.use("/api/order", orderRoutes);
+// app.use("/api/payment", paymentRoutes);
+// app.use("/api/seller", sellerRoutes);
+// app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/settings", userSettingsRoutes);
 app.use("/api/search", searchRoutes);
 
