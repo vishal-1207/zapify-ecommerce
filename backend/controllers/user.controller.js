@@ -3,8 +3,10 @@ import { updateUserProfile } from "../services/user.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
+const User = db.User;
+
 export const currentUserDetails = asyncHandler(async (req, res) => {
-  const user = await db.User.findByPk(req.user.id, {
+  const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["password"] },
   });
 
