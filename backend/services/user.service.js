@@ -46,3 +46,24 @@ export const updateUserProfile = async (userId, profileData) => {
 
   return user;
 };
+
+export const scheduleUserDeletion = async (userId, gracePeriodInDays = 30) => {
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  const deletionDate = new Date();
+  deletionDate.setDate(deletionDate.getDate() + gracePeriodInDays);
+
+  await User.update({
+    scheduledForDeletionAt: deletionDate,
+  });
+
+  await User.destroy();
+
+  return {
+    message: `Account deletion initiated. All personal data will be permanently erased on ${deletionDate.toISOString()}.`,
+  };
+};
