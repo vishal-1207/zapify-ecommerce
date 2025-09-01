@@ -1,30 +1,41 @@
 export default (sequelize, DataTypes) => {
-  const User = sequelize.define("User", {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    fullname: { type: DataTypes.STRING, allowNull: false },
-    username: { type: DataTypes.STRING, allowNull: false, unique: true },
-    email: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: { type: DataTypes.STRING, allowNull: true },
-    roles: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: ["user"],
-    },
-    provider: {
-      type: DataTypes.ENUM("local", "google", "github"),
-      defaultValue: "local",
-    },
+  const User = sequelize.define(
+    "User",
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      fullname: { type: DataTypes.STRING, allowNull: false },
+      username: { type: DataTypes.STRING, allowNull: false, unique: true },
+      email: { type: DataTypes.STRING, allowNull: false, unique: true },
+      password: { type: DataTypes.STRING, allowNull: true },
+      roles: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        defaultValue: ["user"],
+      },
+      provider: {
+        type: DataTypes.ENUM("local", "google", "github"),
+        defaultValue: "local",
+      },
 
-    providerId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      unique: true,
+      providerId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+      },
+      scheduledForDeletionAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
-  });
+    {
+      paranoid: true,
+    }
+  );
 
   User.prototype.toJSON = function () {
     const user = { ...this.get() };
@@ -34,7 +45,10 @@ export default (sequelize, DataTypes) => {
 
   User.associate = (models) => {
     User.hasOne(models.Cart, { foreignKey: "userId" });
-    User.hasOne(models.SellerProfile, { foreignKey: "userId" });
+    User.hasOne(models.SellerProfile, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
     User.hasOne(models.UserSettings, { foreignKey: "userId" });
     User.hasMany(models.Order, { foreignKey: "userId" });
     User.hasMany(models.Review, { foreignKey: "userId" });
