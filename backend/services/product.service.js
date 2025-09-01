@@ -3,7 +3,6 @@ import sequelize from "../config/db.js";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
-import { Op } from "sequelize";
 
 const Product = db.Product;
 const Media = db.Media;
