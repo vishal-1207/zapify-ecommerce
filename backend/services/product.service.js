@@ -10,20 +10,20 @@ const ProductSpec = db.ProductSpec;
 const Category = db.Category;
 const Brand = db.Brand;
 const Seller = db.SellerProfile;
+const Offer = db.Offer;
 
-// FETCH PRODUCT DETAILS SERVICE
-export const getProductDetailsService = async (identifier) => {
-  const whereCondition = identifier.id
-    ? { id: identifier.id }
-    : { slug: identifier.slug };
-
+/**
+ * Gets a single product's public details, including all available offers from sellers.
+ *
+ */
+export const getCustomerProductDetails = async (productSlug) => {
   const product = await Product.findOne({
-    where: whereCondition,
+    where: { slug: productSlug, status: "approved" },
     include: [
       { model: Category, as: "category" },
       { model: Brand, as: "brand" },
       { model: Media, as: "media" },
-      { model: Seller, as: "seller" },
+      { model: ProductSpec, as: "productSpec" },
       {
         model: Review,
         as: "reviews",
@@ -38,113 +38,233 @@ export const getProductDetailsService = async (identifier) => {
           },
         ],
       },
+      {
+        mode: Offer,
+        as: "offer",
+        include: [
+          {
+            model: Seller,
+            as: "sellerProfile",
+            attributes: ["id", "storeName"],
+          },
+        ],
+      },
     ],
+  });
+
+  if (!product) {
+    throw new ApiError(404, "Product not found.");
+  }
+
+  return product;
+};
+
+/**
+ * Service for sellers to search the public catalog for approved products.
+ *
+ */
+
+export const searchProductCatalog = async (searchTerm) => {
+  if (!searchTerm || searchTerm.trim() === "") return [];
+
+  return Product.findAll({
+    where: {
+      name: { [Op.like]: `${searchTerm}` },
+      status: "approved",
+    },
+    attributes: ["id", "name"],
+    include: [{ model: Brand, as: "brand", attributes: ["name"] }],
+    limit: 20,
   });
 };
 
-// CREATE PRODUCT SERVICE
-export const createProductService = async (data, files) => {
-  const {
-    categoryId,
-    brandId,
-    name,
-    description,
-    price,
-    stock,
-    specs = [],
-  } = data;
+/**
+ * Service for sellers to create an offer for an existing, approved product.
+ *
+ */
+
+export const createOfferForProduct = async (
+  productId,
+  sellerProfileId,
+  offerData
+) => {
+  const product = await Product.findOne({
+    where: {
+      id: productId,
+      status: "approved",
+    },
+  });
+
+  if (!product) {
+    throw new ApiError(404, "Approved product not found in catalog.");
+  }
+
+  const existingOffer = await Offer.findOne({
+    where: { productId, sellerProfileId },
+  });
+
+  if (existingOffer) {
+    throw new ApiError(
+      409,
+      "You already have an offer for this product. Please update it instead."
+    );
+  }
+
+  const offer = await Offer.create({
+    ...offerData,
+    productId,
+    sellerProfileId,
+  });
+
+  if (!offer) {
+    throw new ApiError(500, "Something went wrong.");
+  }
+
+  return offer;
+};
+
+/**
+ * Function to create product entry with its media and specs.
+ * This is a core reusable logic. Not to be called directly from controllers
+ */
+
+const _createProduct = async (productData, files, status, transaction) => {
+  const { categoryId, brandId, name, description, specs = [] } = productData;
+
+  const newProduct = await db.Product.create(
+    {
+      name,
+      description,
+      categoryId,
+      brandId,
+      status,
+    },
+    { transaction }
+  );
+
+  // 2. Handle Thumbnail Upload
+  if (files?.thumbnail) {
+    const thumbnailUpload = await uploadToCloudinary(
+      files.thumbnail.path,
+      process.env.CLOUDINARY_PRODUCT_FOLDER
+    );
+    await db.Media.create(
+      {
+        publicId: thumbnailUpload.public_id,
+        url: thumbnailUpload.secure_url,
+        fileType: thumbnailUpload.resource_type,
+        tag: "thumbnail",
+        associatedType: "product",
+        associatedId: newProduct.id,
+      },
+      { transaction }
+    );
+  }
+
+  // 3. Handle Gallery Uploads
+  if (files?.gallery && files.gallery.length > 0) {
+    const uploadPromises = files.gallery.map((file) =>
+      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER)
+    );
+    const uploadResults = await Promise.all(uploadPromises);
+
+    const mediaEntries = uploadResults.map((upload) => ({
+      publicId: upload.public_id,
+      url: upload.secure_url,
+      fileType: upload.resource_type,
+      tag: "gallery",
+      associatedType: "product",
+      associatedId: newProduct.id,
+    }));
+    await db.Media.bulkCreate(mediaEntries, { transaction });
+  }
+
+  // 4. Handle Product Specs
+  if (specs.length > 0) {
+    const specEntries = specs.map((spec) => ({
+      ...spec,
+      productId: newProduct.id,
+    }));
+    await db.ProductSpec.bulkCreate(specEntries, { transaction });
+  }
+
+  return newProduct;
+};
+
+/**
+ * Service for seller to suggest a new product, creating a 'pending' product and their first offer in a single transaction.
+ *
+ */
+export const createProductSuggestion = async (
+  productData,
+  offerData,
+  sellerProfileId,
+  files
+) => {
+  const { categoryId, brandId, name, description, specs = [] } = productData;
+
+  const transaction = await sequelize.transaction();
+  try {
+    const newProduct = await _createProduct(
+      productData,
+      files,
+      "pending",
+      transaction
+    );
+
+    await Offer.create(
+      {
+        ...offerData,
+        productId: newProduct.id,
+        sellerProfileId,
+      },
+      transaction
+    );
+
+    await transaction.commit();
+    return newProduct;
+  } catch (error) {
+    if (error.name === "SequqlizeUniqueConstraintError") {
+      throw new ApiError(409, "A product with this name already exist.");
+    }
+    throw new ApiError(500, "Failed to create product suggestion.", error);
+  }
+};
+
+/**
+ * Service for an admin to create a new, approved generic product in the catalog.
+ */
+export const adminCreateProduct = async (productData, files) => {
+  const { categoryId, brandId, name, description, specs = [] } = data;
 
   const transaction = await sequelize.transaction();
   let committed = false;
 
   try {
-    const createdProduct = await Product.create(
-      { name, description, price, stock, categoryId, brandId },
-      { transaction }
+    const newProduct = await _createProduct(
+      productData,
+      files,
+      "approved",
+      transaction
     );
 
-    let thumbnailImage = null;
-    const thumbnail = files.thumbnail;
-
-    if (thumbnail) {
-      const thumbnailUpload = await uploadToCloudinary(
-        thumbnail.path,
-        process.env.CLOUDINARY_PRODUCT_FOLDER
-      );
-
-      thumbnailImage = await Media.create(
-        {
-          publicId: thumbnailUpload.public_id,
-          url: thumbnailUpload.secure_url,
-          fileType: thumbnailUpload.resource_type,
-          tag: "thumbnail",
-          associatedType: "product",
-          associatedId: createdProduct.id,
-        },
-        { transaction }
-      );
-    }
-
-    let galleryImages = [];
-    const galleryFiles = files?.gallery || [];
-
-    if (galleryFiles.length > 0) {
-      const uploadGalleryFiles = galleryFiles.map((galleryFile) =>
-        uploadToCloudinary(
-          galleryFile.path,
-          process.env.CLOUDINARY_PRODUCT_FOLDER
-        )
-      );
-
-      const uploadResults = await Promise.all(uploadGalleryFiles);
-      galleryImages = await Promise.all(
-        uploadResults.map((uploadResult) =>
-          Media.create(
-            {
-              publicId: uploadResult.public_id,
-              url: uploadResult.secure_url,
-              fileType: uploadResult.resource_type,
-              tag: "gallery",
-              associatedType: "product",
-              associatedId: createdProduct.id,
-            },
-            { transaction }
-          )
-        )
-      );
-    }
-
-    const specEntries = specs.map(({ key, value }) => ({
-      key,
-      value,
-      productId: createdProduct.id,
-    }));
-
-    const productSpecs = await ProductSpec.bulkCreate(specEntries, {
-      transaction,
-    });
     await transaction.commit();
     committed = true;
-    return { createdProduct, productSpecs, thumbnailImage, galleryImages };
+    return { newProduct, productSpecs, thumbnailImage, galleryImages };
   } catch (error) {
     if (!committed) await transaction.rollback();
-
-    console.error(error);
+    if (error === "SequelizeUniqueConstraintError") {
+      throw new ApiError(409, "A product with this name already exist.");
+    }
     throw new ApiError(500, "Failed to create product.");
   }
 };
 
-// UPDATE PRODUCT SERVICE
+/**
+ * Service for admin to update product details.
+ */
 export const updateProductService = async (productId, data, files) => {
-  const {
-    categoryId,
-    brandId,
-    name,
-    description,
-    price,
-    stock,
-    specs = [],
-  } = data;
+  const { categoryId, brandId, name, description, specs = [] } = data;
 
   const transaction = await sequelize.transaction();
   let committed = false;
@@ -167,13 +287,11 @@ export const updateProductService = async (productId, data, files) => {
     if (name) product.name = name;
     if (brandId) product.brandId = brandId;
     if (description) product.description = description;
-    if (price) product.price = price;
-    if (stock) product.stock = stock;
     if (categoryId) product.categoryId = categoryId;
 
     const updatedProduct = await product.save({ transaction });
 
-    // THUMBNAIL UPDATE LOGIC
+    // Thumbnail update logic
     let updatedThumbnail = null;
     if (files.thumbnail) {
       const existingThumbnail = product.media.find(
@@ -203,7 +321,7 @@ export const updateProductService = async (productId, data, files) => {
       );
     }
 
-    // GALLERY MEDIA UPDATE LOGIC
+    // Gallery media update logic
     let updatedGallery = null;
     if (files?.gallery && files.gallery.length > 0) {
       const existingGallery = product.media.filter((m) => m.tag === "gallery");
@@ -251,7 +369,7 @@ export const updateProductService = async (productId, data, files) => {
     await transaction.commit();
     committed = true;
 
-    return { updatedProduct, updatedSpecs, updatedThumbnail, updatedGallery };
+    return updatedProduct;
   } catch (error) {
     console.error(error);
     if (!committed) await transaction.rollback();
@@ -259,7 +377,9 @@ export const updateProductService = async (productId, data, files) => {
   }
 };
 
-// DELETE PRODUCT SERVICE
+/**
+ * Service for admin to delete a product from the catalog.
+ */
 export const deleteProductService = async (productId) => {
   const transaction = await sequelize.transaction();
 
