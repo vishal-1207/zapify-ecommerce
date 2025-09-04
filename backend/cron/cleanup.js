@@ -57,3 +57,5 @@ const scheduleUserPurge = () => {
     }
   });
 };
+
+export default scheduleUserPurge;
