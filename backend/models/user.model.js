@@ -52,7 +52,10 @@ export default (sequelize, DataTypes) => {
     User.hasOne(models.UserSettings, { foreignKey: "userId" });
     User.hasMany(models.Order, { foreignKey: "userId" });
     User.hasMany(models.Review, { foreignKey: "userId" });
-    User.hasMany(models.RefreshToken, { foreignKey: "userId" });
+    User.hasMany(models.RefreshToken, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
     User.belongsToMany(models.Product, {
       through: models.WishList,
       foreignKey: "userId",
