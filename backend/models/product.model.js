@@ -12,8 +12,11 @@ export default (sequelize, DataTypes) => {
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false },
-    stock: { type: DataTypes.INTEGER, defaultValue: 0 },
+    status: {
+      types: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "pending",
+    },
     slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
 
