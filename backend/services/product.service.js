@@ -129,15 +129,23 @@ export const createOfferForProduct = async (
  */
 
 const _createProduct = async (productData, files, status, transaction) => {
-  const { categoryId, brandId, name, description, specs = [] } = productData;
+  const {
+    categoryId,
+    brandId,
+    name,
+    description,
+    price,
+    specs = [],
+  } = productData;
 
   const newProduct = await db.Product.create(
     {
       name,
       description,
+      price,
+      status,
       categoryId,
       brandId,
-      status,
     },
     { transaction }
   );
@@ -201,9 +209,8 @@ export const createProductSuggestion = async (
   sellerProfileId,
   files
 ) => {
-  const { categoryId, brandId, name, description, specs = [] } = productData;
-
   const transaction = await sequelize.transaction();
+  let committed = false;
   try {
     const newProduct = await _createProduct(
       productData,
@@ -222,11 +229,15 @@ export const createProductSuggestion = async (
     );
 
     await transaction.commit();
+    committed = true;
+
     return newProduct;
   } catch (error) {
+    if (!committed) await transaction.rollback();
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
     }
+
     throw new ApiError(500, "Failed to create product suggestion.", error);
   }
 };
@@ -235,8 +246,6 @@ export const createProductSuggestion = async (
  * Service for an admin to create a new, approved generic product in the catalog.
  */
 export const adminCreateProduct = async (productData, files) => {
-  const { categoryId, brandId, name, description, specs = [] } = data;
-
   const transaction = await sequelize.transaction();
   let committed = false;
 
@@ -256,6 +265,7 @@ export const adminCreateProduct = async (productData, files) => {
     if (error === "SequelizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
     }
+
     throw new ApiError(500, "Failed to create product.");
   }
 };
@@ -264,7 +274,7 @@ export const adminCreateProduct = async (productData, files) => {
  * Service for admin to update product details.
  */
 export const updateProductService = async (productId, data, files) => {
-  const { categoryId, brandId, name, description, specs = [] } = data;
+  const { categoryId, brandId, name, description, price, specs = [] } = data;
 
   const transaction = await sequelize.transaction();
   let committed = false;
@@ -285,9 +295,10 @@ export const updateProductService = async (productId, data, files) => {
     if (!product) throw new ApiError(404, "Product not found.");
 
     if (name) product.name = name;
-    if (brandId) product.brandId = brandId;
     if (description) product.description = description;
+    if (price) product.price = price;
     if (categoryId) product.categoryId = categoryId;
+    if (brandId) product.brandId = brandId;
 
     const updatedProduct = await product.save({ transaction });
 
@@ -349,7 +360,7 @@ export const updateProductService = async (productId, data, files) => {
       updatedGallery = await Media.bulkCreate(galleryMedia, { transaction });
     }
 
-    // SPECS UPDATE LOGIC
+    // Specifications update logic
     let updatedSpecs = null;
     if (specs.length > 0) {
       await ProductSpec.destroy({
@@ -378,6 +389,33 @@ export const updateProductService = async (productId, data, files) => {
 };
 
 /**
+ * Service for admin to review product suggestion from seller. Either approve or reject based on product availability.
+ */
+
+export const reviewProductSuggestion = async (productId, decision) => {
+  const product = await Product.findOne({
+    where: { id: productId, status: "pending" },
+    include: [
+      { model: Media, as: "media" },
+      { model: ProductSpec, as: "specs" },
+    ],
+  });
+
+  if (!product) {
+    throw new ApiError(404, "Product not found.");
+  }
+
+  if (decision !== "approved" || decision !== "rejected") {
+    throw new ApiError(400, "Decision must be approved or rejected.");
+  }
+
+  product.decision = "approved";
+  await Product.save();
+
+  return product;
+};
+
+/**
  * Service for admin to delete a product from the catalog.
  */
 export const deleteProductService = async (productId) => {
@@ -385,7 +423,10 @@ export const deleteProductService = async (productId) => {
 
   try {
     const product = await Product.findByPk(productId, {
-      include: [{ model: Media, as: "media" }, { model: ProductSpec }],
+      include: [
+        { model: Media, as: "media" },
+        { model: ProductSpec, as: "specs" },
+      ],
       transaction,
     });
 
@@ -400,16 +441,14 @@ export const deleteProductService = async (productId) => {
             resource_type: media.fileType,
           });
         }
-
-        await media.destroy({ transaction });
       }
     }
 
-    if (product.ProductSpec && product.ProductSpec.length > 0) {
-      for (const spec of product.ProductSpec) {
-        await spec.destroy({ transaction });
-      }
-    }
+    // if (product.specs && product.specs.length > 0) {
+    //   for (const spec of product.specs) {
+    //     await spec.destroy({ transaction });
+    //   }
+    // }
 
     await product.destroy({ transaction });
     await transaction.commit();
