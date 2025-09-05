@@ -12,6 +12,7 @@ export default (sequelize, DataTypes) => {
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
+    price: { type: DataTypes.FLOAT, allowNull: false },
     status: {
       types: DataTypes.STRING,
       allowNull: false,
@@ -64,12 +65,16 @@ export default (sequelize, DataTypes) => {
       scope: { associatedType: "product" },
       as: "media",
     });
-    Product.belongsTo(models.SellerProfile, { foreignKey: "sellerProfileId" });
+    Product.belongsTo(models.SellerProfile, {
+      foreignKey: "sellerProfileId",
+      onDelete: "CASCADE",
+    });
     Product.belongsTo(models.User, {
       foreignKey: "productId",
       through: "models.WishList",
       otherKey: "userId",
       as: "wishListedByUsers",
+      onDelete: "CASCADE",
     });
   };
 
