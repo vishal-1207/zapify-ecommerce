@@ -116,6 +116,6 @@ export const deleteBrandService = async (id) => {
     }
   }
 
-  await media?.destroy();
+  // await media?.destroy();
   await brand.destroy();
 };

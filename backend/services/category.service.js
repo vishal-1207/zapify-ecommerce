@@ -109,6 +109,6 @@ export const deleteCategoryService = async (data) => {
     });
   }
 
-  await media.destroy();
+  // await media.destroy();
   await category.destroy();
 };
