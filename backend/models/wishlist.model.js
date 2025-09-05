@@ -8,8 +8,14 @@ export default (sequelize, DataTypes) => {
   });
 
   WishList.associate = (models) => {
-    WishList.belongsTo(models.User, { foreignKey: "userId" });
-    WishList.belongsTo(models.Product, { foreignKey: "productId" });
+    WishList.belongsTo(models.User, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
+    WishList.belongsTo(models.Product, {
+      foreignKey: "productId",
+      onDelete: "CASCADE",
+    });
   };
 
   return WishList;

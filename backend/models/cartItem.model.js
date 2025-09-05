@@ -9,8 +9,14 @@ export default (sequelize, DataTypes) => {
   });
 
   CartItem.associate = (models) => {
-    CartItem.belongsTo(models.Cart, { foreignKey: "cartId" });
-    CartItem.belongsTo(models.Product, { foreignKey: "productId" });
+    CartItem.belongsTo(models.Cart, {
+      foreignKey: "cartId",
+      onDelete: "CASCADE",
+    });
+    CartItem.belongsTo(models.Product, {
+      foreignKey: "productId",
+      onDelete: "CASCADE",
+    });
   };
 
   return CartItem;

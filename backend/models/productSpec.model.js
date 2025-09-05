@@ -10,7 +10,10 @@ export default (sequelize, DataTypes) => {
   });
 
   ProductSpec.associate = (models) => {
-    ProductSpec.belongsTo(models.Product, { foreignKey: "productId" });
+    ProductSpec.belongsTo(models.Product, {
+      foreignKey: "productId",
+      onDelete: "CASCADE",
+    });
   };
 
   return ProductSpec;

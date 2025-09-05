@@ -25,21 +25,25 @@ export default (sequelize, DataTypes) => {
       foreignKey: "associatedId",
       constraints: false,
       as: "brand",
+      onDelete: "CASCADE",
     });
     Media.belongsTo(models.Product, {
       foreignKey: "associatedId",
       constraints: false,
       as: "product",
+      onDelete: "CASCADE",
     });
     Media.belongsTo(models.Review, {
       foreignKey: "associatedId",
       constraints: false,
       as: "review",
+      onDelete: "CASCADE",
     });
     Media.belongsTo(models.Category, {
       foreignKey: "associatedId",
       constraints: false,
       as: "category",
+      onDelete: "CASCADE",
     });
   };
 

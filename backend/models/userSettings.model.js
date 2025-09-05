@@ -35,7 +35,10 @@ export default (sequelize, DataTypes) => {
   });
 
   UserSettings.associate = (models) => {
-    UserSettings.belongsTo(models.User, { foreignKey: "userId" });
+    UserSettings.belongsTo(models.User, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
   };
 
   return UserSettings;

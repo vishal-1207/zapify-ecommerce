@@ -30,6 +30,7 @@ export default (sequelize, DataTypes) => {
   SellerSettings.associate = (models) => {
     SellerSettings.belongsTo(models.SellerProfile, {
       foreignKey: "sellerProfileId",
+      onDelete: "CASCADE",
     });
   };
 
