@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
           fields: ["userId", "productId"],
         },
       ],
-      tableName: "reviews",
+      tableName: "Reviews",
       timestamps: true,
     }
   );
