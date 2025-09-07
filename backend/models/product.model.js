@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false },
+    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     status: {
       types: DataTypes.STRING,
       allowNull: false,
@@ -56,7 +56,6 @@ export default (sequelize, DataTypes) => {
     Product.belongsTo(models.Category, { foreignKey: "categoryId" });
     Product.belongsTo(models.Brand, { foreignKey: "brandId" });
     Product.hasMany(models.CartItem, { foreignKey: "productId" });
-    Product.hasMany(models.OrderItem, { foreignKey: "productId" });
     Product.hasMany(models.ProductSpec, { foreignKey: "productId" });
     Product.hasMany(models.Review, { foreignKey: "productId" });
     Product.hasMany(models.Media, {
