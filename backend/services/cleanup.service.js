@@ -49,3 +49,10 @@ const purgeExpiredUsers = async () => {
     );
   }
 };
+
+export const startCleanupService = () => {
+  const TIME_INTERVAL = 24 * 60 * 60 * 1000;
+  console.log("Cleanup service started. Will run every 24 hours.");
+  purgeExpiredUsers();
+  setInterval(purgeExpiredUsers, TIME_INTERVAL);
+};
