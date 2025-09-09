@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 import tokenRoutes from "./routes/token.routes.js";
 import userSettingsRoutes from "./routes/settings.routes.js";
 import searchRoutes from "./routes/search.routes.js";
+import { startCleanupService } from "./services/cleanup.service.js";
 import passport from "passport";
 
 const app = express();
@@ -49,6 +50,8 @@ const startServer = async () => {
   try {
     await db.sequelize.sync({ force: false });
     console.log("Database synced...");
+
+    startCleanupService();
 
     app.listen(PORT, () => {
       console.log(`Listening on port ${PORT}`);
