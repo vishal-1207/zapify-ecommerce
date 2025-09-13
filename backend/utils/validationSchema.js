@@ -8,7 +8,7 @@ export const registerSchema = Joi.object({
     .min(3)
     .pattern(/^[a-zA-Z\s]+$/)
     .required()
-    .custom(sanitize, "XSS Sanitization")
+    .custom(sanitize)
     .messages({
       "string.empty": "Name is required.",
     }),
@@ -16,129 +16,110 @@ export const registerSchema = Joi.object({
     .min(6)
     .pattern(/^[a-zA-Z0-9_]+$/)
     .required()
-    .custom(sanitize, "XSS Sanitization")
+    .custom(sanitize)
     .messages({
       "string.empty": "Username is required.",
       "string.min": "Username must be atleast 6 characters long.",
     }),
-  email: Joi.string()
-    .email()
-    .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Email is required.",
-      "string.email": "Email format is invalid.",
-    }),
-  password: Joi.string()
-    .min(8)
-    .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Password is required.",
-      "string.min": "Password must be atleast 8 characters long.",
-    }),
+  email: Joi.string().email().required().custom(sanitize).messages({
+    "string.empty": "Email is required.",
+    "string.email": "Email format is invalid.",
+  }),
+  password: Joi.string().min(8).required().custom(sanitize).messages({
+    "string.empty": "Password is required.",
+    "string.min": "Password must be atleast 8 characters long.",
+  }),
 });
 
 export const loginSchema = Joi.object({
   userId: Joi.string()
-    .custom((value, helpers) => {
-      const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
-      const isEmail = emailRegex.test(value);
-
-      const isUsername = /^[a-zA-Z0-9_]+$/.test(value);
-
-      if (!isEmail && !isUsername) {
-        return helpers.error("any.invalid");
-      }
-
-      return value;
-    })
     .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Username or Email is required.",
-      "any.invalid": "User ID must be either a username or a email.",
-    }),
+    .custom(sanitize)
+    .messages({ "string.empty": "Username or Email is required." }),
 
-  password: Joi.string()
-    .min(8)
-    .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Password is required.",
-      "string.min": "Passwod is incorrect.",
-    }),
+  password: Joi.string().min(8).required().custom(sanitize).messages({
+    "string.empty": "Password is required.",
+    "string.min": "Passwod is incorrect.",
+  }),
 });
 
 export const productSchema = Joi.object({
-  categoryId: Joi.number().integer().positive().required().messages({
-    "number.empty": "Category is required.",
-  }),
-
   name: Joi.string()
     .trim()
     .min(10)
-    .max(100)
+    .max(150)
     .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Product name is required.",
-      "string.min": "Product name must be atleast 6 characters long.",
-    }),
-
-  model: Joi.string()
-    .trim()
-    .max(30)
-    .optional()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.max": "Model name cannot exceed 30 characters.",
-    }),
-
+    .custom(sanitize)
+    .messages({ "string.empty": "Product name is required." }),
   description: Joi.string()
     .trim()
     .min(50)
-    .max(1000)
+    .max(2000)
     .required()
-    .custom(sanitize, "XSS Sanitization")
-    .messages({
-      "string.empty": "Description is required.",
-      "string.min": "Description must be atleast 50 characters long.",
-    }),
+    .custom(sanitize)
+    .messages({ "string.empty": "Description is required." }),
+  categoryId: Joi.string()
+    .uuid()
+    .required()
+    .messages({ "string.empty": "Category ID is required." }),
+  brandId: Joi.string()
+    .uuid()
+    .required()
+    .messages({ "string.empty": "Brand ID is required." }),
+  specs: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) return helpers.error("any.invalid");
+        return parsed;
+      } catch (e) {
+        return helpers.error("any.invalid");
+      }
+    })
+    .messages({ "any.invalid": "Specs must be a valid JSON array string." }),
+});
 
+export const offerSchema = Joi.object({
   price: Joi.number().positive().precision(2).required().messages({
     "number.base": "Price must be a valid number.",
     "number.empty": "Price is required.",
     "number.positive": "Price must be a positive value.",
-    "number.precision": "Price can have a maximum of 2 decimal places.",
   }),
-
-  stock: Joi.number().integer().positive().min(0).required().messages({
-    "number.base": "Price must be a valid number.",
-    "number.empty": "Price is required.",
-    "number.positive": "Price must be a positive value.",
+  stockQuantity: Joi.number().integer().min(0).required().messages({
+    "number.base": "Stock quantity must be a valid number.",
+    "number.empty": "Stock quantity is required.",
+    "number.integer": "Stock quantity must be a whole number.",
+    "number.min": "Stock quantity cannot be negative.",
   }),
+  condition: Joi.string()
+    .valid("New", "Used - Like New", "Used - Good", "Refurbished")
+    .optional()
+    .default("New"),
+});
 
-  specs: Joi.array()
-    .items(
-      Joi.object({
-        key: Joi.string()
-          .trim()
-          .required()
-          .custom(sanitize, "XSS Sanitization")
-          .messages({ "string.empty": "Specification is required." }),
-        value: Joi.string()
-          .trim()
-          .required()
-          .custom(sanitize, "XSS Sanitization")
-          .messages({
-            "string.empty": "Specification description is required.",
-          }),
-      })
-    )
-    .min(1)
-    .required()
-    .messages({ "array.min": "Atleast one specification is required." }),
+export const suggestProductSchema = Joi.object({
+  productData: Joi.object({
+    name: Joi.string().trim().min(10).max(150).required().custom(sanitize),
+    description: Joi.string()
+      .trim()
+      .min(50)
+      .max(2000)
+      .required()
+      .custom(sanitize),
+    categoryId: Joi.string().uuid().required(),
+    brandId: Joi.string().uuid().required(),
+    specs: Joi.string().required(),
+  }).required(),
+
+  offerData: Joi.object({
+    price: Joi.number().positive().precision(2).required(),
+    stockQuantity: Joi.number().integer().min(0).required(),
+    condition: Joi.string()
+      .valid("New", "Used - Like New", "Used - Good", "Refurbished")
+      .optional()
+      .default("New"),
+  }).required(),
 });
 
 export const categorySchema = Joi.object({
@@ -148,7 +129,7 @@ export const categorySchema = Joi.object({
     .min(4)
     .max(15)
     .required()
-    .custom(sanitize, "XSS Sanitization")
+    .custom(sanitize)
     .messages({
       "string.empty": "Category name is required.",
       "string.min": "Category name should be atleast 4 characters long.",
@@ -163,7 +144,7 @@ export const brandSchema = Joi.object({
     .min(2)
     .max(25)
     .required()
-    .custom(sanitize, "XSS Sanitization")
+    .custom(sanitize)
     .messages({
       "string.empty": "Brand name is required.",
       "string.min": "Brand name should be atleast 2 characters long.",
@@ -200,14 +181,6 @@ export const userSettingsSchema = Joi.object({
   dataSharingConsent: Joi.boolean().optional(),
 });
 
-export const productIdSchema = Joi.object({
-  id: Joi.number().integer().positive().required(),
-});
-
-export const productSlugSchema = Joi.object({
-  slug: Joi.string().trim().required(),
-});
-
 export const searchSchema = Joi.object({
   search: Joi.string().trim().optional(),
   categorySlug: Joi.string().trim().optional(),
@@ -221,30 +194,3 @@ export const searchSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
   offset: Joi.number().integer().min(0).optional(),
 });
-
-const ALLOWED_SORT_FIELDS = ["createdAt", "price", "averageRating"];
-
-export const validateProductQuery = async (query) => {
-  const schema = Joi.object({
-    search: Joi.string().max(100).optional(),
-    categorySlug: Joi.string().optional(),
-    categoryId: Joi.number().integer().min(1).optional(),
-    brand: Joi.string().max(50).optional(),
-    inStock: Joi.boolean().optional(),
-    priceMin: Joi.number().min(0).optional(),
-    priceMax: Joi.number().min(0).optional(),
-    sortBy: Joi.string()
-      .valid(...ALLOWED_SORT_FIELDS)
-      .default("createdAt"),
-    order: Joi.string().valid("asc", "desc").default("desc"),
-    limit: Joi.number().integer().min(1).max(100).default(10),
-    page: Joi.number().integer().min(1).default(1),
-  });
-
-  const value = await schema.validateAsync(query, { abortEarly: false });
-
-  return {
-    ...value,
-    offset: (value.page - 1) * value.limit,
-  };
-};
