@@ -1,4 +1,3 @@
-import { Router } from "express";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -8,10 +7,11 @@ import { productSchema } from "../utils/validationSchema.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+// router.use(authenticate);
 
 router.route("/").post(
   authenticate,
-  authorizeRoles("seller", "admin"),
+  authorizeRoles("admin"),
   csrfProtection,
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
@@ -21,16 +21,19 @@ router.route("/").post(
   productController.createProduct
 );
 
-router.route("/:slug").get(getProductDetails);
+router.route("/:slug").get(productController.getProductDetailsForCustomer);
 router
   .route("/:productId")
-  .get(authorizeRoles("admin"), productController.getProductDetails);
-router
-  .route("/offerId")
-  .get(authorizeRoles("seller"), productController.getProductOfferDetails);
+  .get(
+    authenticate,
+    authorizeRoles("admin"),
+    productController.getProductDetailsAdmin
+  );
+
 router.route("/catalog-search").get(productController.searchCatalog);
 
 router.route("/suggest-product").post(
+  authenticate,
   authorizeRoles("seller"),
   csrfProtection,
   upload.fields([
@@ -41,16 +44,32 @@ router.route("/suggest-product").post(
   productController.suggestNewProduct
 );
 
-router.route("/edit/:id").put(
+router
+  .route("/review/pending")
+  .get(
+    authenticate,
+    authorizeRoles("admin"),
+    productController.getPendingProductsForReview
+  );
+router
+  .route("/review/:productId")
+  .patch(
+    authenticate,
+    authorizeRoles("admin"),
+    csrfProtection,
+    productController.reviewProduct
+  );
+
+router.route("/edit/:productId").patch(
   authenticate,
-  authorizeRoles("seller", "admin"),
+  authorizeRoles("admin"),
   csrfProtection,
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
   ]),
   validate(productSchema),
-  updateProduct
+  productController.updateProduct
 );
 
 router
@@ -59,7 +78,7 @@ router
     authenticate,
     authorizeRoles("seller", "admin"),
     csrfProtection,
-    deleteProduct
+    productController.deleteProduct
   );
 
 export default router;
