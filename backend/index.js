@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 import tokenRoutes from "./routes/token.routes.js";
 import userSettingsRoutes from "./routes/settings.routes.js";
 import searchRoutes from "./routes/search.routes.js";
+import offerRoutes from "./routes/offer.routes.js";
 import { startCleanupService } from "./services/cleanup.service.js";
 import passport from "passport";
 
@@ -32,6 +33,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/brand", brandRoutes);
 app.use("/api/product", productRoutes);
+app.use("/api/offer", offerRoutes);
 // app.use("/api/cart", cartRoutes);
 // app.use("/api/order", orderRoutes);
 // app.use("/api/payment", paymentRoutes);
