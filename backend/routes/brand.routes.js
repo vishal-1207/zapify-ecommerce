@@ -15,9 +15,9 @@ import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 const router = express.Router();
 
 router
-  .get("/", getBrands)
+  .route("/")
+  .get(getBrands)
   .post(
-    "/",
     authenticate,
     authorizeRoles("admin"),
     csrfProtection,
@@ -26,22 +26,16 @@ router
     createBrand
   );
 
-router.put(
-  "/:id/edit",
-  authenticate,
-  authorizeRoles("admin"),
-  csrfProtection,
-  upload.single("image"),
-  validate(brandSchema),
-  updateBrand
-);
-
-router.delete(
-  "/:id/delete",
-  authenticate,
-  authorizeRoles("admin"),
-  csrfProtection,
-  deleteBrand
-);
+router
+  .route("/:id")
+  .put(
+    authenticate,
+    authorizeRoles("admin"),
+    csrfProtection,
+    upload.single("image"),
+    validate(brandSchema),
+    updateBrand
+  )
+  .delete(authenticate, authorizeRoles("admin"), csrfProtection, deleteBrand);
 
 export default router;
