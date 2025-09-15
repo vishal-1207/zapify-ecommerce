@@ -58,6 +58,11 @@ export const productSchema = Joi.object({
     .required()
     .custom(sanitize)
     .messages({ "string.empty": "Description is required." }),
+  price: Joi.number().positive().precision(2).required().messages({
+    "number.base": "Price must be a valid number.",
+    "number.empty": "Price is required.",
+    "number.positive": "Price must be a positive value.",
+  }),
   categoryId: Joi.string()
     .uuid()
     .required()
@@ -182,15 +187,20 @@ export const userSettingsSchema = Joi.object({
 });
 
 export const searchSchema = Joi.object({
-  search: Joi.string().trim().optional(),
-  categorySlug: Joi.string().trim().optional(),
-  brand: Joi.string().trim().optional(),
+  search: Joi.string().trim().max(100).optional().allow("").custom(sanitize),
+  categorySlug: Joi.string().trim().optional().custom(sanitize),
+  brand: Joi.string().trim().optional().custom(sanitize),
   priceMin: Joi.number().min(0).optional(),
   priceMax: Joi.number().positive().optional(),
   sortBy: Joi.string()
-    .valid("createdAt", "price", "name", "popularity", "relevance")
-    .optional(),
-  order: Joi.string().uppercase().valid("ASC", "DESC").optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  offset: Joi.number().integer().min(0).optional(),
+    .valid("createdAt", "price", "name", "relevance")
+    .optional()
+    .default("relevance"),
+  order: Joi.string()
+    .uppercase()
+    .valid("ASC", "DESC")
+    .optional()
+    .default("DESC"),
+  limit: Joi.number().integer().min(1).max(100).optional().default(20),
+  offset: Joi.number().integer().min(0).optional().default(0),
 });
