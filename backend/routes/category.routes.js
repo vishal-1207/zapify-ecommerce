@@ -13,12 +13,12 @@ import { categorySchema } from "../utils/validationSchema.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+router.use(authenticate);
 
 router
   .route("/")
   .get(getCategories)
   .post(
-    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
@@ -27,23 +27,14 @@ router
   );
 
 router
-  .route("/:id/edit")
+  .route("/:id")
   .put(
-    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
     updateCategory
-  );
-
-router
-  .route("/:id/delete")
-  .delete(
-    authenticate,
-    authorizeRoles("admin"),
-    csrfProtection,
-    deleteCategory
-  );
+  )
+  .delete(authorizeRoles("admin"), csrfProtection, deleteCategory);
 
 export default router;
