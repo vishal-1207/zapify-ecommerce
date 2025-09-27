@@ -29,7 +29,9 @@ export const getBrands = asyncHandler(async (req, res) => {
     throw new ApiError(404, "No brands found.");
   }
 
-  res.status(200).json({ message: "Brands fetched successfully.", brands });
+  return res
+    .status(200)
+    .json({ message: "Brands fetched successfully.", brands });
 });
 
 export const createBrand = asyncHandler(async (req, res) => {
@@ -37,7 +39,9 @@ export const createBrand = asyncHandler(async (req, res) => {
   const file = req.file;
 
   const brand = await addBrandService({ name, description }, file);
-  res.status(201).json({ message: "Brand created successfully.", brand });
+  return res
+    .status(201)
+    .json({ message: "Brand created successfully.", brand });
 });
 
 export const updateBrand = asyncHandler(async (req, res) => {
@@ -58,5 +62,5 @@ export const updateBrand = asyncHandler(async (req, res) => {
 export const deleteBrand = asyncHandler(async (req, res) => {
   const { id } = req.params;
   await deleteBrandService(id);
-  res.status(200).json({ message: "Brand deleted successfully." });
+  return res.status(200).json({ message: "Brand deleted successfully." });
 });

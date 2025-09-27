@@ -21,10 +21,10 @@ export const csrfToken = asyncHandler(async (req, res) => {
       sameSite: "strict",
     });
 
-    res.status(200).json({ csrfToken: token });
+    return res.status(200).json({ csrfToken: token });
   } catch (err) {
     console.error("CSRF token generation failed: ", err.message);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Failed to generate CSRF token.",
       error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });

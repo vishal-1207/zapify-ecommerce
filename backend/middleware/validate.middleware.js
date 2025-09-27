@@ -36,7 +36,7 @@ export const validate = (schema, source = "body") => {
         path: detail.path,
       }));
 
-      res.status(400).json({
+      return res.status(400).json({
         message: "Validation error",
         errors: errorDetails,
       });

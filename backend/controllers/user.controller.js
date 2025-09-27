@@ -26,7 +26,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   const updatedProfile = await updateUserProfile(userId, data);
 
-  res.status(200).json({
+  return res.status(200).json({
     message: "Profile updated successfully.",
     user: updatedProfile,
   });

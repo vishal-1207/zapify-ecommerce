@@ -37,7 +37,9 @@ export const addCategory = asyncHandler(async (req, res) => {
   const image = req.file;
 
   const category = await createCategoryService(name, image);
-  res.status(200).json({ message: "Category created successfully.", category });
+  return res
+    .status(200)
+    .json({ message: "Category created successfully.", category });
 });
 
 // UPDATE CATEGORY
@@ -56,5 +58,5 @@ export const updateCategory = asyncHandler(async (req, res) => {
 export const deleteCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
   await deleteCategoryService(id);
-  res.status(200).json({ message: "Category deleted successfully." });
+  return res.status(200).json({ message: "Category deleted successfully." });
 });

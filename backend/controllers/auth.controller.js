@@ -19,14 +19,18 @@ export const register = asyncHandler(async (req, res) => {
     res
   );
 
-  res.status(201).json({ message: "User registered", user, accessToken });
+  return res
+    .status(201)
+    .json({ message: "User registered", user, accessToken });
 });
 
 //Login Controller
 export const login = asyncHandler(async (req, res) => {
   const { userId, password } = req.body;
   const { user, accessToken } = await findUser({ userId, password }, res);
-  res.status(200).json({ message: "Login successfull", user, accessToken });
+  return res
+    .status(200)
+    .json({ message: "Login successfull", user, accessToken });
 });
 
 //Social Callback Handler Controller
@@ -39,7 +43,7 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
 
   const tokens = await generateTokens(user.userId, user.roles);
   setTokensInCookies(res, tokens);
-  res.status(200).json({
+  return res.status(200).json({
     message: "Login successful.",
     user,
     accessToken: tokens.accessToken,
@@ -103,5 +107,5 @@ export const logout = asyncHandler(async (req, res) => {
 
   await db.RefreshToken.destroy({ where: { tokenId: payload.tokenId } });
 
-  res.status(200).json({ message: "Logged out successfully." });
+  return res.status(200).json({ message: "Logged out successfully." });
 });

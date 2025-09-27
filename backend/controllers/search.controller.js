@@ -6,5 +6,7 @@ export const getSearchResults = asyncHandler(async (req, res) => {
 
   const data = await getFilteredProducts(queryParams);
 
-  res.status(200).json({ message: "Products fetched successfully.", data });
+  return res
+    .status(200)
+    .json({ message: "Products fetched successfully.", data });
 });
