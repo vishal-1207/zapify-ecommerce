@@ -6,7 +6,7 @@ import { validate } from "../middleware/validate.middleware.js";
 import * as offerController from "../controllers/offer.controller.js";
 
 const router = express.Router;
-// router.use(authenticate);
+router.use(authenticate);
 
 router
   .route("/product/:productId")
@@ -30,6 +30,6 @@ router
     validate(offerSchema),
     offerController.updateProductOffer
   )
-  .delete(authenticate, authorizeRoles("seller"), offerController.deleteOffer);
+  .delete(authorizeRoles("seller"), offerController.deleteOffer);
 
 export default router;
