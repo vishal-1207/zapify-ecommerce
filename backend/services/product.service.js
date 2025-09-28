@@ -4,46 +4,38 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 
-const Product = db.Product;
-const Media = db.Media;
-const ProductSpec = db.ProductSpec;
-const Category = db.Category;
-const Brand = db.Brand;
-const Seller = db.SellerProfile;
-const Offer = db.Offer;
-
 /**
  * Gets a single product's public details, including all available offers from sellers.
  *
  */
 export const getCustomerProductDetails = async (productSlug) => {
-  const product = await Product.findOne({
+  const product = await db.Product.findOne({
     where: { slug: productSlug, status: "approved" },
     include: [
-      { model: Category, as: "category" },
-      { model: Brand, as: "brand" },
-      { model: Media, as: "media" },
-      { model: ProductSpec, as: "productSpec" },
+      { model: db.Category, as: "category" },
+      { model: db.Brand, as: "brand" },
+      { model: db.Media, as: "media" },
+      { model: db.ProductSpec, as: "productSpec" },
       {
-        model: Review,
+        model: db.Review,
         as: "reviews",
         attributes: ["id", "rating", "comment", "createdAt"],
         separate: true,
         order: [["createdAt", "DESC"]],
         include: [
           {
-            model: User,
+            model: db.User,
             as: "reviewer",
             attributes: ["id", "fullname"],
           },
         ],
       },
       {
-        mode: Offer,
+        mode: db.Offer,
         as: "offer",
         include: [
           {
-            model: Seller,
+            model: db.SellerProfile,
             as: "sellerProfile",
             attributes: ["id", "storeName"],
           },
@@ -60,6 +52,26 @@ export const getCustomerProductDetails = async (productSlug) => {
 };
 
 /**
+ * Service for admin to get product details for checking purpose.
+ */
+
+export const getProductDetailsAdmin = async (id) => {
+  const productId = await db.Product.findByPk({
+    where: { id: productId },
+    include: [
+      {
+        model: db.ProductSpec,
+        as: "productSpecs",
+      },
+      {
+        model: db.Media,
+        as: "media",
+      },
+    ],
+  });
+};
+
+/**
  * Service for sellers to search the public catalog for approved products.
  *
  */
@@ -67,13 +79,13 @@ export const getCustomerProductDetails = async (productSlug) => {
 export const searchProductCatalog = async (searchTerm) => {
   if (!searchTerm || searchTerm.trim() === "") return [];
 
-  return Product.findAll({
+  return db.Product.findAll({
     where: {
       name: { [Op.like]: `${searchTerm}` },
       status: "approved",
     },
     attributes: ["id", "name"],
-    include: [{ model: Brand, as: "brand", attributes: ["name"] }],
+    include: [{ model: db.Brand, as: "brand", attributes: ["name"] }],
     limit: 20,
   });
 };
@@ -88,7 +100,7 @@ export const createOfferForProduct = async (
   sellerProfileId,
   offerData
 ) => {
-  const product = await Product.findOne({
+  const product = await db.Product.findOne({
     where: {
       id: productId,
       status: "approved",
@@ -99,7 +111,7 @@ export const createOfferForProduct = async (
     throw new ApiError(404, "Approved product not found in catalog.");
   }
 
-  const existingOffer = await Offer.findOne({
+  const existingOffer = await db.Offer.findOne({
     where: { productId, sellerProfileId },
   });
 
@@ -110,7 +122,7 @@ export const createOfferForProduct = async (
     );
   }
 
-  const offer = await Offer.create({
+  const offer = await db.Offer.create({
     ...offerData,
     productId,
     sellerProfileId,
@@ -219,7 +231,7 @@ export const createProductSuggestion = async (
       transaction
     );
 
-    await Offer.create(
+    await db.Offer.create(
       {
         ...offerData,
         productId: newProduct.id,
@@ -280,14 +292,14 @@ export const updateProductService = async (productId, data, files) => {
   let committed = false;
 
   try {
-    const product = await Product.findByPk(productId, {
+    const product = await db.Product.findByPk(productId, {
       include: [
         {
-          model: Media,
+          model: db.Media,
           as: "media",
         },
         {
-          model: ProductSpec,
+          model: db.ProductSpec,
         },
       ],
     });
@@ -319,7 +331,7 @@ export const updateProductService = async (productId, data, files) => {
         process.env.CLOUDINARY_PRODUCT_FOLDER
       );
 
-      updatedThumbnail = await Media.create(
+      updatedThumbnail = await db.Media.create(
         {
           publicId: uplaodThumbnail.public_id,
           url: uplaodThumbnail.secure_url,
@@ -357,7 +369,7 @@ export const updateProductService = async (productId, data, files) => {
         associatedId: product.id,
       }));
 
-      updatedGallery = await Media.bulkCreate(galleryMedia, { transaction });
+      updatedGallery = await db.Media.bulkCreate(galleryMedia, { transaction });
     }
 
     // Specifications update logic
@@ -374,7 +386,7 @@ export const updateProductService = async (productId, data, files) => {
         productId: product.id,
       }));
 
-      updatedSpecs = await ProductSpec.bulkCreate(newSpecs, { transaction });
+      updatedSpecs = await db.ProductSpec.bulkCreate(newSpecs, { transaction });
     }
 
     await transaction.commit();
@@ -393,11 +405,11 @@ export const updateProductService = async (productId, data, files) => {
  */
 
 export const reviewProductSuggestion = async (productId, decision) => {
-  const product = await Product.findOne({
+  const product = await db.Product.findOne({
     where: { id: productId, status: "pending" },
     include: [
-      { model: Media, as: "media" },
-      { model: ProductSpec, as: "specs" },
+      { model: db.Media, as: "media" },
+      { model: db.ProductSpec, as: "specs" },
     ],
   });
 
@@ -410,7 +422,7 @@ export const reviewProductSuggestion = async (productId, decision) => {
   }
 
   product.decision = "approved";
-  await Product.save();
+  await db.Product.save();
 
   return product;
 };
@@ -422,10 +434,10 @@ export const deleteProductService = async (productId) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const product = await Product.findByPk(productId, {
+    const product = await db.Product.findByPk(productId, {
       include: [
-        { model: Media, as: "media" },
-        { model: ProductSpec, as: "specs" },
+        { model: db.Media, as: "media" },
+        { model: db.ProductSpec, as: "specs" },
       ],
       transaction,
     });
