@@ -13,12 +13,12 @@ import { brandSchema } from "../utils/validationSchema.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+router.use(authenticate);
 
 router
   .route("/")
   .get(getBrands)
   .post(
-    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
@@ -29,13 +29,12 @@ router
 router
   .route("/:id")
   .put(
-    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(brandSchema),
     updateBrand
   )
-  .delete(authenticate, authorizeRoles("admin"), csrfProtection, deleteBrand);
+  .delete(authorizeRoles("admin"), csrfProtection, deleteBrand);
 
 export default router;

@@ -6,10 +6,9 @@ import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
+router.use(authenticate);
 
 router.route("/login").post(csrfProtection, validate(loginSchema), login);
-router
-  .route("/logout")
-  .post(authenticate, validate(registerSchema), csrfProtection, logout);
+router.route("/logout").post(validate(registerSchema), csrfProtection, logout);
 
 export default router;

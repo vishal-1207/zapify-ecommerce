@@ -14,6 +14,7 @@ import { socialCallbackHandler } from "../controllers/auth.controller.js";
 import { limiter } from "../utils/rateLimiter.util.js";
 
 const router = express.Router();
+router.use(authenticate);
 
 //Register route
 router
@@ -51,6 +52,6 @@ router
   );
 
 router.route("/access-token").post(csrfProtection, limiter, refreshTokenHander);
-router.route("/logout").post(authenticate, csrfProtection, logout);
+router.route("/logout").post(csrfProtection, logout);
 
 export default router;

@@ -13,22 +13,20 @@ import { sellerProfileSchema } from "../utils/validationSchema.js";
 import { registerSellerProfile } from "../controllers/seller.controller.js";
 
 const router = express.Router();
-
-router.route(
-  "/profile/register",
-  csrfProtection,
-  validate(sellerProfileSchema),
-  limiter,
-  registerSellerProfile
-);
+router.use(authenticate);
 
 router
-  .route("/profile")
-  .get(authenticate, authorizeRoles("seller"), getSellerProfile);
+  .route("/profile/register")
+  .post(
+    csrfProtection,
+    validate(sellerProfileSchema),
+    limiter,
+    registerSellerProfile
+  );
 
-router
-  .route("/analytics")
-  .get(authenticate, authorizeRoles("seller"), getSellerAnalytics);
+router.route("/profile").get(authorizeRoles("seller"), getSellerProfile);
+
+router.route("/analytics").get(authorizeRoles("seller"), getSellerAnalytics);
 
 router
   .route("/:slug/edit/profile")
