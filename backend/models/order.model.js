@@ -22,6 +22,7 @@ export default (sequelize, DataTypes) => {
   Order.associate = (models) => {
     Order.belongsTo(models.User, { foreignKey: "userId" });
     Order.hasMany(models.OrderItem, { foreignKey: "orderId" });
+    Order.hasOne(models.Payment, { foreignKey: "orderId" });
   };
 
   return Order;
