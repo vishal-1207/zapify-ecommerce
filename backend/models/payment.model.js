@@ -3,7 +3,7 @@ export default (sequelize, DataTypes) => {
     id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
     amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     currency: {
-      type: Datatypes.STRING(3),
+      type: DataTypes.STRING(3),
       defaultValue: "INR",
       allowNull: false,
     },
