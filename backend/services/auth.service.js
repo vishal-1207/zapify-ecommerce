@@ -4,13 +4,19 @@ import bcrypt from "bcrypt";
 import generateTokens from "../utils/token.utils.js";
 import ApiError from "../utils/ApiError.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
+import crypto from "crypto";
+import sendMail from "../utils/mailUtility.js";
 
 const User = db.User;
 const UserSettings = db.UserSettings;
 const Cart = db.Cart;
 
-//Create User Service
-export const createUser = async (userData, res) => {
+/**
+ * Register service creates a new user and store it in the database.
+ * @param {userData} - userData consist of name, email, password which is required for account creation.
+ * @return {user, accessToken} - Return new user after successful registration.
+ */
+export const registerService = async (userData, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { fullname, username, email, password } = userData;
@@ -21,6 +27,7 @@ export const createUser = async (userData, res) => {
       },
     });
 
+    // Check if user already exists.
     if (existingUser) {
       const message =
         existingUser.username === username
@@ -30,6 +37,7 @@ export const createUser = async (userData, res) => {
       throw new ApiError(409, message);
     }
 
+    // Create hashed passwords.
     const saltRounds = parseInt(process.env.SALT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -45,6 +53,7 @@ export const createUser = async (userData, res) => {
       { transaction }
     );
 
+    // Create associated records.
     await UserSettings.create({ userId: user.id }, { transaction });
     await Cart.create({ userId: user.id }, { transaction });
 
@@ -55,7 +64,14 @@ export const createUser = async (userData, res) => {
 
     await transaction.commit();
 
-    return { user, accessToken: tokens.accessToken };
+    // Send welcome email (fire and forget, don't block the response)
+    const subject = "Welcome to Zapify!";
+    const html = `<h1>Hi ${fullname},</h1><p>Thank you for registering. Welcome to our community!</p>`;
+    sendMail(email, subject, html).catch((err) =>
+      console.error("Failed to send welcome email:", err)
+    );
+
+    return { user: user, accessToken: tokens.accessToken };
   } catch (error) {
     await transaction.rollback();
     console.error("Registration failed, transaction rolled back: ", error);
@@ -64,7 +80,7 @@ export const createUser = async (userData, res) => {
 };
 
 //Find User Service
-export const findUser = async (userData, res) => {
+export const loginService = async (userData, res) => {
   const { userId, password } = userData;
   const user = await User.findOne({
     where: {
