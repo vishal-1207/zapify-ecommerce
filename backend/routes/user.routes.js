@@ -1,27 +1,33 @@
 import express from "express";
 import { authenticate } from "../middleware/auth.middleware.js";
-import {
-  currentUserDetails,
-  // deleteUser,
-  updateProfile,
-} from "../controllers/user.controller.js";
+import * as userControllers from "../controllers/user.controller.js";
 
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+router.use(authenticate);
 
 router
   .route("/profile")
-  .get(authenticate, authorizeRoles("user"), currentUserDetails);
+  .get(authorizeRoles("user"), userControllers.currentUserDetailsController);
 
 router
   .route("/profile/edit")
-  .patch(authenticate, authorizeRoles("user"), csrfProtection, updateProfile);
+  .patch(
+    authorizeRoles("user"),
+    csrfProtection,
+    userControllers.updateProfileController
+  );
 
-// TODO: COMPLETE DELETE USER CONTROLLER
-// router
-//   .route("/profile/delete")
-//   .delete(authenticate, authorizeRoles("user"), csrfProtection, deleteUser);
+router.route("/forgot-password").post(userControllers.forgotPasswordController);
+
+router
+  .route("/profile/delete")
+  .delete(
+    authorizeRoles("user"),
+    csrfProtection,
+    userControllers.deleteUserController
+  );
 
 export default router;

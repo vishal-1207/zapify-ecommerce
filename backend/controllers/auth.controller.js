@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { createUser, findUser } from "../services/auth.service.js";
+import * as authServices from "../services/auth.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import ApiError from "../utils/ApiError.js";
@@ -7,9 +7,9 @@ import generateTokens from "../utils/token.utils.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
 
 //Register Controller
-export const register = asyncHandler(async (req, res) => {
+export const registerController = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
-  const { user, accessToken } = await createUser(
+  const { user, accessToken } = await authServices.registerService(
     {
       fullname,
       username,
@@ -25,9 +25,12 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 //Login Controller
-export const login = asyncHandler(async (req, res) => {
+export const loginController = asyncHandler(async (req, res) => {
   const { userId, password } = req.body;
-  const { user, accessToken } = await findUser({ userId, password }, res);
+  const { user, accessToken } = await authServices.loginService(
+    { userId, password },
+    res
+  );
   return res
     .status(200)
     .json({ message: "Login successfull", user, accessToken });
@@ -86,7 +89,7 @@ export const refreshTokenHander = asyncHandler(async (req, res) => {
 });
 
 //Logout Controller
-export const logout = asyncHandler(async (req, res) => {
+export const logoutController = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
