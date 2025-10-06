@@ -1,14 +1,11 @@
 import db from "../models/index.js";
-import {
-  scheduleUserDeletion,
-  updateUserProfile,
-} from "../services/user.service.js";
+import * as userServices from "../services/user.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const User = db.User;
 
-export const currentUserDetails = asyncHandler(async (req, res) => {
+export const currentUserDetailsController = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["password"] },
   });
@@ -20,11 +17,11 @@ export const currentUserDetails = asyncHandler(async (req, res) => {
   res.json({ message: "User details fetched successfully.", user });
 });
 
-export const updateProfile = asyncHandler(async (req, res) => {
+export const updateProfileController = asyncHandler(async (req, res) => {
   const data = { ...req.body };
   const userId = req.user.id;
 
-  const updatedProfile = await updateUserProfile(userId, data);
+  const updatedProfile = await userServices.updateUserProfile(userId, data);
 
   return res.status(200).json({
     message: "Profile updated successfully.",
@@ -32,10 +29,16 @@ export const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
-export const deleteAccount = asyncHandler(async (req, res) => {
+export const forgotPasswordController = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const result = await userServices.forgotPassword(email);
+  return res.status(200).json({ message: result.message, result });
+});
+
+export const deleteUserController = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  const result = await scheduleUserDeletion(userId, 30);
+  const result = await userServices.scheduleUserDeletion(userId, 30);
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
 
