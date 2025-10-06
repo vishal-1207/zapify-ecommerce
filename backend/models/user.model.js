@@ -20,11 +20,18 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.ENUM("local", "google", "github"),
         defaultValue: "local",
       },
-
       providerId: {
         type: DataTypes.STRING,
         allowNull: true,
         unique: true,
+      },
+      passwordResetToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      passwordResetExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       scheduledForDeletionAt: {
         type: DataTypes.DATE,
