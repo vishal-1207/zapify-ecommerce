@@ -11,6 +11,11 @@ const checkExistingUser = async (param) => {
   return user;
 };
 
+/**
+ * User service to update their profile data such as email, name, password, etc, fields may vary.
+ * @param {*} userId - User ID for which the profile will be updated.
+ * @param {*} profileData - User profile data including email, name and password (maybe).
+ */
 export const updateUserProfile = async (userId, profileData) => {
   const { name, email, currentPassword, newPassword } = profileData;
   const user = await User.findByPk(userId);
@@ -47,6 +52,43 @@ export const updateUserProfile = async (userId, profileData) => {
   return user;
 };
 
+/**
+ * Forgot password service to send users to change/reset their account password.
+ * @param {email} - Require user email which will recieve password reset link mail.
+ */
+export const forgotPassword = async (email) => {
+  const user = await db.User.findOne({ where: { email } });
+
+  if (!user) {
+    return {
+      message:
+        "If a user exists with this email, a password reset link has been sent.",
+    };
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  user.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  await user.save();
+
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+  const subject = "Your Password Reset Request.";
+  const html = `<p>You requested a password reset. Please click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`;
+  sendMail(email, subject, html).catch((error) => {
+    console.error("Failed to send password reset mail: ", error);
+  });
+
+  return { message: "Password reset link sent." };
+};
+
+/**
+ * User service to schedule user account deletion once the user has confirmed their account deletion.
+ * @param {*} userId - User ID for which account deletion will be scheduled.
+ * @param {*} gracePeriodInDays - Nmber of days after which the account will be permanently deleted.
+ */
 export const scheduleUserDeletion = async (userId, gracePeriodInDays = 30) => {
   const user = await User.findByPk(userId);
 
