@@ -9,7 +9,19 @@ export default (sequelize, DataTypes) => {
       },
       fullname: { type: DataTypes.STRING, allowNull: false },
       username: { type: DataTypes.STRING, allowNull: false, unique: true },
-      email: { type: DataTypes.STRING, allowNull: false, unique: true },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        validate: {
+          isEmail: true,
+        },
+      },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+      },
       password: { type: DataTypes.STRING, allowNull: true },
       roles: {
         type: DataTypes.JSON,
@@ -24,6 +36,24 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
         unique: true,
+      },
+      verificationCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Stores the 6-digit code for email or phone verification.",
+      },
+      verificationCodeExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "The expiry time for the verification code.",
+      },
+      isEmailVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      isPhoneVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
       passwordResetToken: {
         type: DataTypes.STRING,
@@ -41,6 +71,13 @@ export default (sequelize, DataTypes) => {
     },
     {
       paranoid: true,
+      hooks: {
+        beforeValidate: (user) => {
+          if (!user.email && !user.phoneNumber) {
+            throw new Error("Either email or phone number must be provided.");
+          }
+        },
+      },
     }
   );
 
