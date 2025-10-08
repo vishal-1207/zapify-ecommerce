@@ -25,11 +25,15 @@ export const registerSchema = Joi.object({
     "string.empty": "Email is required.",
     "string.email": "Email format is invalid.",
   }),
+  phoneNumber: Joi.string()
+    .pattern(/^\+[1-9]\d{1,14}$/)
+    .optional()
+    .custom(sanitize),
   password: Joi.string().min(8).required().custom(sanitize).messages({
     "string.empty": "Password is required.",
     "string.min": "Password must be atleast 8 characters long.",
   }),
-});
+}).or("email", "phoneNumber");
 
 export const loginSchema = Joi.object({
   userId: Joi.string()
@@ -41,6 +45,22 @@ export const loginSchema = Joi.object({
     "string.empty": "Password is required.",
     "string.min": "Passwod is incorrect.",
   }),
+});
+
+export const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required().custom(sanitize),
+});
+
+export const resetPasswordSchema = Joi.object({
+  token: Joi.string().hex().length(64).required(),
+  password: Joi.string().min(8).required(),
+});
+
+export const verifyCodeSchema = Joi.object({
+  code: Joi.string()
+    .length(6)
+    .pattern(/^[0-9]+$/)
+    .required(),
 });
 
 export const productSchema = Joi.object({
