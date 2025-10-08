@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import generateTokens from "../utils/token.utils.js";
 import ApiError from "../utils/ApiError.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
-import crypto from "crypto";
 import sendMail from "../utils/mailUtility.js";
 
 const User = db.User;
@@ -21,20 +20,19 @@ export const registerService = async (userData, res) => {
   try {
     const { fullname, username, email, password } = userData;
 
-    const existingUser = await User.findOne({
-      where: {
-        [Op.or]: [{ username }, { email }],
-      },
+    const whereClause = [];
+    if (email) whereClause.push({ email });
+    if (username) whereClause.push({ username });
+    if (phoneNumber) whereClause.push({ phoneNumber });
+
+    const existingUser = await db.User.findOne({
+      where: { [db.Sequelize.Op.or]: whereClause },
     });
-
-    // Check if user already exists.
     if (existingUser) {
-      const message =
-        existingUser.username === username
-          ? "Username is already taken."
-          : "Email is already registered.";
-
-      throw new ApiError(409, message);
+      throw new ApiError(
+        409,
+        "User with this email, username, or phone number already exists."
+      );
     }
 
     // Create hashed passwords.
@@ -46,6 +44,7 @@ export const registerService = async (userData, res) => {
         fullname,
         username,
         email,
+        phoneNumber,
         password: hashedPassword,
         roles: ["user"],
         provider: "local",
@@ -67,9 +66,11 @@ export const registerService = async (userData, res) => {
     // Send welcome email (fire and forget, don't block the response)
     const subject = "Welcome to Zapify!";
     const html = `<h1>Hi ${fullname},</h1><p>Thank you for registering. Welcome to our community!</p>`;
-    sendMail(email, subject, html).catch((err) =>
-      console.error("Failed to send welcome email:", err)
-    );
+    if (email) {
+      sendMail(email, subject, html).catch((err) =>
+        console.error("Failed to send welcome email:", err)
+      );
+    }
 
     return { user: user, accessToken: tokens.accessToken };
   } catch (error) {
@@ -79,22 +80,34 @@ export const registerService = async (userData, res) => {
   }
 };
 
-//Find User Service
+// Login service
 export const loginService = async (userData, res) => {
   const { userId, password } = userData;
-  const user = await User.findOne({
+
+  if (!userId || !password) {
+    throw new ApiError(400, "Username/Email/Phone and password are required.");
+  }
+
+  // Find the user by username, email, OR phone number
+  const user = await db.User.findOne({
     where: {
-      [Op.or]: [{ username: userId }, { email: userId }],
+      [db.Sequelize.Op.or]: [
+        { username: userId },
+        { email: userId },
+        { phoneNumber: userId },
+      ],
     },
   });
 
-  if (!user) throw new ApiError(404, "User not found.");
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
 
   if (user.provider !== "local")
     throw new ApiError(400, `Login via ${user.provider} account.`);
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new ApiError(401, "Invalid credentials.");
+  if (!isMatch) throw new ApiError(401, "Invalid user credentials.");
 
   const payload = {
     userId: user.id,
