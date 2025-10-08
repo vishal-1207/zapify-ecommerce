@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
     status: {
       type: DataTypes.ENUM(
         "pending",
-        "paid",
+        "processing",
         "shipped",
         "delivered",
         "cancelled",
