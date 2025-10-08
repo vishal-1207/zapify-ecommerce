@@ -76,17 +76,96 @@ export const getProductDetailsAdmin = asyncHandler(async (req, res) => {
 /**
  * Seller controller to suggest product to admin that is not listed or available on the platform.
  */
-export const suggestNewProduct = asyncHandler(async (req, res) => {});
+export const suggestNewProduct = asyncHandler(async (req, res) => {
+  const {
+    name,
+    description,
+    categoryId,
+    brandId,
+    specs,
+    price,
+    stockQuantity,
+    condition,
+  } = req.body;
+  const files = req.files;
+
+  const sellerProfile = await db.SellerProfile.findOne({
+    where: { userId: req.user.id },
+  });
+  if (!sellerProfile) {
+    throw new ApiError(403, "Forbidden: Seller profile required.");
+  }
+
+  const productData = {
+    name,
+    description,
+    categoryId,
+    brandId,
+    specs: JSON.parse(specs || [""]),
+  };
+  const offerData = {
+    price: parseFloat(price),
+    stockQuantity: parseInt(stockQuantity, 10),
+    condition,
+  };
+
+  const newProduct = await productService.createProductSuggestion(
+    productData,
+    offerData,
+    sellerProfile.id,
+    files
+  );
+  return res.status(201).json({
+    message: "Product successfully submitted for admin approval.",
+    newProduct,
+  });
+});
 
 /**
  * Admin controller to get list of pending suggested products by seller.
  */
-export const getPendingProductsForReview = asyncHandler(async (req, res) => {});
+export const getPendingProductsForReview = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page, 10) || 1; // current page
+  const limit = parseInt(req.query.limit, 10) || 15; // records per page (default 15)
+  const result = await paginate(
+    db.Product,
+    {
+      where: { status: "pending" },
+      include: [{ model: db.ProductSpecs, as: "specs" }],
+      order: [["createdAt", "DESC"]],
+    },
+    page,
+    limit
+  );
+
+  if (result.total === 0) {
+    return res.status(200).json({
+      message:
+        "No pending products found. All products are verified. Nice work.",
+      ...result,
+    });
+  }
+
+  return res.status(200).json({
+    message: `Found ${result.total} product(s) pending for review.`,
+    ...result,
+  });
+});
 
 /**
  * Admin controller to review product, and perform needed action based on product data.
  */
-export const reviewProduct = asyncHandler(async (req, res) => {});
+export const reviewProduct = asyncHandler(async (req, res) => {
+  const { decision } = req.body;
+  const product = await productService.reviewProductSuggestion(
+    req.params.productId,
+    decision
+  );
+
+  return res
+    .status(200)
+    .json({ message: `Product has been ${decision}.`, product });
+});
 
 /**
  * Seller controller for finding product from list of active products listed by admin.
@@ -113,7 +192,7 @@ export const createProduct = asyncHandler(async (req, res) => {
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
     await productService.createProductService(data, files);
 
-  res.status(200).json({
+  return res.status(200).json({
     message: "Product added successfully.",
     product: createdProduct,
     productSpecs,
@@ -133,7 +212,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   const { updatedProduct, updatedSpecs, updatedThumbnail, updaterGallery } =
     await productService.updateProductService(productId, data, files);
 
-  res.status(200).json({
+  return res.status(200).json({
     message: "Product updated successfully.",
     product: updatedProduct,
     productSpecs: updatedSpecs,
@@ -148,5 +227,5 @@ export const updateProduct = asyncHandler(async (req, res) => {
 export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.id;
   const result = await productService.deleteProductService(productId);
-  res.status(200).json({ message: result.message });
+  return res.status(200).json({ message: result.message });
 });
