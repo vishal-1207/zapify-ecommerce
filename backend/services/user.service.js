@@ -85,6 +85,32 @@ export const forgotPassword = async (email) => {
 };
 
 /**
+ * Resets a user's password using a valid token.
+ * @param {*} token
+ * @param {*} newPassword
+ */
+export const resetPassword = async (token, newPassword) => {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await db.User.findOne({
+    where: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { [db.Sequelize.Op.gt]: Date.now() },
+    },
+  });
+
+  if (!user) throw new ApiError(400, "Token is invalid or has expired.");
+
+  const saltRounds = parseInt(process.env.SALT_ROUNDS);
+  user.password = await bcrypt.hash(newPassword, saltRounds);
+  user.passwordResetToken = null;
+  user.passwordResetExpires = null;
+  await user.save();
+
+  return { message: "Password has been reset successfully." };
+};
+
+/**
  * User service to schedule user account deletion once the user has confirmed their account deletion.
  * @param {*} userId - User ID for which account deletion will be scheduled.
  * @param {*} gracePeriodInDays - Nmber of days after which the account will be permanently deleted.
