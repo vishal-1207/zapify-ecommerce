@@ -32,7 +32,7 @@ export default (sequelize, DataTypes) => {
       onDelete: "CASCADE",
     });
 
-    Shipment.belongsTo(models.SellerProfileId, {
+    Shipment.belongsTo(models.SellerProfile, {
       foreignKey: "sellerProfileId",
       onDelete: "SET NULL",
     });
