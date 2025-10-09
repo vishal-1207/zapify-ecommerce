@@ -1,6 +1,6 @@
 import express from "express";
 import * as otpControllers from "../controllers/otp.controller.js";
-import authenticate from "../middleware/auth.middleware.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { verifyCodeSchema } from "../utils/validationSchema.js";
