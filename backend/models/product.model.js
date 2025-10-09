@@ -14,9 +14,19 @@ export default (sequelize, DataTypes) => {
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     status: {
-      types: DataTypes.STRING,
+      type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "pending",
+    },
+    averageRating: {
+      type: DataTypes.DECIMAL(3, 2), // e.g., 4.50
+      allowNull: true,
+      defaultValue: 0.0,
+    },
+    reviewCount: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
     },
     slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
@@ -55,7 +65,11 @@ export default (sequelize, DataTypes) => {
   Product.associate = (models) => {
     Product.belongsTo(models.Category, { foreignKey: "categoryId" });
     Product.belongsTo(models.Brand, { foreignKey: "brandId" });
-    Product.hasMany(models.CartItem, { foreignKey: "productId" });
+    Product.hasMany(models.Offer, {
+      as: "Offers",
+      foreignKey: "productId",
+      onDelete: "CASCADE",
+    });
     Product.hasMany(models.ProductSpec, { foreignKey: "productId" });
     Product.hasMany(models.Review, { foreignKey: "productId" });
     Product.hasMany(models.Media, {
@@ -64,13 +78,9 @@ export default (sequelize, DataTypes) => {
       scope: { associatedType: "product" },
       as: "media",
     });
-    Product.belongsTo(models.SellerProfile, {
-      foreignKey: "sellerProfileId",
-      onDelete: "CASCADE",
-    });
-    Product.belongsTo(models.User, {
+    Product.belongsToMany(models.User, {
       foreignKey: "productId",
-      through: "models.WishList",
+      through: models.WishList,
       otherKey: "userId",
       as: "wishListedByUsers",
       onDelete: "CASCADE",
