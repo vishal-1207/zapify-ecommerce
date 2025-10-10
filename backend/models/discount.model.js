@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const Discount = sequelize.define("Discount", {
     id: {
       type: DataTypes.UUID,
-      defaultValue: UUIDV4,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     code: {
