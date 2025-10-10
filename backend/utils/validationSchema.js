@@ -103,6 +103,23 @@ export const productSchema = Joi.object({
       }
     })
     .messages({ "any.invalid": "Specs must be a valid JSON array string." }),
+  mediaToDelete: Joi.string()
+    .optional()
+    .custom((value, helpers) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) {
+          return helpers.error("any.invalid", {
+            details: "mediaToDelete must be an array of media IDs.",
+          });
+        }
+        return parsed;
+      } catch (e) {
+        return helpers.error("any.invalid", {
+          details: "mediaToDelete must be a valid JSON array string.",
+        });
+      }
+    }),
 });
 
 export const offerSchema = Joi.object({
@@ -223,4 +240,38 @@ export const searchSchema = Joi.object({
     .default("DESC"),
   limit: Joi.number().integer().min(1).max(100).optional().default(20),
   offset: Joi.number().integer().min(0).optional().default(0),
+});
+
+export const reviewSchema = Joi.object({
+  rating: Joi.number().min(1).max(5).required().messages({
+    "number.min": "Rating must be at least 1.",
+    "number.max": "Rating cannot be more than 5.",
+    "any.required": "A star rating is required.",
+  }),
+  comment: Joi.string()
+    .trim()
+    .max(300)
+    .optional()
+    .allow("")
+    .custom(sanitize)
+    .messages({
+      "string.max": "Comment cannot exceed 300 characters.",
+    }),
+  mediaToDelete: Joi.string()
+    .optional()
+    .custom((value, helpers) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) {
+          return helpers.error("any.invalid", {
+            details: "mediaToDelete must be an array of media IDs.",
+          });
+        }
+        return parsed;
+      } catch (e) {
+        return helpers.error("any.invalid", {
+          details: "mediaToDelete must be a valid JSON array string.",
+        });
+      }
+    }),
 });
