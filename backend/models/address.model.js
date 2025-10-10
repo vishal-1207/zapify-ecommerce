@@ -1,6 +1,10 @@
 export default (sequelize, DataTypes) => {
   const Address = sequelize.define("Address", {
-    id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     addressableId: { type: DataTypes.UUID, allowNull: false },
     addressableType: {
       type: DataTypes.ENUM("User", "SellerProfile"),
