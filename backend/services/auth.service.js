@@ -12,8 +12,8 @@ const Cart = db.Cart;
 
 /**
  * Register service creates a new user and store it in the database.
- * @param {userData} - userData consist of name, email, password which is required for account creation.
- * @return {user, accessToken} - Return new user after successful registration.
+ * @param {object} userData - userData consist of name, email, password which is required for account creation.
+ * @return {object} - Return new user after successful registration.
  */
 export const registerService = async (userData, res) => {
   const transaction = await db.sequelize.transaction();
