@@ -91,51 +91,6 @@ export const searchProductCatalog = async (searchTerm) => {
 };
 
 /**
- * Service for sellers to create an offer for an existing, approved product.
- *
- */
-
-export const createOfferForProduct = async (
-  productId,
-  sellerProfileId,
-  offerData
-) => {
-  const product = await db.Product.findOne({
-    where: {
-      id: productId,
-      status: "approved",
-    },
-  });
-
-  if (!product) {
-    throw new ApiError(404, "Approved product not found in catalog.");
-  }
-
-  const existingOffer = await db.Offer.findOne({
-    where: { productId, sellerProfileId },
-  });
-
-  if (existingOffer) {
-    throw new ApiError(
-      409,
-      "You already have an offer for this product. Please update it instead."
-    );
-  }
-
-  const offer = await db.Offer.create({
-    ...offerData,
-    productId,
-    sellerProfileId,
-  });
-
-  if (!offer) {
-    throw new ApiError(500, "Something went wrong.");
-  }
-
-  return offer;
-};
-
-/**
  * Function to create product entry with its media and specs.
  * This is a core reusable logic. Not to be called directly from controllers
  */
