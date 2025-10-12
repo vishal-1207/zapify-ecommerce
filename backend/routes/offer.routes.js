@@ -4,14 +4,14 @@ import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 import { offerSchema } from "../utils/validationSchema.js";
 import { validate } from "../middleware/validate.middleware.js";
 import * as offerController from "../controllers/offer.controller.js";
+import * as productController from "../controllers/product.controller.js";
 
-const router = express.Router;
+const router = express.Router();
 router.use(authenticate);
 
 router
   .route("/product/:productId")
   .post(
-    authenticate,
     authorizeRoles("seller"),
     validate(offerSchema),
     offerController.createOffer
@@ -19,13 +19,8 @@ router
 
 router
   .route("/:offerId")
-  .get(
-    authenticate,
-    authorizeRoles("seller"),
-    productController.getProductOfferDetails
-  )
+  .get(authorizeRoles("seller"), productController.getProductOfferDetails)
   .patch(
-    authenticate,
     authorizeRoles("seller"),
     validate(offerSchema),
     offerController.updateProductOffer
