@@ -1,10 +1,9 @@
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { userSettingsSchema } from "../utils/validationSchema.js";
 
 const UserSettings = db.UserSettings;
 
-export const getUserSettings = aynscHandler(async (req, res) => {
+export const getUserSettings = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const settings = await UserSettings.findOne({ where: { userId } });
   if (!settings) throw new ApiError(404, "Settings not found for this user.");
