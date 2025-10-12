@@ -51,8 +51,8 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
   const orderItem = await db.OrderItem.findOne({
     where: { id: orderItemId },
     include: [
-      { model: db.Order, as: "Order", attributes: ["userId"] },
-      { model: db.Offer, as: "Offer", attributes: ["productId"] },
+      { model: db.Order, as: "order", attributes: ["userId"] },
+      { model: db.Offer, as: "offer", attributes: ["productId"] },
     ],
   });
 

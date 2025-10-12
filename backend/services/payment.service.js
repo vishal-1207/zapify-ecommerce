@@ -178,14 +178,14 @@ export const handleStripeWebhook = async (event) => {
           },
           {
             model: db.OrderItem,
-            as: "OrderItems",
+            as: "orderItem",
             include: [
               {
                 model: db.Offer,
-                as: "Offer",
+                as: "offer",
                 include: [
-                  { model: db.Product, as: "Product" },
-                  { model: db.SellerProfile, as: "SellerProfile" },
+                  { model: db.Product, as: "product" },
+                  { model: db.SellerProfile, as: "sellerProfile" },
                 ],
               },
             ],
