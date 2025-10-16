@@ -14,6 +14,15 @@ export default (sequelize, DataTypes) => {
     },
     contactNumber: { type: DataTypes.STRING, allowNull: false },
     address: { type: DataTypes.TEXT, allowNull: false },
+    settings: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {
+        storeVisibility: true,
+        lowStockNotification: true,
+        salesReportEmail: true,
+      },
+    },
     isVerified: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
