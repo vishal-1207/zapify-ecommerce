@@ -47,6 +47,17 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         comment: "The expiry time for the verification code.",
       },
+      settings: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        defaultValue: {
+          theme: "light",
+          language: "en",
+          emailNotifications: true,
+          smsNotifications: true,
+          deleteOnRead: false,
+        },
+      },
       isEmailVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
