@@ -1,21 +1,30 @@
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import * as settingsService from "../services/settings.service.js";
+import ApiError from "../utils/ApiError.js";
 
-const UserSettings = db.UserSettings;
-
-export const getUserSettings = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const settings = await UserSettings.findOne({ where: { userId } });
-  if (!settings) throw new ApiError(404, "Settings not found for this user.");
-  res.json({ message: "User settings fetched successfully.", settings });
+/**
+ * Controller to update the settings of the currently logged-in user.
+ */
+export const updateUserSettings = asyncHandler(async (req, res) => {
+  const updatedUser = await settingsService.updateSellerSettings(
+    req.user.id,
+    req.body
+  );
+  return res
+    .status(200)
+    .json({ message: "User settings updated successfully.", updatedUser });
 });
 
-export const updateUserSettings = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const settingsData = req.body;
-
-  const settings = await UserSettings.findOne({ where: { userId } });
-  if (!settings) throw new ApiError(404, "Settings not found for this user.");
-  await settings.update(settingsData);
-  res.json({ message: "User settings updated successfully.", settings });
+/**
+ * Controller for a seller to update their own settings.
+ */
+export const updateSellerSettings = asyncHandler(async (req, res) => {
+  const updatedProfile = await settingsService.updateSellerSettings(
+    req.user.id,
+    req.body
+  );
+  return res
+    .status(200)
+    .json({ message: "Seller settings updated successfully.", updatedProfile });
 });
