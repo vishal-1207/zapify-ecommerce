@@ -95,6 +95,11 @@ export default (sequelize, DataTypes) => {
   User.prototype.toJSON = function () {
     const user = { ...this.get() };
     delete user.password;
+    delete user.verificationCode;
+    delete user.verificationCodeExpiry;
+    delete user.passwordResetToken;
+    delete user.passwordResetExpires;
+    delete user.scheduledForDeletionAt;
     return user;
   };
 
