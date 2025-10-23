@@ -5,9 +5,21 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 const User = db.User;
 
+/**
+ * Fetches the profile of the currently authenticated user.
+ */
 export const currentUserDetailsController = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id, {
-    attributes: { exclude: ["password"] },
+    attributes: {
+      exclude: [
+        "password",
+        "verificationCode",
+        "verificationCodeExpiry",
+        "passwordResetToken",
+        "passwordResetExpires",
+        "deletedAt",
+      ],
+    },
   });
 
   if (!user) {
