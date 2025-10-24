@@ -3,6 +3,7 @@ import sequelize from "../config/db.js";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
+import { paginate } from "../utils/paginate.js";
 
 /**
  * Gets a single product's public details, including all available offers from sellers.
@@ -167,7 +168,7 @@ const _createProduct = async (productData, files, status, transaction) => {
 };
 
 /**
- * Service for seller to suggest a new product, creating a 'pending' product and their first offer in a single transaction.
+ * Product service for sellers to suggest a new product, creating a 'pending' product and their first offer in a single transaction.
  *
  */
 export const createProductSuggestion = async (
@@ -207,6 +208,29 @@ export const createProductSuggestion = async (
 
     throw new ApiError(500, "Failed to create product suggestion.", error);
   }
+};
+
+/**
+ *
+ * @param {*} productData
+ * @param {*} files
+ * @returns
+ */
+export const getPendingProductsForReview = async (req) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const result = await paginate(
+    db.Product,
+    {
+      where: { status: "pending" },
+      include: [{ model: db.ProductSpecs, as: "specs" }],
+      order: [["createdAt", "DESC"]],
+    },
+    page,
+    limit
+  );
+
+  return result;
 };
 
 /**
