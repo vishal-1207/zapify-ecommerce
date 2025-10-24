@@ -2,6 +2,7 @@ import cloudinary from "../config/cloudinary.js";
 import db from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadToCloudinary } from "../utils/cloudinary.util.js";
+import { paginate } from "../utils/paginate.js";
 
 /**
  * Helper function to calculate and update a product's average rating.
@@ -253,4 +254,54 @@ export const deleteUserReview = async (reviewId, userId) => {
     if (error instanceof ApiError) throw error;
     throw new ApiError(500, "Failed to delete review.", error);
   }
+};
+
+/**
+ * Admin review service to get the list of pending reviews for verification.
+ */
+export const getPendingReviews = async (req) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+
+  const result = await paginate(
+    db.Review,
+    {
+      where: { status: "pending" },
+      include: [
+        { model: db.User, attributes: ["id", "fullname"] },
+        { model: db.Product, attributes: ["id", "name"] },
+      ],
+    },
+    page,
+    limit
+  );
+
+  return result;
+};
+
+/**
+ * Service for admin to check and review users rating and/or comment for a specific product.
+ * Allows admin to approve or reject a user's review.
+ * @param {*} reviewId - Users review which will be reviewed for a specific product.
+ * @param {*} decision - Admin decision to either approve or reject a review.
+ * @returns
+ */
+export const approveOrRejectReview = async (reviewId, decision) => {
+  const review = await db.Review.findOne({
+    where: { id: reviewId, status: "pending" },
+  });
+  if (!review) throw new ApiError(404, "Pending review not found.");
+
+  review.status = decision;
+  await review.save();
+
+  if (decision === "approved") {
+    await updateProductAverageRating(review.productId);
+  }
+
+  // Notify the user who wrote the review about the admin's decision.
+  const message = `Your review for product '${review.Product.name}' has been ${decision}.`;
+  createNotification(review.userId, `review_${decision}`, message);
+
+  return review;
 };
