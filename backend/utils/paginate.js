@@ -1,25 +1,39 @@
+// Example: utils/pagination.js
+
 /**
- * Generic pagination utility for Sequelize models.
- *
- * @param {Model} model - Sequelize model
- * @param {Object} options - query options (where, include, order, etc.)
- * @param {number} page - current page (default: 1)
- * @param {number} limit - records per page (default: 15)
- * @returns {Object} - { total, totalPages, currentPage, rows }
+ * A generic pagination helper for Sequelize models.
+ * @param {Sequelize.Model} model - The Sequelize model to paginate.
+ * @param {object} queryOptions - The options for findAndCountAll (where, include, order, etc.).
+ * @param {number} page - The current page number (1-based).
+ * @param {number} limit - The number of items per page.
+ * @returns {Promise<object>} An object containing paginated data and metadata.
  */
-export const paginate = async (model, options = {}, page = 1, limit = 15) => {
-  const offset = (page - 1) * limit;
+export const paginate = async (
+  model,
+  queryOptions = {},
+  page = 1,
+  limit = 10
+) => {
+  const safePage = Math.max(1, parseInt(page, 10) || 1);
+  const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
+
+  const offset = (safePage - 1) * safeLimit;
 
   const { count, rows } = await model.findAndCountAll({
-    ...options,
-    limit,
+    ...queryOptions,
     offset,
+    limit: safeLimit,
   });
 
+  const totalPages = Math.ceil(count / safeLimit);
+
   return {
+    data: rows,
     total: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    rows,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: totalPages,
+    hasNextPage: safePage < totalPages,
+    hasPrevPage: safePage > 1,
   };
 };
