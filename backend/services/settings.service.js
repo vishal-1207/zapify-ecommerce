@@ -19,9 +19,6 @@ export const updateUserSettings = async (userId, newSettings) => {
   user.changed("settings", true);
   await user.save();
 
-  const userProfile = user.toJSON();
-  delete userProfile.password;
-
   return userProfile;
 };
 
