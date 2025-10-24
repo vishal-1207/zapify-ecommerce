@@ -22,8 +22,10 @@ export const createReviewController = asyncHandler(async (req, res) => {
  */
 export const getReviewController = asyncHandler(async (req, res) => {
   const { productId } = req.params;
-  const review = await reviewServices.getReviewsForProduct(productId);
-  return res.status(201).json({ message: "Reviews fetched successfully" });
+  const reviews = await reviewServices.getReviewsForProduct(productId);
+  return res
+    .status(201)
+    .json({ message: "Reviews fetched successfully", reviews });
 });
 
 /**
@@ -48,4 +50,24 @@ export const deleteReviewController = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const result = await reviewServices.deleteUserReview(reviewId, userId);
   return res.status(200).json(new ApiResponse(200, result, result.message));
+});
+
+/**
+ * Review controller for admin to approve or reject a user's review for a specific product.
+ */
+export const getPendingReviewsController = asyncHandler(async (req, res) => {
+  const result = await reviewServices.getPendingReviews(req);
+
+  if (result.total === 0) {
+    return res.status(200).json({
+      message:
+        "No pending review(s) found. All products are verified. Nice work.",
+      ...result,
+    });
+  }
+
+  return res.status(200).json({
+    message: `Found ${result.total} review(s) pending for review.`,
+    ...result,
+  });
 });
