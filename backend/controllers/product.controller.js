@@ -1,6 +1,7 @@
 import * as productService from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import paginate from "../utils/paginate.js";
 
 /**
  * Helper function for checking and parsing input data to process for services.
@@ -125,18 +126,7 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
  * Admin controller to get list of pending suggested products by seller.
  */
 export const getPendingProductsForReview = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1; // current page
-  const limit = parseInt(req.query.limit, 10) || 15; // records per page (default 15)
-  const result = await paginate(
-    db.Product,
-    {
-      where: { status: "pending" },
-      include: [{ model: db.ProductSpecs, as: "specs" }],
-      order: [["createdAt", "DESC"]],
-    },
-    page,
-    limit
-  );
+  const result = await productService.getPendingProductsForReview(req);
 
   if (result.total === 0) {
     return res.status(200).json({
