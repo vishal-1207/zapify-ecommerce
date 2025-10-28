@@ -17,7 +17,7 @@ export const currentUserDetailsController = asyncHandler(async (req, res) => {
         "verificationCodeExpiry",
         "passwordResetToken",
         "passwordResetExpires",
-        "deletedAt",
+        "scheduledForDeletionAt",
       ],
     },
   });
