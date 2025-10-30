@@ -53,7 +53,6 @@ export const registerService = async (userData, res) => {
     );
 
     // Create associated records.
-    await UserSettings.create({ userId: user.id }, { transaction });
     await Cart.create({ userId: user.id }, { transaction });
 
     const payload = { userId: user.id, roles: user.roles };
