@@ -1,7 +1,5 @@
-import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import * as settingsService from "../services/settings.service.js";
-import ApiError from "../utils/ApiError.js";
 
 /**
  * Controller to update the settings of the currently logged-in user.
@@ -20,11 +18,11 @@ export const updateUserSettings = asyncHandler(async (req, res) => {
  * Controller for a seller to update their own settings.
  */
 export const updateSellerSettings = asyncHandler(async (req, res) => {
-  const updatedProfile = await settingsService.updateSellerSettings(
+  const updatedSeller = await settingsService.updateSellerSettings(
     req.user.id,
     req.body
   );
   return res
     .status(200)
-    .json({ message: "Seller settings updated successfully.", updatedProfile });
+    .json({ message: "Seller settings updated successfully.", updatedSeller });
 });
