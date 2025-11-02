@@ -17,6 +17,9 @@ export default (sequelize, DataTypes) => {
         "order_status_update",
         "review_approved",
         "review_rejected",
+        "product_suggestion",
+        "offer_suggestion",
+        "order_suggestion",
 
         // Types for Admins
         "new_product_suggestion",
