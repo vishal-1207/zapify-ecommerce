@@ -35,3 +35,45 @@ export const getNotificationsForUser = async (userId) => {
     limit: 50,
   });
 };
+
+/**
+ * Notification service which marks notificaiton as read and also delete if settings is enabled for delete on read.
+ * @param {*} user
+ * @param {*} notificationIds
+ * @returns
+ */
+export const markNotificationsAsRead = async (user, notificationIds) => {
+  if (!notificationIds || notificationIds.length === 0) {
+    throw new ApiError(400, "Notification IDs are required.");
+  }
+
+  const shouldDelete = user.settings?.deleteOnRead === true;
+
+  if (shouldDelete) {
+    await db.Notification.destroy({
+      where: {
+        id: notificationIds,
+        recipientId: user.id,
+      },
+    });
+    return { message: "Notifications deleted." };
+  } else {
+    await db.Notification.update(
+      { isRead: true },
+      { where: { id: notificationIds, recipientId: user.id } } // Security check
+    );
+    return { message: "Notifications marked as read." };
+  }
+};
+
+/**
+ * Notification service to clear all notifications regardless of it been read or not.
+ * @param {*} userId
+ * @returns
+ */
+export const clearAllNotifications = async (userId) => {
+  await db.Notification.destroy({
+    where: { recipientId: userId },
+  });
+  return { message: "All notifications have been cleared." };
+};
