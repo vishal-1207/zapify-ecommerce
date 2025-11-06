@@ -35,6 +35,22 @@ const sendOrderConfirmationEmail = async (order) => {
 };
 
 /**
+ * Sends an order confirmation SMS to the customer. (Currently disabled because of paid feature.)
+ * @param {object} order - The full order object with associations.
+ * @private
+ */
+// const sendOrderConfirmationSms = async (order) => {
+//   if (!order?.User?.phoneNumber) {
+//     console.log(`Skipping SMS for order ${order.id}: No phone number found.`);
+//     return;
+//   }
+//   const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${
+//     order.totalAmount
+//   } has been placed successfully.`;
+//   await sendSms(order.User.phoneNumber, messageBody);
+// };
+
+/**
  * Notifies each seller involved in an order about the new items they need to fulfill.
  * @param {object} order - The full order object with all associations.
  * @private
@@ -84,23 +100,14 @@ const notifySellersOfNewOrder = async (order) => {
     `;
 
     await sendEmail(sellerUser.email, subject, html);
-  }
-};
 
-/**
- * Sends an order confirmation SMS to the customer. (Currently disabled because of paid feature.)
- * @param {object} order - The full order object with associations.
- * @private
- */
-const sendOrderConfirmationSms = async (order) => {
-  if (!order?.User?.phoneNumber) {
-    console.log(`Skipping SMS for order ${order.id}: No phone number found.`);
-    return;
+    // --- Send In-App Notification ---
+    const message = `New Sale! You have ${
+      items.length
+    } new item(s) to fulfill for Order #${order.id.slice(0, 8)}.`;
+    const linkUrl = `/seller/orders/${order.id}`; // Example link to the seller's order page
+    createNotification(sellerUser.id, "new_order", message, linkUrl);
   }
-  const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${
-    order.totalAmount
-  } has been placed successfully.`;
-  // await sendSms(order.User.phoneNumber, messageBody);
 };
 
 /**
