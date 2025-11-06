@@ -1,3 +1,4 @@
+import express from "express";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -7,10 +8,9 @@ import { productSchema } from "../utils/validationSchema.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
-// router.use(authenticate);
+router.use(authenticate);
 
 router.route("/").post(
-  authenticate,
   authorizeRoles("admin"),
   csrfProtection,
   upload.fields([
@@ -24,16 +24,11 @@ router.route("/").post(
 router.route("/:slug").get(productController.getProductDetailsForCustomer);
 router
   .route("/:productId")
-  .get(
-    authenticate,
-    authorizeRoles("admin"),
-    productController.getProductDetailsAdmin
-  );
+  .get(authorizeRoles("admin"), productController.getProductDetailsAdmin);
 
 router.route("/catalog-search").get(productController.searchCatalog);
 
 router.route("/suggest-product").post(
-  authenticate,
   authorizeRoles("seller"),
   csrfProtection,
   upload.fields([
@@ -46,22 +41,16 @@ router.route("/suggest-product").post(
 
 router
   .route("/review/pending")
-  .get(
-    authenticate,
-    authorizeRoles("admin"),
-    productController.getPendingProductsForReview
-  );
+  .get(authorizeRoles("admin"), productController.getPendingProductsForReview);
 router
   .route("/review/:productId")
   .patch(
-    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     productController.reviewProduct
   );
 
 router.route("/edit/:productId").patch(
-  authenticate,
   authorizeRoles("admin"),
   csrfProtection,
   upload.fields([
@@ -73,9 +62,8 @@ router.route("/edit/:productId").patch(
 );
 
 router
-  .route("/:id")
+  .route("/:productId")
   .delete(
-    authenticate,
     authorizeRoles("seller", "admin"),
     csrfProtection,
     productController.deleteProduct
