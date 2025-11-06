@@ -2,12 +2,7 @@ import express from "express";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { csrfProtection } from "../middleware/csrf.middleware.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
-import {
-  deleteSellerProfile,
-  getSellerAnalytics,
-  getSellerProfile,
-  updateSellerProfile,
-} from "../controllers/seller.controller.js";
+import * as sellerController from "../controllers/seller.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { sellerProfileSchema } from "../utils/validationSchema.js";
 import { registerSellerProfile } from "../controllers/seller.controller.js";
@@ -21,12 +16,16 @@ router
     csrfProtection,
     validate(sellerProfileSchema),
     limiter,
-    registerSellerProfile
+    sellerController.registerSellerProfile
   );
 
-router.route("/profile").get(authorizeRoles("seller"), getSellerProfile);
+router
+  .route("/profile")
+  .get(authorizeRoles("seller"), sellerController.getSellerProfile);
 
-router.route("/analytics").get(authorizeRoles("seller"), getSellerAnalytics);
+router
+  .route("/analytics")
+  .get(authorizeRoles("seller"), sellerController.getSellerAnalytics);
 
 router
   .route("/:slug/edit/profile")
@@ -35,7 +34,7 @@ router
     authorizeRoles("seller"),
     csrfProtection,
     validate(sellerProfileSchema),
-    updateSellerProfile
+    sellerController.updateSellerProfile
   );
 
 router
@@ -44,5 +43,5 @@ router
     authenticate,
     authorizeRoles("seller"),
     csrfProtection,
-    deleteSellerProfile
+    sellerController.deleteSellerProfile
   );
