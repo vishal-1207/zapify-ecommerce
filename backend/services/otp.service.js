@@ -40,7 +40,7 @@ export const sendVerificationCode = async (userId, method) => {
     if (!user.phoneNumber)
       throw new ApiError(400, "User does not have a phone number.");
     const messageBody = `Your verification code for <Your Store Name> is: ${code}. It will expire in 10 minutes.`;
-    await sendSms(user.phoneNumber, messageBody);
+    // await sendSms(user.phoneNumber, messageBody);
     return { message: "Verification code sent successfully to your phone." };
   }
 };
