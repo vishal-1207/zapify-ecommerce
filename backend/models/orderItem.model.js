@@ -6,6 +6,17 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     quantity: { type: DataTypes.INTEGER, allowNull: false },
+    status: {
+      type: DataTypes.ENUM(
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "refunded"
+      ),
+      defaultValue: "pending",
+    },
     priceAtTimeOfPurchase: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   });
 
