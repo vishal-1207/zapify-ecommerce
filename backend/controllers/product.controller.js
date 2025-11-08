@@ -215,7 +215,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
  * Admin controller for deleting product from the list of available products.
  */
 export const deleteProduct = asyncHandler(async (req, res) => {
-  const productId = req.params.id;
+  const productId = req.params.productId;
   const result = await productService.deleteProductService(productId);
   return res.status(200).json({ message: result.message });
 });
