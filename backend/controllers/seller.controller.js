@@ -1,8 +1,8 @@
-import { registerSellerService } from "../services/seller.service.js";
+import * as sellerService from "../services/seller.service.js";
 import asyncHandler from "../utils/asyncHandler";
 
 // Seller profile registration controller
-export const registerSellerProfile = asyncHandler(async (req, res) => {
+export const createProfile = asyncHandler(async (req, res) => {
   const {
     storeName,
     contactNumber,
@@ -14,14 +14,22 @@ export const registerSellerProfile = asyncHandler(async (req, res) => {
 
   const data = { storeName, contactNumber, address, userId };
   const optional = { bio, website };
-  const seller = await registerSellerService(data, optional);
+  const seller = await sellerService.createSellerProfile(data, optional);
   res
     .status(201)
     .json({ message: "Seller profile created successfully.", seller });
 });
 
+export const getProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const profile = await sellerService.getSellerProfile(userId);
+  return res
+    .status(200)
+    .json({ message: "Seller profile fetched successfully.", profile });
+});
+
 // Update seller profile controller
-export const updateSellerProfile = asyncHandler(async (req, res) => {
+export const updateProfile = asyncHandler(async (req, res) => {
   const {
     storeName,
     contactNumber,
@@ -35,22 +43,16 @@ export const updateSellerProfile = asyncHandler(async (req, res) => {
   const data = { storeName, contactNumber, address, slug };
   const optional = { bio, website };
 
-  const updatedSeller = await updateSellerService(data, optional);
+  const updatedSeller = await sellerService.updateSellerProfile(data, optional);
 
-  res.status(201).json({
+  return res.status(201).json({
     message: "Seller profile updated successfully.",
     seller: updatedSeller,
   });
 });
 
-// TODO: Implement delete seller profile controller
-export const deleteSellerProfile = asyncHandler(async (req, res) => {});
-
-// TODO: Implement get seller profile controller
-export const getSellerProfile = asyncHandler(async (req, res) => {});
-
-// TODO: Implement get seller analytics controller
-export const getSellerAnalytics = asyncHandler(async (req, res) => {});
-
-// TODO: Implement otp verfication controller via email
-export const otpVerification = asyncHandler(async (req, res) => {});
+export const deleteSellerProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const result = await sellerService.deleteSellerProfile(userId);
+  return res.status(200).json({ message: result });
+});
