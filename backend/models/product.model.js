@@ -12,14 +12,14 @@ export default (sequelize, DataTypes) => {
     name: { type: DataTypes.STRING, allowNull: false },
     model: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: false },
-    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    price: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, // List price/MRP
     status: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "pending",
     },
     averageRating: {
-      type: DataTypes.DECIMAL(3, 2), // e.g., 4.50
+      type: DataTypes.DECIMAL(3, 2),
       allowNull: true,
       defaultValue: 0.0,
     },
@@ -29,6 +29,20 @@ export default (sequelize, DataTypes) => {
       defaultValue: 0,
     },
     slug: { type: DataTypes.STRING, allowNull: true, unique: true },
+
+    // for search
+    minOfferPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
+    totalOfferStock: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    offerCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    popularityScore: {
+      type: DataTypes.DOUBLE,
+      allowNull: false,
+      defaultValue: 0,
+    },
   });
 
   Product.beforeCreate(async (product, options) => {
