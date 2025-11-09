@@ -8,13 +8,13 @@ export default (sequelize, DataTypes) => {
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      coment: "The price set by the seller for this offer.",
+      comment: "The price set by the seller for this offer.",
     },
     stockQuantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
-      comment: "The number of items the seller has in stock for this offer.",
+      comment: "Live stock for this seller's offer.",
     },
     condition: {
       type: DataTypes.ENUM(
@@ -25,6 +25,7 @@ export default (sequelize, DataTypes) => {
       ),
       defaultValue: "New",
     },
+    isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   });
 
   Offer.associate = (models) => {
