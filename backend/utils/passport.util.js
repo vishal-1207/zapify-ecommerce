@@ -1,19 +1,5 @@
 import db from "../models/index.js";
 
-const User = db.User;
-
-export const generateUniqueName = async (fullName) => {
-  const baseUsername = fullName.toLowerCase();
-
-  let username = baseUsername;
-  while (await User.findOne({ where: { username } })) {
-    const randomSuffix = generateRandomSuffix(4);
-    username = `${baseUsername}${randomSuffix}`;
-  }
-
-  return username;
-};
-
 const generateRandomSuffix = (count) => {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -22,4 +8,16 @@ const generateRandomSuffix = (count) => {
   }
 
   return result;
+};
+
+export const generateUniqueName = async (fullName) => {
+  const baseUsername = fullName.toLowerCase();
+
+  let username = baseUsername;
+  while (await db.User.findOne({ where: { username } })) {
+    const randomSuffix = generateRandomSuffix(4);
+    username = `${baseUsername}${randomSuffix}`;
+  }
+
+  return username;
 };
