@@ -6,9 +6,6 @@ import { csrfProtection } from "../middleware/csrf.middleware.js";
 const router = express.Router();
 router.use(authenticate);
 
-/**
- * Payment route for creating payment intent
- */
 router
   .route("/create-intent")
   .post(csrfProtection, paymentControllers.createPaymentIntent);
