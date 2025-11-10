@@ -1,8 +1,8 @@
 import cloudinary from "../config/cloudinary.js";
 import db from "../models/index.js";
-import { ApiError } from "../utils/ApiError.js";
-import { uploadToCloudinary } from "../utils/cloudinary.util.js";
-import { paginate } from "../utils/paginate.js";
+import ApiError from "../utils/ApiError.js";
+import uploadToCloudinary from "../utils/cloudinary.util.js";
+import paginate from "../utils/paginate.js";
 
 /**
  * Helper function to calculate and update a product's average rating.

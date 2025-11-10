@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { ApiError } from "../utils/ApiError.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Updates the settings for the currently authenticated user.

@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { ApiError } from "../utils/ApiError.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Service for a seller to create an offer for an existing, approved product.
