@@ -1,5 +1,5 @@
 import db from "../models/index.js";
-import { ApiError } from "../utils/ApiError.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Notification service which creates a notification with a type, message which will be sent to a recipient using the link url mentioned.
