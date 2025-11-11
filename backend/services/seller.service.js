@@ -34,7 +34,7 @@ const findStore = async (storeName) => {
 export const createSellerProfile = async (data, optional) => {
   const transaction = sequelize.transaction();
   try {
-    const { storeName, contactNumber, address, userId } = data;
+    const { storeName, contactNumber, userId } = data;
     const bio = optional;
 
     const { slug, existingSeller } = await findStore(storeName);
@@ -47,7 +47,6 @@ export const createSellerProfile = async (data, optional) => {
         storeName,
         bio,
         contactNumber,
-        address,
         slug,
       },
       { transaction }
@@ -88,7 +87,7 @@ export const getSellerProfile = async (userId) => {
  * @returns {Promise<SellerProfile>} The updated seller profile.
  */
 export const updateSellerProfile = async (data, optional) => {
-  const { storeName, contactNumber, address, slug } = data;
+  const { storeName, contactNumber, slug } = data;
   const bio = optional;
 
   const profile = await db.SellerProfile.findOne({ where: { slug } });
@@ -104,7 +103,6 @@ export const updateSellerProfile = async (data, optional) => {
 
   profile.storeName = storeName;
   profile.contactNumber = contactNumber;
-  profile.address = address;
   profile.slug = newSlug === "" ? slug : newSlug;
   profile.bio = bio;
 
