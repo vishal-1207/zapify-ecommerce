@@ -3,7 +3,7 @@ import sequelize from "../config/db.js";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
-import { paginate } from "../utils/paginate.js";
+import paginate from "../utils/paginate.js";
 
 /**
  * Gets a single product's public details, including all available offers from sellers.
@@ -211,7 +211,7 @@ export const createProductSuggestion = async (
 };
 
 /**
- *
+ * Product service for admin to get list of products pending for review.
  * @param {*} productData
  * @param {*} files
  * @returns
@@ -400,7 +400,7 @@ export const reviewProductSuggestion = async (productId, decision) => {
     throw new ApiError(400, "Decision must be approved or rejected.");
   }
 
-  product.decision = "approved";
+  product.status = decision;
   await db.Product.save();
 
   return product;
