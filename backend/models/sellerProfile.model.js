@@ -8,7 +8,6 @@ export default (sequelize, DataTypes) => {
     storeName: { type: DataTypes.STRING, allowNull: false },
     bio: { type: DataTypes.TEXT, allowNull: true },
     contactNumber: { type: DataTypes.STRING, allowNull: false },
-    address: { type: DataTypes.TEXT, allowNull: false },
     settings: {
       type: DataTypes.JSON,
       allowNull: false,
