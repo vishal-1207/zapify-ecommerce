@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
         "Shipped",
         "In Transit",
         "Delivered",
-        "Cancelled"
+        "Failed"
       ),
       defaultValue: "Processing",
       allowNull: false,
