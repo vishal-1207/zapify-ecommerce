@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
     description: { type: DataTypes.TEXT, allowNull: false },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, // List price/MRP
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM("draft", "pending", "approved", "rejected"),
       allowNull: false,
       defaultValue: "pending",
     },
