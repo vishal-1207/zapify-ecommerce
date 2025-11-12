@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
+import { getSellerProfile } from "./seller.service.js";
 
 /**
  * Service for a seller to create an offer for an existing, approved product.
@@ -46,6 +47,25 @@ export const createOfferForProduct = async (
   }
 
   return offer;
+};
+
+/**
+ * Fetches all of a seller's active offers (their inventory).
+ * @param {*} userId
+ * @returns
+ */
+export const getSellerOffers = async (userId) => {
+  const profile = await getSellerProfile(userId);
+  return db.Offer.findAll({
+    where: { sellerProfileId: profile.id },
+    include: [
+      {
+        model: db.Product,
+        as: "Product",
+        attributes: ["id", "name", "status"],
+      },
+    ],
+  });
 };
 
 /**
