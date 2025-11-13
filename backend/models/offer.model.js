@@ -25,7 +25,11 @@ export default (sequelize, DataTypes) => {
       ),
       defaultValue: "New",
     },
-    isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    status: {
+      type: DataTypes.ENUM("draft", "active"),
+      allowNull: false,
+      defaultValue: "draft",
+    },
   });
 
   Offer.associate = (models) => {
