@@ -5,7 +5,6 @@ import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
 import * as sellerController from "../controllers/seller.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { sellerProfileSchema } from "../utils/validationSchema.js";
-import { registerSellerProfile } from "../controllers/seller.controller.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -16,12 +15,12 @@ router
     csrfProtection,
     validate(sellerProfileSchema),
     limiter,
-    sellerController.registerSellerProfile
+    sellerController.createProfile
   );
 
 router
   .route("/profile")
-  .get(authorizeRoles("seller"), sellerController.getSellerProfile);
+  .get(authorizeRoles("seller"), sellerController.getProfile);
 
 router
   .route("/analytics")
