@@ -29,6 +29,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: "orderId",
       onDelete: "CASCADE",
     });
+    Order.hasMany(models.Shipment, {
+      as: "Shipments",
+      foreignKey: "orderId",
+    });
     Order.hasOne(models.Payment, {
       foreignKey: "orderId",
       onDelete: "CASCADE",
