@@ -3,6 +3,12 @@ import ApiError from "../utils/ApiError.js";
 import * as offerServices from "../services/offer.service.js";
 import db from "../models/index.js";
 
+export const getOffers = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const offers = await offerServices.getSellerOffers(userId);
+  res.status(200).json({ message: "Offers fetched successfully.", offers });
+});
+
 /**
  * Offer controller for seller to create offer for a product.
  */
