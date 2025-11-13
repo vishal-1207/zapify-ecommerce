@@ -4,7 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 const SellerProfile = db.SellerProfile;
 
 //Allow only OTP verified seller
-export const requireSellerVerification = asyncHandler(
+export default requireSellerVerification = asyncHandler(
   async (req, res, next) => {
     const profile = await SellerProfile.findOne({
       where: { userId: req.user.id },

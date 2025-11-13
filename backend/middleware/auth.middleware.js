@@ -5,7 +5,7 @@ import db from "../models/index.js";
 const User = db.User;
 
 //Authenticate Middleware
-export const authenticate = asyncHandler(async (req, res, next) => {
+export default authenticate = asyncHandler(async (req, res, next) => {
   try {
     const token =
       req.cookie?.accessToken ||
