@@ -28,7 +28,7 @@ router
 
 router.route("/catalog-search").get(productController.searchCatalog);
 
-router.route("/suggest-product").post(
+router.route("/suggest-product/:sellerId").post(
   authorizeRoles("seller"),
   csrfProtection,
   upload.fields([
