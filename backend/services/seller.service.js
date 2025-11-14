@@ -24,6 +24,8 @@ const findStore = async (storeName) => {
   return { slug, existingSeller };
 };
 
+// Profile Management Services
+
 /**
  * Creates a seller profile for an existing user, upgrading their role.
  * This is an atomic operation within a transaction.
@@ -161,4 +163,248 @@ export const deleteSellerProfile = async (userId) => {
     await transaction.rollback();
     throw new ApiError(500, "Failed to delete seller profile.", error);
   }
+};
+
+// Seller Dashboard Analytics Services
+
+/**
+ * Seller dashboard service to get quick-glance KPI stats card for the top of the dashboard.
+ * @param {string} userId
+ * @param {number} days
+ * @returns
+ */
+export const getSellerDashboardStats = async (userId, days = 30) => {
+  const profile = await getSellerProfile(userId);
+  const dateRange = new Date();
+  dateRange.setDate(dateRange.getDate() - days);
+
+  // 1. Total Revenue (for the selected period)
+  const totalRevenue = await db.OrderItem.sum("priceAtTimeOfPurchase", {
+    where: { status: "delivered", createdAt: { [Op.gte]: dateRange } },
+    include: [
+      { model: db.Offer, as: "offer", where: { sellerProfileId: profile.id } },
+    ],
+  });
+
+  // 2. Total Orders (for the selected period)
+  const totalOrders = await db.OrderItem.count({
+    distinct: true,
+    col: "orderId",
+    where: { status: "delivered", createdAt: { [Op.gte]: dateRange } },
+    include: [
+      { model: db.Offer, as: "offer", where: { sellerProfileId: profile.id } },
+    ],
+  });
+
+  // 3. Total Sales (Items Sold, for the selected period)
+  const totalSales = await db.OrderItem.sum("quantity", {
+    where: { status: "delivered", createdAt: { [Op.gte]: dateRange } },
+    include: [
+      { model: db.Offer, as: "offer", where: { sellerProfileId: profile.id } },
+    ],
+  });
+
+  return {
+    totalRevenue: totalRevenue || 0.0,
+    totalOrders: totalOrders || 0,
+    totalSales: totalSales || 0,
+  };
+};
+
+/**
+ * Seller dashboard service which gets sales/revenue/orders data grouped by day for the dashboard line chart.
+ * Takes a dynamic number of days to look back.
+ * @param {string} userId
+ * @param {number} days
+ * @returns
+ */
+export const getSellerSalesAnalytics = async (userId, days) => {
+  const profile = await getSellerProfile(userId);
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const results = await db.OrderItem.findAll({
+    where: {
+      status: "delivered",
+      createdAt: { [Op.gte]: startDate },
+    },
+    attributes: [
+      [
+        db.sequelize.fn("DATE", db.sequelize.col("OrderItem.createdAt")),
+        "date",
+      ],
+      [
+        db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
+        "totalRevenue",
+      ],
+      [
+        db.sequelize.fn(
+          "COUNT",
+          db.sequelize.fn("DISTINCT", db.sequelize.col("orderId"))
+        ),
+        "totalOrders",
+      ],
+      [db.sequelize.fn("SUM", db.sequelize.col("quantity")), "totalSales"],
+    ],
+    include: [
+      {
+        model: db.Offer,
+        as: "offer",
+        attributes: [],
+        where: { sellerProfileId: profile.id },
+      },
+    ],
+    group: ["date"],
+    order: [["date", "ASC"]],
+    raw: true,
+  });
+
+  // Format data for Chart.js
+  const labels = results.map((row) =>
+    new Date(row.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })
+  );
+  const revenueData = results.map((row) => row.totalRevenue);
+  const orderData = results.map((row) => row.totalOrders);
+  const salesData = results.map((row) => row.totalSales);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: "Revenue (INR)",
+        data: revenueData,
+        borderColor: "rgb(75, 192, 192)",
+      },
+      { label: "Orders", data: orderData, borderColor: "rgb(255, 99, 132)" },
+      {
+        label: "Items Sold",
+        data: salesData,
+        borderColor: "rgb(54, 162, 235)",
+      },
+    ],
+  };
+};
+
+/**
+ * Gets a specific seller's top 5 best-performing products by revenue.
+ * @param {*} userId
+ * @param {*} days
+ * @returns
+ */
+export const getSellerTopProducts = async (userId, days = 30) => {
+  const profile = await getSellerProfile(userId);
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return db.OrderItem.findAll({
+    where: { status: "delivered", createdAt: { [Op.gte]: startDate } },
+    attributes: [
+      [
+        db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
+        "totalRevenue",
+      ],
+    ],
+    include: [
+      {
+        model: db.Offer,
+        as: "offer",
+        attributes: [],
+        where: { sellerProfileId: profile.id },
+        include: [
+          {
+            model: db.Product,
+            as: "product",
+            attributes: ["name"],
+          },
+        ],
+      },
+    ],
+    group: ["offer.product.id", "offer.product.name"],
+    order: [
+      [
+        db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
+        "DESC",
+      ],
+    ],
+    limit: 5,
+    raw: true,
+    nest: true,
+  });
+};
+
+/**
+ * Gets sales data grouped by Category for a pie chart.
+ * @param {string} userId
+ * @param {number} days
+ * @returns
+ */
+export const getSellerCategoryPerformance = async (userId, days = 30) => {
+  const profile = await getSellerProfile(userId);
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const results = await db.OrderItem.findAll({
+    where: { status: "delivered", createdAt: { [Op.gte]: startDate } },
+    attributes: [
+      [
+        db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
+        "totalRevenue",
+      ],
+    ],
+    include: [
+      {
+        model: db.Offer,
+        as: "offer",
+        attributes: [],
+        where: { sellerProfileId: profile.id },
+        include: [
+          {
+            model: db.Product,
+            as: "product",
+            attributes: [],
+            include: [
+              {
+                model: db.Category,
+                as: "category",
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    group: ["offer.product.category.id", "offer.product.category.name"],
+    order: [
+      [
+        db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
+        "DESC",
+      ],
+    ],
+    raw: true,
+    nest: true,
+  });
+
+  // Format data for Chart.js
+  const labels = results.map((row) => row.Offer.Product.Category.name);
+  const data = results.map((row) => row.totalRevenue);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: "Revenue by Category",
+        data,
+        backgroundColor: [
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#4BC0C0",
+          "#9966FF",
+        ],
+      },
+    ],
+  };
 };
