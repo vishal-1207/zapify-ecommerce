@@ -50,19 +50,38 @@ export const createOfferForProduct = async (
 };
 
 /**
- * Fetches all of a seller's active offers (their inventory).
+ * Fetches all of a seller's active offers.
+ */
+export const getActiveOffers = async (userId, status = "active") => {
+  const seller = getSellerProfile(userId);
+  const offers = await db.Offer.findAll({
+    where: { status, sellerProfileId: seller.id },
+    include: [
+      {
+        model: db.Product,
+        as: "product",
+        attributes: ["id", "name", "price", "status"],
+      },
+    ],
+  });
+
+  return offers;
+};
+
+/**
+ * Fetches all of a seller's offers (their inventory).
  * @param {*} userId
  * @returns
  */
-export const getSellerOffers = async (userId) => {
+export const getAllOffers = async (userId) => {
   const profile = await getSellerProfile(userId);
   return db.Offer.findAll({
     where: { sellerProfileId: profile.id },
     include: [
       {
         model: db.Product,
-        as: "Product",
-        attributes: ["id", "name", "status"],
+        as: "product",
+        attributes: ["id", "name", "price", "status"],
       },
     ],
   });
