@@ -10,7 +10,10 @@ import { csrfProtection } from "../middleware/csrf.middleware.js";
 const router = express.Router();
 router.use(authenticate);
 
-router.route("/").get(authorizeRoles("seller"), offerController.getOffers);
+router.route("/").get(authorizeRoles("seller"), offerController.getOffersList);
+router
+  .route("/active")
+  .get(authorizeRoles("seller"), offerController.getActiveOffersList);
 
 router
   .route("/product/:productId")
