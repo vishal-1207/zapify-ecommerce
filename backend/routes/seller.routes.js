@@ -9,6 +9,7 @@ import { sellerProfileSchema } from "../utils/validationSchema.js";
 const router = express.Router();
 router.use(authenticate);
 
+// Profile Management
 router
   .route("/profile/register")
   .post(
@@ -33,7 +34,7 @@ router
     authorizeRoles("seller"),
     csrfProtection,
     validate(sellerProfileSchema),
-    sellerController.updateSellerProfile
+    sellerController.updateProfile
   );
 
 router
@@ -42,5 +43,33 @@ router
     authenticate,
     authorizeRoles("seller"),
     csrfProtection,
-    sellerController.deleteSellerProfile
+    sellerController.deleteProfile
   );
+
+// Dashboard
+// GET /api/seller/dashboard/stats?days=30
+router.get(
+  "/dashboard/stats",
+  authorizeRoles("seller"),
+  sellerController.getDashboardStats
+);
+// GET /api/seller/dashboard/sales-analytics?days=90
+router.get(
+  "/dashboard/sales-analytics",
+  authorizeRoles("seller"),
+  sellerController.getSalesAnalytics
+);
+// GET /api/seller/dashboard/top-products?days=30
+router.get(
+  "/dashboard/top-products",
+  authorizeRoles("seller"),
+  sellerController.getTopProducts
+);
+// GET /api/seller/dashboard/category-performance?days=30
+router.get(
+  "/dashboard/category-performance",
+  authorizeRoles("seller"),
+  sellerController.getCategoryPerformance
+);
+
+export default router;
