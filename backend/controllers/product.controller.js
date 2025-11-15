@@ -126,13 +126,13 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
  * Admin controller to get list of pending suggested products by seller.
  */
 export const getPendingProductsForReview = asyncHandler(async (req, res) => {
-  const result = await productService.getPendingProductsForReview(req);
+  const { page = 1, limit = 10 } = req.query;
+  const result = await productService.getPendingProductsForReview(page, limit);
 
   if (result.total === 0) {
     return res.status(200).json({
       message:
         "No pending products found. All products are verified. Nice work.",
-      ...result,
     });
   }
 
@@ -218,4 +218,25 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.productId;
   const result = await productService.deleteProductService(productId);
   return res.status(200).json({ message: result.message });
+});
+
+/**
+ * Admin controller to get list of all user's (customer or seller), which can be used for auditing or other uses.
+ */
+export const getUsers = asyncHandler(async (req, res) => {
+  const role = req.param;
+  const { page = 1, limit = 10 } = req.query;
+
+  const result = await productService.getUsersList(role, page, limit);
+
+  if (result.total === 0) {
+    return res.status(200).json({
+      message: "No users found.",
+    });
+  }
+
+  return res.status(200).json({
+    message: `Found ${result.total} product(s) pending for review.`,
+    ...result,
+  });
 });
