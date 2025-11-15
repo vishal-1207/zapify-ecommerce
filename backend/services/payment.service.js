@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
+import { getSellerProfile } from "./seller.service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -227,4 +228,30 @@ export const handleStripeWebhook = async (event) => {
       await payment.save();
     }
   }
+};
+
+// Seller Payment History
+/**
+ * Fetches a seller's transaction history (i.e., completed order items).
+ */
+export const getSellerTransactions = async (userId) => {
+  const profile = await getSellerProfile(userId);
+  return db.OrderItem.findAll({
+    where: { status: "Delivered" },
+    attributes: ["id", "priceAtTimeOfPurchase", "quantity", "updatedAt"],
+    include: [
+      {
+        model: db.Offer,
+        as: "offer",
+        where: { sellerProfileId: profile.id },
+        attributes: [],
+        include: [{ model: db.Product, as: "product", attributes: ["name"] }],
+      },
+      { model: db.Order, as: "order", attributes: ["id"] },
+    ],
+    order: [["updatedAt", "DESC"]],
+    limit: 100,
+    raw: true,
+    nest: true,
+  });
 };
