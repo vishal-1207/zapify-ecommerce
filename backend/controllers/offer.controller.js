@@ -3,10 +3,25 @@ import ApiError from "../utils/ApiError.js";
 import * as offerServices from "../services/offer.service.js";
 import db from "../models/index.js";
 
-export const getOffers = asyncHandler(async (req, res) => {
+/**
+ * Offer controller to get all listed offers by the seller.
+ */
+export const getOffersList = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const offers = await offerServices.getSellerOffers(userId);
+  const offers = await offerServices.getAllOffers(userId);
   res.status(200).json({ message: "Offers fetched successfully.", offers });
+});
+
+/**
+ * Offer controller to get only active listed offers by the seller.
+ */
+export const getActiveOffersList = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const offers = await offerServices.getActiveOffers(userId);
+
+  return res
+    .status(200)
+    .json({ message: "Fetched active offers successfully.", offers });
 });
 
 /**
