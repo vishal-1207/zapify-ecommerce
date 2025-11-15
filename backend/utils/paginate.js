@@ -1,5 +1,3 @@
-// Example: utils/pagination.js
-
 /**
  * A generic pagination helper for Sequelize models.
  * @param {Sequelize.Model} model - The Sequelize model to paginate.
@@ -8,7 +6,7 @@
  * @param {number} limit - The number of items per page.
  * @returns {Promise<object>} An object containing paginated data and metadata.
  */
-export const paginate = async (
+export default paginate = async (
   model,
   queryOptions = {},
   page = 1,
