@@ -56,13 +56,13 @@ export const deleteReviewController = asyncHandler(async (req, res) => {
  * Review controller for admin to approve or reject a user's review for a specific product.
  */
 export const getPendingReviewsController = asyncHandler(async (req, res) => {
-  const result = await reviewServices.getPendingReviews(req);
+  const { page = 1, limit = 10 } = req.query;
+  const result = await reviewServices.getPendingReviews(page, limit);
 
   if (result.total === 0) {
     return res.status(200).json({
       message:
         "No pending review(s) found. All products are verified. Nice work.",
-      ...result,
     });
   }
 
