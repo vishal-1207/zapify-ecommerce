@@ -4,6 +4,7 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import paginate from "../utils/paginate.js";
+import { createNotification } from "../services/notification.service.js";
 
 /**
  * Gets a single product's public details, including all available offers from sellers.
@@ -62,7 +63,7 @@ export const getProductDetailsAdmin = async (id) => {
     include: [
       {
         model: db.ProductSpec,
-        as: "productSpecs",
+        as: "specs",
       },
       {
         model: db.Media,
@@ -174,7 +175,7 @@ const _createProduct = async (productData, files, status, transaction) => {
 export const createProductSuggestion = async (
   productData,
   offerData,
-  sellerProfileId,
+  sellerId,
   files
 ) => {
   const transaction = await sequelize.transaction();
@@ -191,7 +192,7 @@ export const createProductSuggestion = async (
       {
         ...offerData,
         productId: newProduct.id,
-        sellerProfileId,
+        sellerId,
       },
       transaction
     );
@@ -216,14 +217,27 @@ export const createProductSuggestion = async (
  * @param {*} files
  * @returns
  */
-export const getPendingProductsForReview = async (req) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
+export const getPendingProductsForReview = async (page, limit) => {
   const result = await paginate(
     db.Product,
     {
       where: { status: "pending" },
-      include: [{ model: db.ProductSpecs, as: "specs" }],
+      include: [
+        { model: db.ProductSpecs, as: "specs" },
+        { model: db.Brand, as: "brand", attributes: ["name"] },
+        { model: db.Category, as: "category", attributes: ["name"] },
+        {
+          model: db.Offer,
+          as: "offers",
+          include: [
+            {
+              model: db.SellerProfile,
+              as: "sellerProfile",
+              attributes: ["id", "storeName"],
+            },
+          ],
+        },
+      ],
       order: [["createdAt", "DESC"]],
     },
     page,
@@ -387,8 +401,17 @@ export const reviewProductSuggestion = async (productId, decision) => {
   const product = await db.Product.findOne({
     where: { id: productId, status: "pending" },
     include: [
-      { model: db.Media, as: "media" },
-      { model: db.ProductSpec, as: "specs" },
+      {
+        model: db.Offer,
+        as: "offers",
+        include: [
+          {
+            model: db.SellerProfile,
+            as: "sellerProfile",
+            include: [{ model: db.User, attributes: ["id"] }],
+          },
+        ],
+      },
     ],
   });
 
@@ -402,6 +425,20 @@ export const reviewProductSuggestion = async (productId, decision) => {
 
   product.status = decision;
   await db.Product.save();
+
+  const sellerProfile = product.Offers[0]?.SellerProfile;
+  const sellerUser = sellerProfile?.User;
+
+  if (sellerUser) {
+    const message = `Your product suggestion '${product.name}' has been ${decision}.`;
+    const linkUrl = `/seller/products/${product.id}`;
+    createNotification(
+      sellerUser.id,
+      `product_suggestion_${decision}`,
+      message,
+      linkUrl
+    );
+  }
 
   return product;
 };
@@ -435,11 +472,11 @@ export const deleteProductService = async (productId) => {
       }
     }
 
-    // if (product.specs && product.specs.length > 0) {
-    //   for (const spec of product.specs) {
-    //     await spec.destroy({ transaction });
-    //   }
-    // }
+    if (product.specs && product.specs.length > 0) {
+      for (const spec of product.specs) {
+        await spec.destroy({ transaction });
+      }
+    }
 
     await product.destroy({ transaction });
     await transaction.commit();
