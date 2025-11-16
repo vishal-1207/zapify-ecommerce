@@ -3,15 +3,12 @@ import uploadToCloudinary from "../utils/cloudinary.util.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-const Category = db.Category;
-const Media = db.Media;
-
 // CREATE CATEGORY SERVICE
 export const createCategoryService = async (data, file) => {
   const name = data;
   const image = file.path;
 
-  const existingCategory = await Category.findOne({
+  const existingCategory = await db.Category.findOne({
     where: { name },
   });
 
@@ -24,11 +21,11 @@ export const createCategoryService = async (data, file) => {
     process.env.CLOUDINARY_CATEGORY_FOLDER
   );
 
-  const category = await Category.create({
+  const category = await db.Category.create({
     name,
   });
 
-  const media = await Media.create({
+  const media = await db.Media.create({
     publicId: uploadResult.public_id,
     url: uploadResult.secure_url,
     fileType: uploadResult.resource_type,
@@ -46,9 +43,9 @@ export const updateCategoryService = async (data, file) => {
   const { id, name } = data;
   const image = file;
 
-  const category = await Category.findByPk(id, {
+  const category = await db.Category.findByPk(id, {
     include: {
-      model: Media,
+      model: db.Media,
       as: "media",
     },
   });
@@ -94,8 +91,8 @@ export const updateCategoryService = async (data, file) => {
 export const deleteCategoryService = async (data) => {
   const id = data;
 
-  const category = await Category.findByPk(id, {
-    include: { model: Media, as: "media" },
+  const category = await db.Category.findByPk(id, {
+    include: { model: db.Media, as: "media" },
   });
 
   if (!category) {
