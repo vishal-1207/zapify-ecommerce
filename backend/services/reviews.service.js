@@ -3,6 +3,7 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import paginate from "../utils/paginate.js";
+import { getSellerProfile } from "./seller.service.js";
 
 /**
  * Helper function to calculate and update a product's average rating.
@@ -260,10 +261,7 @@ export const deleteUserReview = async (reviewId, userId) => {
 /**
  * Admin review service to get the list of pending reviews for verification.
  */
-export const getPendingReviews = async (req) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-
+export const getPendingReviews = async (page, limit) => {
   const result = await paginate(
     db.Review,
     {
@@ -272,6 +270,7 @@ export const getPendingReviews = async (req) => {
         { model: db.User, attributes: ["id", "fullname"] },
         { model: db.Product, attributes: ["id", "name"] },
       ],
+      order: [["createdAt", "ASC"]],
     },
     page,
     limit
@@ -305,4 +304,34 @@ export const approveOrRejectReview = async (reviewId, decision) => {
   createNotification(review.userId, `review_${decision}`, message);
 
   return review;
+};
+
+// Seller dashboard reviews service (read only)
+/**
+ * Fetches all (approved) reviews written about a seller's products.
+ */
+export const getMyProductReviews = async (userId) => {
+  const profile = await getSellerProfile(userId);
+  return db.Review.findAll({
+    where: { status: "approved" },
+    include: [
+      {
+        model: db.Product,
+        as: "product",
+        attributes: ["id", "name"],
+        required: true,
+        include: [
+          {
+            model: db.Offer,
+            as: "offer",
+            attributes: [],
+            required: true,
+            where: { sellerProfileId: profile.id },
+          },
+        ],
+      },
+    ],
+    order: [["createdAt", "DESC"]],
+    limit: 100,
+  });
 };
