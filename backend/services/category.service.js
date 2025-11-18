@@ -4,108 +4,122 @@ import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 
 // CREATE CATEGORY SERVICE
-export const createCategoryService = async (data, file) => {
-  const name = data;
-  const image = file.path;
+export const createCategoryService = async (name, file) => {
+  const transaction = await db.sequelize.transaction();
+  try {
+    const newCategory = await db.Category.create({ name }, { transaction });
 
-  const existingCategory = await db.Category.findOne({
-    where: { name },
-  });
+    if (file) {
+      const upload = await uploadToCloudinary(
+        file.path,
+        process.env.CLOUDINARY_CATEGORY_FOLDER
+      );
+      await db.Media.create(
+        {
+          publicId: upload.public_id,
+          url: upload.secure_url,
+          fileType: upload.resource_type,
+          tag: "thumbnail",
+          associatedType: "category",
+          associatedId: newCategory.id,
+        },
+        { transaction }
+      );
+    }
 
-  if (existingCategory) {
-    throw new ApiError(409, "Category already exists.");
+    await transaction.commit();
+    return newCategory;
+  } catch (error) {
+    await transaction.rollback();
+    if (error.name === "SequelizeUniqueConstraintError") {
+      throw new ApiError(409, "A category with this name already exists.");
+    }
+    throw new ApiError(500, "Failed to create category draft.", error);
   }
-
-  const uploadResult = await uploadToCloudinary(
-    image,
-    process.env.CLOUDINARY_CATEGORY_FOLDER
-  );
-
-  const category = await db.Category.create({
-    name,
-  });
-
-  const media = await db.Media.create({
-    publicId: uploadResult.public_id,
-    url: uploadResult.secure_url,
-    fileType: uploadResult.resource_type,
-    tag: "thumbnail",
-    associatedType: "category",
-    associatedId: category.id,
-  });
-
-  return { category, media };
 };
 
 // UPDATE CATEGORY SERVICE
 
 export const updateCategoryService = async (data, file) => {
   const { id, name } = data;
-  const image = file;
+  const transaction = await db.sequelize.transaction();
+  try {
+    const category = await db.Category.findByPk(id, {
+      include: [{ model: db.Media, as: "image" }],
+      transaction,
+    });
+    if (!category) throw new ApiError(404, "Category not found.");
 
-  const category = await db.Category.findByPk(id, {
-    include: {
-      model: db.Media,
-      as: "media",
-    },
-  });
+    category.name = name || category.name;
 
-  if (!category) throw new ApiError(404, "Category not found.");
-
-  if (name) category.name = name;
-
-  let media = null;
-  if (image) {
-    const existingMedia = category.media;
-
-    if (existingMedia) {
-      if (existingMedia.publicId) {
-        await cloudinary.uploader.destroy(existingMedia.publicId, {
-          resource_type: "image",
-        });
+    if (file) {
+      const oldImage = category.image;
+      if (oldImage) {
+        await cloudinary.uploader.destroy(oldImage.publicId);
+        await oldImage.destroy({ transaction });
       }
-      await existingMedia.destroy();
+      const upload = await uploadToCloudinary(
+        file.path,
+        process.env.CLOUDINARY_CATEGORY_FOLDER
+      );
+      await db.Media.create(
+        {
+          publicId: upload.public_id,
+          url: upload.secure_url,
+          fileType: upload.resource_type,
+          tag: "thumbnail",
+          associatedType: "category",
+          associatedId: category.id,
+        },
+        { transaction }
+      );
     }
 
-    const uploadResult = await uploadToCloudinary(
-      image.path,
-      process.env.CLOUDINARY_CATEGORY_FOLDER
-    );
-
-    media = await Media.create({
-      publicId: uploadResult.public_id,
-      url: uploadResult.secure_url,
-      fileType: uploadResult.resource_type,
-      tag: "thumbnail",
-      associatedType: "category",
-      associatedId: category.id,
-    });
+    await category.save({ transaction });
+    await transaction.commit();
+    return category;
+  } catch (error) {
+    await transaction.rollback();
+    if (error.name === "SequelizeUniqueConstraintError") {
+      throw new ApiError(409, "A category with this name already exists.");
+    }
+    throw new ApiError(500, "Failed to update category.", error);
   }
-
-  await category.save();
-
-  return { category, media };
 };
 
 // DELETE CATEGORY SERVICE
-export const deleteCategoryService = async (data) => {
-  const id = data;
-
-  const category = await db.Category.findByPk(id, {
-    include: { model: db.Media, as: "media" },
-  });
-
-  if (!category) {
-    throw new ApiError(400, "Category not found.");
-  }
-
-  const media = category.media;
-  if (media.publicId) {
-    await cloudinary.uploader.destroy(media.publicId, {
-      resource_type: media.fileType || "image",
+export const deleteCategoryService = async (id) => {
+  const transaction = await db.sequelize.transaction();
+  try {
+    const category = await db.Category.findByPk(id, {
+      include: [{ model: db.Media, as: "media" }],
+      transaction,
     });
-  }
+    if (!category) throw new ApiError(404, "Category not found.");
 
-  // await media.destroy();
-  await category.destroy();
+    // Check if any product is using this category
+    const productCount = await db.Product.count({
+      where: { categoryId: id },
+      transaction,
+    });
+    if (productCount > 0) {
+      throw new ApiError(
+        400,
+        `Cannot delete category: ${productCount} product(s) are still associated with it.`
+      );
+    }
+
+    if (category.media?.[0]) {
+      await cloudinary.uploader.destroy(category.media[0].publicId);
+    }
+
+    await category.destroy({ transaction });
+
+    await transaction.commit();
+    return { message: "Category deleted successfully." };
+  } catch (error) {
+    await transaction.rollback();
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(500, "Failed to delete category.", error);
+  }
 };
