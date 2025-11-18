@@ -106,7 +106,7 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
 
       await transaction.commit();
 
-      // For large-scale application it is better to use background jobs for such process.
+      // Self Note: For large-scale application it is better to use background jobs for such process.
       await updateProductAverageRating(orderItem.Offer.productId);
 
       return db.Review.findByPk(newReview.id, {
@@ -300,8 +300,9 @@ export const approveOrRejectReview = async (reviewId, decision) => {
   }
 
   // Notify the user who wrote the review about the admin's decision.
-  const message = `Your review for product '${review.Product.name}' has been ${decision}.`;
-  createNotification(review.userId, `review_${decision}`, message);
+  const message = `Your review for '${review.Product.name}' has been ${decision}.`;
+  const linkUrl = `/products/${review.productId}?review=${review.id}`;
+  createNotification(review.User.id, `review_${decision}`, message, linkUrl);
 
   return review;
 };
@@ -312,26 +313,30 @@ export const approveOrRejectReview = async (reviewId, decision) => {
  */
 export const getMyProductReviews = async (userId) => {
   const profile = await getSellerProfile(userId);
-  return db.Review.findAll({
-    where: { status: "approved" },
-    include: [
-      {
-        model: db.Product,
-        as: "product",
-        attributes: ["id", "name"],
-        required: true,
-        include: [
-          {
-            model: db.Offer,
-            as: "offer",
-            attributes: [],
-            required: true,
-            where: { sellerProfileId: profile.id },
-          },
-        ],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-    limit: 100,
-  });
+  return paginate(
+    db.Review,
+    {
+      where: { status: "approved" },
+      include: [
+        {
+          model: db.Product,
+          as: "product",
+          attributes: ["id", "name"],
+          required: true,
+          include: [
+            {
+              model: db.Offer,
+              as: "offers",
+              attributes: [],
+              required: true,
+              where: { sellerProfileId: profile.id },
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    },
+    page,
+    limit
+  );
 };
