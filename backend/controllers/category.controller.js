@@ -1,22 +1,17 @@
-import {
-  createCategoryService,
-  deleteCategoryService,
-  updateCategoryService,
-} from "../services/category.service.js";
+import * as categoryService from "../services/category.service.js";
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
-const Category = db.Category;
-const Media = db.Media;
-
-// GET CATEGORIES
+/**
+ * Fetches all categories availabe.
+ */
 export const getCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.findAll({
+  const categories = await db.Category.findAll({
     attributes: ["id", "name"],
     order: [["name", "ASC"]],
     include: [
       {
-        model: Media,
+        model: db.Media,
         as: "media",
         attributes: ["id", "publicId", "url", "fileType", "tag"],
         where: {
@@ -31,32 +26,41 @@ export const getCategories = asyncHandler(async (req, res) => {
     .json({ message: "Categories fetched successfully.", categories });
 });
 
-// ADD CATEGORY
+/**
+ * Category controller which allows to admin to create new non-existing category.
+ */
 export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
 
-  const category = await createCategoryService(name, image);
+  const category = await categoryService.createCategoryService(name, image);
   return res
     .status(200)
     .json({ message: "Category created successfully.", category });
 });
 
-// UPDATE CATEGORY
+/**
+ * Category controller which allows admin to update existing category details.
+ */
 export const updateCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const id = req.params.id;
-  const image = req.file ? req.file.path : null;
+  const image = req.file;
 
-  const updatedCategory = await updateCategoryService({ id, name }, image);
+  const updatedCategory = await categoryService.updateCategoryService(
+    { id, name },
+    image
+  );
   res
     .status(200)
     .json({ message: "Category updated successfully.", updatedCategory });
 });
 
-// DELETE CATEGORY
+/**
+ * Allows admin to delete a existing category.
+ */
 export const deleteCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  await deleteCategoryService(id);
+  await categoryService.deleteCategoryService(id);
   return res.status(200).json({ message: "Category deleted successfully." });
 });
