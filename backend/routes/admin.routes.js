@@ -1,22 +1,24 @@
 import express from "express";
-import * as authControllers from "../controllers/auth.controller.js";
+import * as adminController from "../controllers/admin.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
-import { loginSchema, registerSchema } from "../utils/validationSchema.js";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
-router.use(authenticate);
+router.use(authenticate, authorizeRoles("admin"));
+
+// --- Dashboard & Stats Routes ---
+router.route("/stats").get(adminController.getDashboardStats);
+router.route("/stats/sales-over-time").get(adminController.getSalesOverTime);
+router
+  .route("/stats/sales-by-category")
+  .get(adminController.getSalesByCategory);
+
+router.route("/stats/signup-analytics").get(adminController.getSignupAnalytics);
 
 router
-  .route("/login")
-  .post(csrfProtection, validate(loginSchema), authControllers.loginController);
-router
-  .route("/logout")
-  .post(
-    validate(registerSchema),
-    csrfProtection,
-    authControllers.logoutController
-  );
+  .route("/stats/order-activity")
+  .get(adminController.getOrderActivityAnalytics);
+
+router.route("/list/:role").get(adminController.getUsers);
 
 export default router;
