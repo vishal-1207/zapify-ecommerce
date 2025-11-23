@@ -33,7 +33,7 @@ export const addCategory = asyncHandler(async (req, res) => {
   const name = req.body.name;
   const image = req.file;
 
-  const category = await categoryService.createCategoryService(name, image);
+  const category = await categoryService.addCategory(name, image);
   return res
     .status(200)
     .json({ message: "Category created successfully.", category });
@@ -47,7 +47,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
   const image = req.file;
 
-  const updatedCategory = await categoryService.updateCategoryService(
+  const updatedCategory = await categoryService.updateCategory(
     { id, name },
     image
   );
@@ -61,6 +61,6 @@ export const updateCategory = asyncHandler(async (req, res) => {
  */
 export const deleteCategory = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  await categoryService.deleteCategoryService(id);
+  await categoryService.deleteCategory(id);
   return res.status(200).json({ message: "Category deleted successfully." });
 });
