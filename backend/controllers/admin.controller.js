@@ -7,9 +7,7 @@ import * as adminService from "../services/admin.service.js";
  */
 export const getDashboardStats = asyncHandler(async (req, res) => {
   const stats = await adminService.getAdminDashboardStats();
-  return res
-    .status(200)
-    .json(new ApiResponse(200, stats, "Admin stats fetched."));
+  return res.status(200).json({ message: "Admin stats fetched.", stats });
 });
 
 /**
@@ -18,9 +16,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 export const getSalesOverTime = asyncHandler(async (req, res) => {
   const days = parseInt(req.query.days, 10) || 30;
   const salesData = await adminService.getPlatformSalesOverTime(days);
-  return res
-    .status(200)
-    .json(new ApiResponse(200, salesData, "Sales data fetched."));
+  return res.status(200).json({ message: "Sales data fetched.", salesData });
 });
 
 /**
@@ -30,7 +26,7 @@ export const getSalesByCategory = asyncHandler(async (req, res) => {
   const categoryData = await adminService.getPlatformSalesByCategory();
   return res
     .status(200)
-    .json(new ApiResponse(200, categoryData, "Category sales data fetched."));
+    .json({ message: "Category sales data fetched.", categoryData });
 });
 
 /**
@@ -41,7 +37,7 @@ export const getSignupAnalytics = asyncHandler(async (req, res) => {
   const signupData = await adminService.getSignupAnalytics(days);
   return res
     .status(200)
-    .json(new ApiResponse(200, signupData, "Signup analytics fetched."));
+    .json({ message: "Signup analytics fetched.", signupData });
 });
 
 /**
@@ -52,7 +48,7 @@ export const getOrderActivityAnalytics = asyncHandler(async (req, res) => {
   const orderData = await adminService.getOrderActivityAnalytics(days);
   return res
     .status(200)
-    .json(new ApiResponse(200, orderData, "Order activity fetched."));
+    .json({ message: "Order activity fetched.", orderData });
 });
 
 /**

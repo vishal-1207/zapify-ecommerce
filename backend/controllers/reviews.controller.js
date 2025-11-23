@@ -49,7 +49,7 @@ export const deleteReviewController = asyncHandler(async (req, res) => {
   const { reviewId } = req.params;
   const userId = req.user.id;
   const result = await reviewServices.deleteUserReview(reviewId, userId);
-  return res.status(200).json(new ApiResponse(200, result, result.message));
+  return res.status(200).json({ message: result.message, result });
 });
 
 /**

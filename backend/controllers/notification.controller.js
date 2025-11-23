@@ -10,7 +10,7 @@ export const getMyNotifications = asyncHandler(async (req, res) => {
   );
   return res
     .status(200)
-    .json(new ApiResponse(200, notifications, "Notifications fetched."));
+    .json({ message: "Notifications fetched.", notifications });
 });
 
 /**
@@ -23,7 +23,7 @@ export const markAsRead = asyncHandler(async (req, res) => {
     req.user,
     notificationIds
   );
-  return res.status(200).json(new ApiResponse(200, result, result.message));
+  return res.status(200).json({ message: result.message, result });
 });
 
 /**
@@ -31,5 +31,5 @@ export const markAsRead = asyncHandler(async (req, res) => {
  */
 export const clearAll = asyncHandler(async (req, res) => {
   const result = await notificationService.clearAllNotifications(req.user.id);
-  return res.status(200).json(new ApiResponse(200, result, result.message));
+  return res.status(200).json({ message: result.message, result });
 });
