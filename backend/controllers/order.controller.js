@@ -22,7 +22,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
 /**
  * Controller to get the authenticated user's order history (summary view).
  */
-export const getUserOrders = asyncHandler(async (req, res) => {
+export const getOrdersForCustomer = asyncHandler(async (req, res) => {
   const orders = await orderService.getOrdersForCustomer(req.user.id);
   return res
     .status(200)
@@ -32,7 +32,7 @@ export const getUserOrders = asyncHandler(async (req, res) => {
 /**
  * Controller to get the details of a specific order belonging to the user.
  */
-export const getUserOrderDetails = asyncHandler(async (req, res) => {
+export const getOrderDetailsForCustomer = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const orderDetails = await orderService.getOrderDetailsForCustomer(
     orderId,
@@ -46,7 +46,7 @@ export const getUserOrderDetails = asyncHandler(async (req, res) => {
 /**
  * Controller to get shipment and tracking details for a specific order.
  */
-export const getOrderTracking = asyncHandler(async (req, res) => {
+export const getOrderTrackingDetails = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const trackingDetails = await orderService.getOrderTrackingDetails(
     orderId,
@@ -57,12 +57,18 @@ export const getOrderTracking = asyncHandler(async (req, res) => {
     .json({ message: "Tracking details fetched.", trackingDetails });
 });
 
+export const getActiveOrders = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const orders = await orderService.getActiveOrders(req.user.id, page, limit);
+  return res.status(200).json({ message: "Active orders fetched", orders });
+});
+
 /**
  * Controller to get order history (completed) for seller.
  */
-export const orderHistoryForSeller = asyncHandler(async (req, res) => {
+export const getSellerOrdersHistory = asyncHandler(async (req, res) => {
   const sellerId = req.params;
-  const orderList = await orderService.getOrdersForSeller(sellerId);
+  const orderList = await orderService.getSellerOrdersHistory(sellerId);
   return res
     .status(200)
     .json({ message: "Order history list fetched successfully.", orderList });
@@ -71,7 +77,7 @@ export const orderHistoryForSeller = asyncHandler(async (req, res) => {
 /**
  *
  */
-export const getOrderDetailsForFulfillment = asyncHandler(async (req, res) => {
+export const getOrdersForFulfillment = asyncHandler(async (req, res) => {
   const sellerId = req.params;
   const fulfillmentOrderDetails = await orderService.getOrdersForFulfillment(
     sellerId
@@ -92,7 +98,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   if (!status) throw new ApiError(400, "Status is required.");
 
   const trackingData =
-    status === "Shipped" ? { trackingNumber, shippingCarrier } : null;
+    status === "shipped" ? { trackingNumber, shippingCarrier } : null;
 
   const item = await sellerService.updateOrderItemStatus(
     req.user.id,
@@ -100,7 +106,5 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     status,
     trackingData
   );
-  return res
-    .status(200)
-    .json(new ApiResponse(200, item, "Order status updated."));
+  return res.status(200).json({ message: "Order status updated.", item });
 });
