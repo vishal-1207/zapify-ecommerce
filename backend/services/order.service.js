@@ -149,7 +149,7 @@ export const getOrderDetailsForCustomer = async (orderId, userId) => {
  * Service to get all order items that belongs to a specific seller for their dash board.
  * @param {string} sellerProfileId - Seller for which the order items will be fetched.
  */
-export const getOrdersForSeller = async (sellerId) => {
+export const getSellerOrdersHistory = async (sellerId) => {
   const orders = await db.OrderItem.findAll({
     include: [
       {
