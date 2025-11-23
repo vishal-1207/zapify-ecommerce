@@ -4,7 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 
 // CREATE CATEGORY SERVICE
-export const createCategoryService = async (name, file) => {
+export const addCategory = async (name, file) => {
   const transaction = await db.sequelize.transaction();
   try {
     const newCategory = await db.Category.create({ name }, { transaction });
@@ -40,7 +40,7 @@ export const createCategoryService = async (name, file) => {
 
 // UPDATE CATEGORY SERVICE
 
-export const updateCategoryService = async (data, file) => {
+export const updateCategory = async (data, file) => {
   const { id, name } = data;
   const transaction = await db.sequelize.transaction();
   try {
@@ -88,7 +88,7 @@ export const updateCategoryService = async (data, file) => {
 };
 
 // DELETE CATEGORY SERVICE
-export const deleteCategoryService = async (id) => {
+export const deleteCategory = async (id) => {
   const transaction = await db.sequelize.transaction();
   try {
     const category = await db.Category.findByPk(id, {
