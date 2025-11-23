@@ -180,7 +180,7 @@ export const searchCatalog = asyncHandler(async (req, res) => {
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
   const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
-    await productService.createProductService(data, files);
+    await productService.adminCreateProduct(data, files);
 
   return res.status(200).json({
     message: "Product added successfully.",
@@ -200,7 +200,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   const { data, files } = parseProductInput(req, true);
   const { updatedProduct, updatedSpecs, updatedThumbnail, updaterGallery } =
-    await productService.updateProductService(productId, data, files);
+    await productService.updateProduct(productId, data, files);
 
   return res.status(200).json({
     message: "Product updated successfully.",
@@ -216,6 +216,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
  */
 export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.productId;
-  const result = await productService.deleteProductService(productId);
+  const result = await productService.deleteProduct(productId);
   return res.status(200).json({ message: result.message });
 });
