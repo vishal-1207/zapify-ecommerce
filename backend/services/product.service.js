@@ -278,7 +278,7 @@ export const adminCreateProduct = async (productData, files) => {
 /**
  * Service for admin to update product details.
  */
-export const updateProductService = async (productId, data, files) => {
+export const updateProduct = async (productId, data, files) => {
   const { categoryId, brandId, name, description, price, specs = [] } = data;
 
   const transaction = await sequelize.transaction();
@@ -446,7 +446,7 @@ export const reviewProductSuggestion = async (productId, decision) => {
 /**
  * Service for admin to delete a product from the catalog.
  */
-export const deleteProductService = async (productId) => {
+export const deleteProduct = async (productId) => {
   const transaction = await sequelize.transaction();
 
   try {
