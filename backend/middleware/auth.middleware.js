@@ -2,10 +2,8 @@ import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 
-const User = db.User;
-
 //Authenticate Middleware
-export default authenticate = asyncHandler(async (req, res, next) => {
+const authenticate = asyncHandler(async (req, res, next) => {
   try {
     const token =
       req.cookie?.accessToken ||
@@ -16,7 +14,7 @@ export default authenticate = asyncHandler(async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findByPk(decoded.id, {
+    const user = await db.User.findByPk(decoded.id, {
       attributes: { exclude: ["password"] },
     });
 
@@ -27,3 +25,5 @@ export default authenticate = asyncHandler(async (req, res, next) => {
     return res.status(403).json({ message: "Invalid or expired token." });
   }
 });
+
+export default authenticate;

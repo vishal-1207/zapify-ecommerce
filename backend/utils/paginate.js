@@ -6,12 +6,7 @@
  * @param {number} limit - The number of items per page.
  * @returns {Promise<object>} An object containing paginated data and metadata.
  */
-export default paginate = async (
-  model,
-  queryOptions = {},
-  page = 1,
-  limit = 10
-) => {
+const paginate = async (model, queryOptions = {}, page = 1, limit = 10) => {
   const safePage = Math.max(1, parseInt(page, 10) || 1);
   const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
 
@@ -35,3 +30,5 @@ export default paginate = async (
     hasPrevPage: safePage > 1,
   };
 };
+
+export default paginate;
