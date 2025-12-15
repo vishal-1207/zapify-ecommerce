@@ -1,7 +1,7 @@
 import express from "express";
-import { authenticate } from "../middleware/auth.middleware.js";
+import authenticate from "../middleware/auth.middleware.js";
 import * as settingControllers from "../controllers/settings.controller.js";
-import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 router.use(authenticate);

@@ -1,7 +1,7 @@
 import express from "express";
-import { authenticate } from "../middleware/auth.middleware.js";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
-import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
+import authenticate from "../middleware/auth.middleware.js";
+import csrfProtection from "../middleware/csrf.middleware.js";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 import * as sellerController from "../controllers/seller.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { sellerProfileSchema } from "../utils/validationSchema.js";
@@ -15,35 +15,28 @@ router
   .post(
     csrfProtection,
     validate(sellerProfileSchema),
-    limiter,
-    sellerController.createProfile
+    sellerController.createSellerProfile
   );
 
 router
   .route("/profile")
-  .get(authorizeRoles("seller"), sellerController.getProfile);
-
-router
-  .route("/analytics")
-  .get(authorizeRoles("seller"), sellerController.getSellerAnalytics);
+  .get(authorizeRoles("seller"), sellerController.getSellerProfile);
 
 router
   .route("/:slug/edit/profile")
   .patch(
-    authenticate,
     authorizeRoles("seller"),
     csrfProtection,
     validate(sellerProfileSchema),
-    sellerController.updateProfile
+    sellerController.updateSellerProfile
   );
 
 router
   .route("/:slug/delete/profile")
   .delete(
-    authenticate,
     authorizeRoles("seller"),
     csrfProtection,
-    sellerController.deleteProfile
+    sellerController.deleteSellerProfile
   );
 
 // Dashboard
@@ -51,25 +44,25 @@ router
 router.get(
   "/dashboard/stats",
   authorizeRoles("seller"),
-  sellerController.getDashboardStats
+  sellerController.getSellerDashboardStats
 );
 // GET /api/seller/dashboard/sales-analytics?days=90
 router.get(
   "/dashboard/sales-analytics",
   authorizeRoles("seller"),
-  sellerController.getSalesAnalytics
+  sellerController.getSellerSalesAnalytics
 );
 // GET /api/seller/dashboard/top-products?days=30
 router.get(
   "/dashboard/top-products",
   authorizeRoles("seller"),
-  sellerController.getTopProducts
+  sellerController.getSellerTopProducts
 );
 // GET /api/seller/dashboard/category-performance?days=30
 router.get(
   "/dashboard/category-performance",
   authorizeRoles("seller"),
-  sellerController.getCategoryPerformance
+  sellerController.getSellerCategoryPerformance
 );
 
 export default router;

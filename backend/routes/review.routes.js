@@ -1,10 +1,10 @@
 import express from "express";
-import { authenticate } from "../middleware/auth.middleware.js";
-import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
+import authenticate from "../middleware/auth.middleware.js";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { reviewSchema } from "../utils/validationSchema.js";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
+import csrfProtection from "../middleware/csrf.middleware.js";
 import * as reviewControllers from "../controllers/reviews.controller.js";
 
 const router = express.Router();

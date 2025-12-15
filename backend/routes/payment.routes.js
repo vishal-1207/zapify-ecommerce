@@ -1,7 +1,7 @@
 import * as paymentControllers from "../controllers/payment.controller.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import authenticate from "../middleware/auth.middleware.js";
 import express from "express";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
+import csrfProtection from "../middleware/csrf.middleware.js";
 
 const router = express.Router();
 router.use(authenticate);

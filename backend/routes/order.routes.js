@@ -9,21 +9,20 @@ router.use(authenticate);
 router
   .route("/")
   .post(orderControllers.placeOrder)
-  .get(orderControllers.getUserOrders);
+  .get(orderControllers.getOrdersForCustomer);
 
-router.route("/:orderId").get(orderControllers.getUserOrderDetails);
+router.route("/:orderId").get(orderControllers.getOrderDetailsForCustomer);
 
-router.route("/:orderId/tracking").get(orderControllers.getOrderTracking);
+router
+  .route("/:orderId/tracking")
+  .get(orderControllers.getOrderTrackingDetails);
 
 router
   .route("/:sellerId")
-  .get(
-    authorizeRoles("seller"),
-    orderControllers.getOrderDetailsForFulfillment
-  );
+  .get(authorizeRoles("seller"), orderControllers.getOrdersForFulfillment);
 router
   .route("/:sellerId/order-history")
-  .get(authorizeRoles("seller"), orderControllers.orderHistoryForSeller);
+  .get(authorizeRoles("seller"), orderControllers.getSellerOrdersHistory);
 
 router
   .route("/:orderItemId")

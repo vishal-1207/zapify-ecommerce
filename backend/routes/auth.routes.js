@@ -1,7 +1,7 @@
 import express from "express";
 import * as authControllers from "../controllers/auth.controller.js";
-import { authenticate } from "../middleware/auth.middleware.js";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
+import authenticate from "../middleware/auth.middleware.js";
+import csrfProtection from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../utils/validationSchema.js";
 import passport from "passport";

@@ -1,29 +1,24 @@
 import express from "express";
-import {
-  addCategory,
-  deleteCategory,
-  getCategories,
-  updateCategory,
-} from "../controllers/category.controller.js";
-import { authenticate } from "../middleware/auth.middleware.js";
-import { csrfProtection } from "../middleware/csrf.middleware.js";
+import * as categoryController from "../controllers/category.controller.js";
+import authenticate from "../middleware/auth.middleware.js";
+import csrfProtection from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { categorySchema } from "../utils/validationSchema.js";
-import { authorizeRoles } from "../middleware/authorizeRoles.middleware.js";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 router.use(authenticate);
 
 router
   .route("/")
-  .get(getCategories)
+  .get(categoryController.getCategories)
   .post(
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
-    addCategory
+    categoryController.addCategory
   );
 
 router
@@ -33,8 +28,12 @@ router
     csrfProtection,
     upload.single("image"),
     validate(categorySchema),
-    updateCategory
+    categoryController.updateCategory
   )
-  .delete(authorizeRoles("admin"), csrfProtection, deleteCategory);
+  .delete(
+    authorizeRoles("admin"),
+    csrfProtection,
+    categoryController.deleteCategory
+  );
 
 export default router;
