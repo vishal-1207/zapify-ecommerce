@@ -51,7 +51,7 @@ export const syncProductToAlgolia = async (productId) => {
       return;
     }
 
-    const algoliaObject = formatProductForAlgolia(product);
+    const algoliaObject = formatProductsForAlgolia(product);
     await productIndex.saveObject(algoliaObject);
     console.log(`Synced product ${productId} to Algolia`);
   } catch (error) {
