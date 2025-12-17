@@ -5,12 +5,23 @@ import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import paginate from "../utils/paginate.js";
 import { createNotification } from "../services/notification.service.js";
+import redisClient from "../config/redis.js";
+import { invalidateCache } from "../utils/cache.js";
+
+const CACHE_EXPIRATION_SECONDS = 3600;
 
 /**
  * Gets a single product's public details, including all available offers from sellers.
  *
  */
 export const getCustomerProductDetails = async (productSlug) => {
+  const cacheKey = `product:${productSlug}`;
+
+  const cachedProduct = await redisClient.get(cacheKey);
+  if (cachedProduct) {
+    return JSON.parse(cachedProduct);
+  }
+
   const product = await db.Product.findOne({
     where: { slug: productSlug, status: "approved" },
     include: [
@@ -49,6 +60,12 @@ export const getCustomerProductDetails = async (productSlug) => {
   if (!product) {
     throw new ApiError(404, "Product not found.");
   }
+
+  await redisClient.setEx(
+    cacheKey,
+    CACHE_EXPIRATION_SECONDS,
+    JSON.stringify(product)
+  );
 
   return product;
 };
@@ -297,6 +314,8 @@ export const updateProduct = async (productId, data, files) => {
       ],
     });
 
+    const slug = product.slug;
+
     if (!product) throw new ApiError(404, "Product not found.");
 
     if (name) product.name = name;
@@ -385,6 +404,10 @@ export const updateProduct = async (productId, data, files) => {
     await transaction.commit();
     committed = true;
 
+    if (slug) {
+      await invalidateCache(`product:${slug}`);
+    }
+
     return updatedProduct;
   } catch (error) {
     console.error(error);
@@ -458,6 +481,8 @@ export const deleteProduct = async (productId) => {
       transaction,
     });
 
+    const productSlug = product.slug;
+
     if (!product) {
       throw new ApiError(400, "Product not found.");
     }
@@ -480,10 +505,42 @@ export const deleteProduct = async (productId) => {
 
     await product.destroy({ transaction });
     await transaction.commit();
+
+    if (productSlug) {
+      await invalidateCache(`product:${productSlug}`);
+    }
+
     return { message: "Product deleted successfully." };
   } catch (error) {
     console.error(error);
     await transaction.rollback();
     throw new ApiError(500, "Something went wrong.");
   }
+};
+
+/**
+ * Seller service to get list of suggested products for a specified seller.
+ */
+export const getSellerProductSuggestions = async (userId, page, limit) => {
+  const seller = await getSellerProfile(userId);
+  const result = await paginate(
+    db.Product,
+    {
+      where: { status: { [Op.ne]: "approved" } },
+      include: [
+        {
+          model: db.Offer,
+          as: "offers",
+          where: { sellerProfileId: seller.id },
+          attributes: [],
+        },
+      ],
+      attributes: ["id", "name", "status", "createdAt"],
+      order: ["createdAt", "DESC"],
+    },
+    page,
+    limit
+  );
+
+  return result;
 };
