@@ -158,7 +158,7 @@ export const reviewProduct = asyncHandler(async (req, res) => {
 });
 
 /**
- * Seller controller for finding product from list of active products listed by admin.
+ * Seller product controller for finding product from list of active products listed by admin.
  */
 export const searchCatalog = asyncHandler(async (req, res) => {
   const searchTerm = req.query;
@@ -175,7 +175,8 @@ export const searchCatalog = asyncHandler(async (req, res) => {
 });
 
 /**
- * Admin controller for creating or adding products to the product list. By default the product is added to the listed products. And is available for seller to put offer for that product.
+ * Admin controller for creating or adding products to the product list. By default the product is added to the listed products.
+ * And is available for seller to put offer for that product.
  */
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
@@ -218,4 +219,27 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.productId;
   const result = await productService.deleteProduct(productId);
   return res.status(200).json({ message: result.message });
+});
+
+/**
+ * Gets seller's product suggestion for the products that where not listed by the admin.
+ */
+export const getProductSuggestions = asyncHandler(async (req, res) => {
+  const { page, limit } = req.query;
+  const suggestions = await sellerService.getSellerProductSuggestions(
+    req.user.id,
+    page,
+    limit
+  );
+
+  if (suggestions.total === 0) {
+    return res.status(200).json({
+      message:
+        "No pending products found. All products are verified. Nice work.",
+    });
+  }
+
+  return res
+    .status(200)
+    .json({ message: "Product suggestions list fetched.", suggestions });
 });
