@@ -34,9 +34,6 @@ export default (sequelize, DataTypes) => {
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
-    SellerProfile.hasOne(models.SellerSettings, {
-      foreignKey: "sellerProfileId",
-    });
   };
 
   return SellerProfile;
