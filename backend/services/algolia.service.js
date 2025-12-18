@@ -1,6 +1,5 @@
-import { productIndex } from "../config/algolia.js";
+import { client, INDEX_NAME } from "../config/algolia.js";
 import db from "../models/index.js";
-import { Sequelize } from "sequelize";
 
 /**
  * Formats a Sequelize product instance for Algolia.
@@ -24,7 +23,9 @@ const formatProductsForAlgolia = async (product) => {
     rating: parseFloat(product.averageRating) || 0,
     reviewCount: parseInt(product.reviewCount) || 0,
     status: product.status,
-    price: bestPrice,
+    price: parseFloat(product.minOfferPrice) || 0,
+    popularity: parseFloat(product.popularityScore) || 0,
+    inStock: product.totalOfferStock > 0,
   };
 };
 
@@ -47,12 +48,12 @@ export const syncProductToAlgolia = async (productId) => {
 
     // Only index 'approved' products
     if (product.status !== "approved") {
-      await productIndex.deleteObject(productId);
+      await client.deleteObject({ indexName: INDEX_NAME, objectId: productId });
       return;
     }
 
     const algoliaObject = formatProductsForAlgolia(product);
-    await productIndex.saveObject(algoliaObject);
+    await client.saveObject({ indexName: INDEX_NAME, algoliaObject });
     console.log(`Synced product ${productId} to Algolia`);
   } catch (error) {
     console.error(`Failed to sync product ${productId} to Algolia: `, error);
@@ -65,7 +66,10 @@ export const syncProductToAlgolia = async (productId) => {
  */
 export const deleteProductFromAlgolia = async (productId) => {
   try {
-    await productIndex.deleteObject(productId);
+    await client.deleteObject({
+      indexName: INDEX_NAME,
+      objectID: productId,
+    });
     console.log(`Deleted product ${productId} from Algolia.`);
   } catch (error) {
     console.error(
@@ -79,9 +83,10 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
   const { page = 1, limit = 20, category, brand, minPrice, maxPrice } = filters;
 
   const searchOptions = {
+    query,
     page: page - 1,
     hitsPerPage: limit,
-    filters: "status: approved",
+    filters: "status:approved",
   };
 
   const filterConditions = [];
@@ -94,10 +99,10 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     searchOptions.filters += " AND " + filterConditions.join(" AND ");
   }
 
-  const { hits, nbHits, nbPages } = await productIndex.search(
-    query,
-    searchOptions
-  );
+  const { hits, nbHits, nbPages } = await client.searchSingleIndex({
+    indexName: INDEX_NAME,
+    searchOptions,
+  });
 
   return {
     products: hits,
