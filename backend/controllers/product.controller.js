@@ -1,7 +1,6 @@
 import * as productService from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import paginate from "../utils/paginate.js";
 
 /**
  * Helper function for checking and parsing input data to process for services.

@@ -1,5 +1,5 @@
 import * as sellerService from "../services/seller.service.js";
-import asyncHandler from "../utils/asyncHandler";
+import asyncHandler from "../utils/asyncHandler.js";
 
 /**
  * Creates a new store/seller profile for seller.
