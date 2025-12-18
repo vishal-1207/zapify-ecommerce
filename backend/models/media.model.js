@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM("product", "review", "category", "brand"),
       allowNull: false,
     },
-    associatedId: { type: DataTypes.INTEGER, allowNull: false },
+    associatedId: { type: DataTypes.UUID, allowNull: false },
   });
 
   Media.associate = (models) => {
