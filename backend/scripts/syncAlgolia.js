@@ -24,6 +24,8 @@ const runSync = async () => {
     console.log(`Found ${products.length} approved products to sync.`);
 
     for (const product of products) {
+      // First ensure SQL aggregates are upto date
+      await updateProductAggregates(product.id);
       await syncProductToAlgolia(product.id);
       process.stdout.write(".");
     }
