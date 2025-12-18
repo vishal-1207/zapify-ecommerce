@@ -36,4 +36,6 @@ export default (sequelize, DataTypes) => {
       foreignKey: "recipientId",
     });
   };
+
+  return Notification;
 };
