@@ -109,7 +109,6 @@ export default (sequelize, DataTypes) => {
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
-    User.hasOne(models.UserSettings, { foreignKey: "userId" });
     User.hasMany(models.Order, { foreignKey: "userId" });
     User.hasMany(models.Review, { foreignKey: "userId" });
     User.hasMany(models.RefreshToken, {
