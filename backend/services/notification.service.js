@@ -9,7 +9,12 @@ import ApiError from "../utils/ApiError.js";
  * @param {*} linkUrl - Link here denotes the route of the pages, the message is describing about, such as offer page, orders page, etc.
  * @returns
  */
-export const createNotication = async (recipientId, type, message, linkUrl) => {
+export const createNotification = async (
+  recipientId,
+  type,
+  message,
+  linkUrl
+) => {
   try {
     const notification = await db.Notification.create({
       recipientId,

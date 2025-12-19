@@ -2,14 +2,11 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 
-const Brand = db.Brand;
-const Media = db.Media;
-
 export const addBrandService = async (data, file) => {
   const { name, description } = data;
   const logo = file.path;
 
-  const existingBrand = await Brand.findOne({
+  const existingBrand = await db.Brand.findOne({
     where: { name },
   });
 
@@ -20,12 +17,12 @@ export const addBrandService = async (data, file) => {
     process.env.CLOUDINARY_BRAND_FOLDER
   );
 
-  const brand = await Brand.create({
+  const brand = await db.Brand.create({
     name,
     description,
   });
 
-  const media = await Media.create({
+  const media = await db.Media.create({
     publicId: uploadResult.public_id,
     url: uploadResult.secure_url,
     fileType: uploadResult.resource_type,
@@ -40,13 +37,13 @@ export const addBrandService = async (data, file) => {
 export const updateBrandService = async (id, data, file) => {
   const { name, description } = data;
 
-  const existingBrand = await Brand.findByPk(id);
+  const existingBrand = await db.Brand.findByPk(id);
   if (!existingBrand) {
     throw new ApiError(404, "Brand not found.");
   }
 
   if (name) {
-    const brand = await Brand.findOne({
+    const brand = await db.Brand.findOne({
       where: { name },
     });
 
@@ -59,7 +56,7 @@ export const updateBrandService = async (id, data, file) => {
     await brand.save();
 
     if (file) {
-      const existingMedia = await Media.findOne({
+      const existingMedia = await db.Media.findOne({
         where: {
           associatedType: "brand",
           associatedId: id,
@@ -81,7 +78,7 @@ export const updateBrandService = async (id, data, file) => {
       process.env.CLOUDINARY_BRAND_FOLDER
     );
 
-    const media = await Media.create({
+    const media = await db.Media.create({
       publicId: uploadResult.public_id,
       url: uploadResult.secure_url,
       fileType: uploadResult.resource_type,
@@ -95,13 +92,13 @@ export const updateBrandService = async (id, data, file) => {
 };
 
 export const deleteBrandService = async (id) => {
-  const brand = await Brand.findByPk(id);
+  const brand = await db.Brand.findByPk(id);
 
   if (!brand) {
     throw new ApiError(404, "Brand not found.");
   }
 
-  const media = await Media.findOne({
+  const media = await db.Media.findOne({
     where: {
       associatedType: "brand",
       associatedId: id,
@@ -116,6 +113,6 @@ export const deleteBrandService = async (id) => {
     }
   }
 
-  // await media?.destroy();
+  await media?.destroy();
   await brand.destroy();
 };
