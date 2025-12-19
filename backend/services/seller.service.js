@@ -204,10 +204,35 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
     ],
   });
 
+  // 4. Average Rating (across all seller's products)
+  const avgRatingResult = await db.Review.findOne({
+    attributes: [
+      [db.sequelize.fn("AVG", db.sequelize.col("rating")), "averageRating"],
+    ],
+    include: [
+      {
+        model: db.Product,
+        as: "product",
+        attributes: [],
+        include: [
+          {
+            model: db.Offer,
+            as: "offers",
+            attributes: [],
+            where: { sellerProfileId: profile.id },
+          },
+        ],
+      },
+    ],
+    where: { status: "approved" },
+    raw: true,
+  });
+
   return {
     totalRevenue: totalRevenue || 0.0,
     totalOrders: totalOrders || 0,
     totalSales: totalSales || 0,
+    averageRating: parseFloat(avgRatingResult?.averageRating || 0).toFixed(2),
   };
 };
 
