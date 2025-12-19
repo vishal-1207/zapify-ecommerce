@@ -6,10 +6,6 @@ import ApiError from "../utils/ApiError.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
 import sendMail from "../utils/mailUtility.js";
 
-const User = db.User;
-const UserSettings = db.UserSettings;
-const Cart = db.Cart;
-
 /**
  * Register service creates a new user and store it in the database.
  * @param {object} userData - userData consist of name, email, password which is required for account creation.
@@ -39,7 +35,7 @@ export const registerService = async (userData, res) => {
     const saltRounds = parseInt(process.env.SALT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const user = await User.create(
+    const user = await db.User.create(
       {
         fullname,
         username,
@@ -53,7 +49,7 @@ export const registerService = async (userData, res) => {
     );
 
     // Create associated records.
-    await Cart.create({ userId: user.id }, { transaction });
+    await db.Cart.create({ userId: user.id }, { transaction });
 
     const payload = { userId: user.id, roles: user.roles };
     const tokens = generateTokens(payload);
