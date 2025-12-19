@@ -1,6 +1,7 @@
 import redisClient from "../config/redis.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
+import { invalidateCache } from "../utils/cache.js";
 
 const getCartKey = (userId) => `cart:${userId}`;
 
@@ -167,5 +168,5 @@ export const removeItemFromCart = async (userId, offerId) => {
  * @param {*} userId
  */
 export const clearCart = async (userId) => {
-  await redisClient.del(getCartKey(userId));
+  await invalidateCache(getCartKey(userId));
 };
