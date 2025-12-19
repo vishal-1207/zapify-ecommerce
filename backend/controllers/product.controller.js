@@ -1,6 +1,7 @@
 import * as productService from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { searchProductsAlgolia } from "../services/algolia.service.js";
 
 /**
  * Helper function for checking and parsing input data to process for services.
@@ -157,20 +158,22 @@ export const reviewProduct = asyncHandler(async (req, res) => {
 });
 
 /**
- * Seller product controller for finding product from list of active products listed by admin.
+ * Seller product controller for finding product from list of active products listed by admin using algoliasearch.
  */
 export const searchCatalog = asyncHandler(async (req, res) => {
-  const searchTerm = req.query;
+  const { q = "", page = 1, limit = 10 } = req.query;
 
-  const searchResult = await productService.searchProductCatalog(searchTerm);
+  const results = await searchProductsAlgolia(q, { page, limit });
 
-  if (!searchResult) {
-    throw new ApiError("No such record found.");
+  if (results.products.length === 0) {
+    return res
+      .status(200)
+      .json({ message: "No products found matching your search.", results });
   }
 
   return res
     .status(200)
-    .json({ message: `Search result for ${searchTerm}.`, searchResult });
+    .json({ message: `Search results for "${q}" fetched.`, results });
 });
 
 /**
