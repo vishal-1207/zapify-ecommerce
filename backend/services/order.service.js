@@ -14,7 +14,7 @@ export const createOrderFromCart = async (userId, addressId) => {
   const transaction = await db.sequelize.transaction();
 
   try {
-    const { items: cartItems, totalAmount } = getCart(userId);
+    const { items: cartItems, totalAmount } = await getCart(userId);
     const address = await db.Address.findOne({
       where: { id: addressId, addressableId: userId, addressableType: "User" },
       transaction,
