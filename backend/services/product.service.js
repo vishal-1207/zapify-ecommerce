@@ -91,25 +91,6 @@ export const getProductDetailsAdmin = async (id) => {
 };
 
 /**
- * Service for sellers to search the public catalog for approved products.
- *
- */
-
-export const searchProductCatalog = async (searchTerm) => {
-  if (!searchTerm || searchTerm.trim() === "") return [];
-
-  return db.Product.findAll({
-    where: {
-      name: { [Op.like]: `${searchTerm}` },
-      status: "approved",
-    },
-    attributes: ["id", "name"],
-    include: [{ model: db.Brand, as: "brand", attributes: ["name"] }],
-    limit: 20,
-  });
-};
-
-/**
  * Function to create product entry with its media and specs.
  * This is a core reusable logic. Not to be called directly from controllers
  */
@@ -414,6 +395,34 @@ export const updateProduct = async (productId, data, files) => {
     if (!committed) await transaction.rollback();
     throw new ApiError(500, "Failed to update product.");
   }
+};
+
+/**
+ * Recalculates and updates denormalized fields on a Product.
+ * This will trigger the 'afterUpdate' hook on Product, which syncs to Algolia.
+ */
+export const updateProductAggregates = async (productId) => {
+  const offers = await db.Offer.findAll({
+    where: { productId },
+    attributes: ["price", "stockQuantity"],
+  });
+
+  const offersCount = offers.length;
+  const totalStock = offers.reduce((sum, o) => sum + o.quantityStock, 0);
+  const minPrice =
+    offersCount > 0 ? Math.min(...offers.map((o) => parseFloat(o.price))) : 0;
+
+  await db.Product.update(
+    {
+      minOfferPrice: minPrice,
+      totalOfferStock: totalStock,
+      offerCount: offersCount,
+    },
+    {
+      where: { id: productId },
+      individualHooks: true,
+    }
+  );
 };
 
 /**
