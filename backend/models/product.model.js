@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
 import { Op } from "sequelize";
 import slugify from "slugify";
-import { syncProductToAlgolia } from "../services/algolia.service";
 
 export default (sequelize, DataTypes) => {
   const Product = sequelize.define(
@@ -53,12 +52,21 @@ export default (sequelize, DataTypes) => {
     {
       hooks: {
         afterCreate: async (product) => {
+          const { syncProductToAlgolia } = await import(
+            "../services/algolia.service.js"
+          );
           syncProductToAlgolia(product.id).catch((e) => console.error(e));
         },
         afterUpdate: async (product) => {
+          const { syncProductToAlgolia } = await import(
+            "../services/algolia.service.js"
+          );
           syncProductToAlgolia(product.id).catch((e) => console.error(e));
         },
         afterDestroy: async (product) => {
+          const { deleteProductFromAlgolia } = await import(
+            "../services/algolia.service.js"
+          );
           deleteProductFromAlgolia(product.id).catch((e) => console.error(e));
         },
       },
