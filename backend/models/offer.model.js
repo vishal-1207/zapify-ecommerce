@@ -1,5 +1,3 @@
-import { updateProductAggregates } from "../services/product.service.js";
-
 export default (sequelize, DataTypes) => {
   const Offer = sequelize.define(
     "Offer",
@@ -38,12 +36,21 @@ export default (sequelize, DataTypes) => {
     {
       hooks: {
         afterCreate: async (offer) => {
+          const { updateProductAggregates } = await import(
+            "../services/product.service.js"
+          );
           await updateProductAggregates(offer.productId);
         },
         afterUpdate: async (offer) => {
+          const { updateProductAggregates } = await import(
+            "../services/product.service.js"
+          );
           await updateProductAggregates(offer.productId);
         },
         afterDestroy: async (offer) => {
+          const { updateProductAggregates } = await import(
+            "../services/product.service.js"
+          );
           await updateProductAggregates(offer.productId);
         },
       },
