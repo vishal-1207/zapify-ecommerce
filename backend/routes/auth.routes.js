@@ -8,7 +8,6 @@ import passport from "passport";
 import { limiter } from "../utils/rateLimiter.util.js";
 
 const router = express.Router();
-router.use(authenticate);
 
 //Register route
 router
@@ -63,6 +62,8 @@ router
 router
   .route("/access-token")
   .post(csrfProtection, limiter, authControllers.refreshTokenHander);
-router.route("/logout").post(csrfProtection, authControllers.logoutController);
+router
+  .route("/logout")
+  .post(authenticate, csrfProtection, authControllers.logoutController);
 
 export default router;
