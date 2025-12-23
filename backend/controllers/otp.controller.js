@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import * as otpServices from "../services/otp.service.js";
+import db from "../models/index.js";
 
 // To send the code to the user's phone
 export const sendPhoneVerificationController = asyncHandler(
@@ -16,7 +17,7 @@ export const verifyPhoneController = asyncHandler(async (req, res) => {
 
   await db.User.update(
     { isPhoneVerified: true },
-    { where: { id: req.user.id } }
+    { where: { id: req.user.id }, validate: false }
   );
 
   return res
@@ -39,7 +40,7 @@ export const verifyEmailController = asyncHandler(async (req, res) => {
 
   await db.User.update(
     { isEmailVerified: true },
-    { where: { id: req.user.id } }
+    { where: { id: req.user.id }, validate: false }
   );
 
   return res.status(200).json({ message: "Email verified successfully." });
