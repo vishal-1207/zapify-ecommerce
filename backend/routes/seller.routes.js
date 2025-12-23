@@ -40,25 +40,21 @@ router
   );
 
 // Dashboard
-// GET /api/seller/dashboard/stats?days=30
 router.get(
   "/dashboard/stats",
   authorizeRoles("seller"),
   sellerController.getSellerDashboardStats
 );
-// GET /api/seller/dashboard/sales-analytics?days=90
 router.get(
   "/dashboard/sales-analytics",
   authorizeRoles("seller"),
   sellerController.getSellerSalesAnalytics
 );
-// GET /api/seller/dashboard/top-products?days=30
 router.get(
   "/dashboard/top-products",
   authorizeRoles("seller"),
   sellerController.getSellerTopProducts
 );
-// GET /api/seller/dashboard/category-performance?days=30
 router.get(
   "/dashboard/category-performance",
   authorizeRoles("seller"),
