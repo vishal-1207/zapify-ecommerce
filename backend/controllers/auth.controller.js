@@ -9,31 +9,40 @@ import setTokensInCookies from "../utils/setTokensInCookies.js";
 //Register Controller
 export const registerController = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
-  const { user, accessToken } = await authServices.registerService(
-    {
-      fullname,
-      username,
-      email,
-      password,
-    },
-    res
-  );
+  const { user, tokens } = await authServices.registerService({
+    fullname,
+    username,
+    email,
+    password,
+  });
 
-  return res
-    .status(201)
-    .json({ message: "User registered", user, accessToken });
+  setTokensInCookies(res, tokens);
+
+  return res.status(201).json({
+    message:
+      "Registration successful. Please verify email to continue using the website. Click on the button below to get code.",
+    user,
+    accessToken: tokens.accessToken,
+  });
 });
 
 //Login Controller
 export const loginController = asyncHandler(async (req, res) => {
   const { userId, password } = req.body;
-  const { user, accessToken } = await authServices.loginService(
-    { userId, password },
-    res
-  );
+  const { user, tokens } = await authServices.loginService({
+    userId,
+    password,
+  });
+
+  setTokensInCookies(res, tokens);
+
   return res
     .status(200)
-    .json({ message: "Login successfull", user, accessToken });
+    .json({
+      message: "Login successfull",
+      user,
+      accessToken: tokens.accessToken,
+    });
 });
 
 //Social Callback Handler Controller
