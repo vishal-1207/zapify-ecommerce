@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import sendSms from "../utils/smsUtility.js";
+import sendMail from "../utils/mailUtility.js";
 import ApiError from "../utils/ApiError.js";
 
 /**
@@ -17,22 +18,27 @@ const generateCode = () => {
  * @param {string} userId - The ID of the user to send the OTP to.
  */
 export const sendVerificationCode = async (userId, method) => {
-  const user = db.User.findByPk(userId);
+  const user = await db.User.findByPk(userId);
   if (!user) {
     throw new ApiError(404, "User not found.");
   }
 
   const { code, expiry } = generateCode();
-  user.verificationCode = code;
-  user.verificationCodeExpiry = expiry;
-  await user.save();
+  await db.User.update(
+    {
+      verificationCode: code,
+      verificationCodeExpiry: expiry,
+    },
+    { where: { id: userId }, validate: false }
+  );
 
   if (method === "email") {
     if (!user.email)
       throw new ApiError(400, "User does not have an email adderss.");
+
     const subject = "Your Verification Code";
     const html = `<p>Your verification code for <strong>Zapify</strong> is: <strong>${code}</strong>. It will expire in 10 minutes.</p>`;
-    await sendEmail(user.email, subject, html);
+    await sendMail(user.email, subject, html);
     return { message: "Verification code sent successfully to your email." };
   }
 
@@ -52,8 +58,22 @@ export const sendVerificationCode = async (userId, method) => {
  * @param {string} userId - The ID of the user.
  * @param {string} submittedCode - The code submitted by the user.
  */
-export const verifyCode = async (userId, submittedCode) => {
+export const verifyCode = async (userId, submittedCode, method) => {
   const user = await db.User.findByPk(userId);
+
+  if (method === "email" && user.isEmailVerified) {
+    throw new ApiError(
+      400,
+      "This email address is already verified. No further action is needed."
+    );
+  }
+  if (method === "sms" && user.isPhoneVerified) {
+    throw new ApiError(
+      400,
+      "This phone number is already verified. No further action is needed."
+    );
+  }
+
   if (!user || !user.verificationCode || !user.verificationCodeExpiry) {
     throw new ApiError(
       400,
