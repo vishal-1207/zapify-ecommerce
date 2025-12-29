@@ -16,14 +16,22 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     discountType: {
-      type: DataTypes.ENUM("percentage", "fixed"),
+      type: DataTypes.ENUM("percentage", "flat"),
       allowNull: false,
     },
     value: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       comment:
-        "The discount amount (e.g., 20.00 for percentage, or 500.00 for fixed",
+        "The discount amount (e.g., 20.00 for percentage, or 500.00 for flat off)",
+    },
+    minOrderAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    maxDiscountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
     },
     expiresAt: {
       type: DataTypes.DATE,
