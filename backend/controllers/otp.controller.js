@@ -13,7 +13,7 @@ export const sendPhoneVerificationController = asyncHandler(
 // To verify the code and update the phone status
 export const verifyPhoneController = asyncHandler(async (req, res) => {
   const { code } = req.body;
-  await otpServices.verifyCode(req.user.id, code);
+  await otpServices.verifyCode(req.user.id, code, "sms");
 
   await db.User.update(
     { isPhoneVerified: true },
@@ -36,7 +36,7 @@ export const sendEmailVerificationController = asyncHandler(
 // To verify the code and update the email status
 export const verifyEmailController = asyncHandler(async (req, res) => {
   const { code } = req.body;
-  await otpServices.verifyCode(req.user.id, code);
+  await otpServices.verifyCode(req.user.id, code, "email");
 
   await db.User.update(
     { isEmailVerified: true },
