@@ -24,7 +24,11 @@ router
   );
 
 router
-  .route("/:id/toggle")
-  .patch(csrfProtection, discountController.toggleStatus);
+  .route("/:id")
+  .get(discountController.getDiscount)
+  .patch(csrfProtection, discountController.updateDiscount)
+  .delete(discountController.deleteDiscount);
+
+router.patch("/:id/toggle", discountController.toggleStatus);
 
 export default router;
