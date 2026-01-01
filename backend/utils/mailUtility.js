@@ -7,8 +7,8 @@ import nodemailer from "nodemailer";
 const createProductionTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_POST === 456,
+    port: parseInt(process.env.EMAIL_PORT || "587", 10),
+    secure: parseInt(process.env.EMAIL_PORT, 10) === 465,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -53,11 +53,15 @@ const sendMail = async (to, subject, html) => {
     if (process.env.NODE_ENV === "production") {
       transporter = createProductionTransporter();
     } else {
-      transporter = createDevelopmentTransporter();
+      transporter = await createDevelopmentTransporter();
+    }
+
+    if (!transporter || typeof transporter.sendMail !== "function") {
+      throw new Error("Nodemailer transporter was not initialized correctly.");
     }
 
     const mailOptions = {
-      from: `"<Zapify>" <${(process, env.EMAIL_FROM)}>}`,
+      from: `"Zapify" <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
