@@ -215,7 +215,10 @@ export const discountSchema = Joi.object({
   value: Joi.number().positive().required().message({
     "number.positive": "Discount must be greater than 0",
   }),
-  expiresAt: Joi.date().greater("now").optional(),
+  minOrderAmount: Joi.number().min(0).optional(),
+  maxDiscountAmount: Joi.number().min(0).optional(),
   usageLimit: Joi.number().integer().min(1).optional(),
+  usagePerUser: Joi.number().integer().min(1).default(1).optional(),
+  expiresAt: Joi.date().greater("now").optional(),
   isActive: Joi.boolean().default(true),
 });
