@@ -3,6 +3,17 @@ import xss from "xss";
 
 const sanitize = (value) => xss(value);
 
+const parseJsonArray = (value, helpers) => {
+  try {
+    if (typeof value !== "string") return value;
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return helpers.error("any.invalid");
+    return parsed;
+  } catch (e) {
+    return helpers.error("any.invalid");
+  }
+};
+
 export const registerSchema = Joi.object({
   fullname: Joi.string()
     .min(3)
@@ -63,6 +74,14 @@ export const verifyCodeSchema = Joi.object({
     .required(),
 });
 
+export const userSettingsSchema = Joi.object({
+  theme: Joi.string().valid("light", "dark").optional(),
+  language: Joi.string().valid("en", "hi", "es", "fr").optional(),
+  emailNotifications: Joi.boolean().optional(),
+  smsNotifications: Joi.boolean().optional(),
+  deleteOnRead: Joi.boolean().optional(),
+});
+
 export const productSchema = Joi.object({
   name: Joi.string()
     .trim()
@@ -93,33 +112,9 @@ export const productSchema = Joi.object({
     .messages({ "string.empty": "Brand ID is required." }),
   specs: Joi.string()
     .required()
-    .custom((value, helpers) => {
-      try {
-        const parsed = JSON.parse(value);
-        if (!Array.isArray(parsed)) return helpers.error("any.invalid");
-        return parsed;
-      } catch (e) {
-        return helpers.error("any.invalid");
-      }
-    })
+    .custom(parseJsonArray)
     .messages({ "any.invalid": "Specs must be a valid JSON array string." }),
-  mediaToDelete: Joi.string()
-    .optional()
-    .custom((value, helpers) => {
-      try {
-        const parsed = JSON.parse(value);
-        if (!Array.isArray(parsed)) {
-          return helpers.error("any.invalid", {
-            details: "mediaToDelete must be an array of media IDs.",
-          });
-        }
-        return parsed;
-      } catch (e) {
-        return helpers.error("any.invalid", {
-          details: "mediaToDelete must be a valid JSON array string.",
-        });
-      }
-    }),
+  mediaToDelete: Joi.string().optional().custom(parseJsonArray),
 });
 
 export const offerSchema = Joi.object({
@@ -141,27 +136,8 @@ export const offerSchema = Joi.object({
 });
 
 export const suggestProductSchema = Joi.object({
-  productData: Joi.object({
-    name: Joi.string().trim().min(10).max(150).required().custom(sanitize),
-    description: Joi.string()
-      .trim()
-      .min(50)
-      .max(2000)
-      .required()
-      .custom(sanitize),
-    categoryId: Joi.string().uuid().required(),
-    brandId: Joi.string().uuid().required(),
-    specs: Joi.string().required(),
-  }).required(),
-
-  offerData: Joi.object({
-    price: Joi.number().positive().precision(2).required(),
-    stockQuantity: Joi.number().integer().min(0).required(),
-    condition: Joi.string()
-      .valid("New", "Used - Like New", "Used - Good", "Refurbished")
-      .optional()
-      .default("New"),
-  }).required(),
+  productData: Joi.object(productSchema).required(),
+  offerData: Joi.object(offerSchema).required(),
 });
 
 export const categorySchema = Joi.object({
@@ -201,45 +177,17 @@ export const sellerProfileSchema = Joi.object({
     "string.max": "Store name must not exceed 50 characters.",
   }),
   bio: Joi.string().max(500).optional().allow(""),
-  website: Joi.string().uri().optional().allow("").messages({
-    "website.uri": "Website must be a valid URL.",
-  }),
   contactNumber: Joi.string()
     .pattern(/^[\d+\-\s()]{6,17}$/)
     .optional()
     .allow("")
     .messages({ "string.base": "Contact number format is invalid." }),
-  address: Joi.string().max(300).optional().allow(""),
 });
 
-export const userSettingsSchema = Joi.object({
-  language: Joi.string().optional(),
-  theme: Joi.string().valid("light", "dark").optional(),
-  timezone: Joi.string().optional(),
-  emailNotifications: Joi.boolean().optional(),
-  smsNotifications: Joi.boolean().optional(),
-  twoFactorEnabled: Joi.boolean().optional(),
-  loginAlerts: Joi.boolean().optional(),
-  dataSharingConsent: Joi.boolean().optional(),
-});
-
-export const searchSchema = Joi.object({
-  search: Joi.string().trim().max(100).optional().allow("").custom(sanitize),
-  categorySlug: Joi.string().trim().optional().custom(sanitize),
-  brand: Joi.string().trim().optional().custom(sanitize),
-  priceMin: Joi.number().min(0).optional(),
-  priceMax: Joi.number().positive().optional(),
-  sortBy: Joi.string()
-    .valid("createdAt", "price", "name", "relevance")
-    .optional()
-    .default("relevance"),
-  order: Joi.string()
-    .uppercase()
-    .valid("ASC", "DESC")
-    .optional()
-    .default("DESC"),
-  limit: Joi.number().integer().min(1).max(100).optional().default(20),
-  offset: Joi.number().integer().min(0).optional().default(0),
+export const sellerSettingsSchema = Joi.object({
+  storeVisibility: Joi.boolean().optional(),
+  lowStockNotification: Joi.boolean().optional(),
+  salesReportEmail: Joi.boolean().optional(),
 });
 
 export const reviewSchema = Joi.object({
@@ -257,21 +205,17 @@ export const reviewSchema = Joi.object({
     .messages({
       "string.max": "Comment cannot exceed 300 characters.",
     }),
-  mediaToDelete: Joi.string()
-    .optional()
-    .custom((value, helpers) => {
-      try {
-        const parsed = JSON.parse(value);
-        if (!Array.isArray(parsed)) {
-          return helpers.error("any.invalid", {
-            details: "mediaToDelete must be an array of media IDs.",
-          });
-        }
-        return parsed;
-      } catch (e) {
-        return helpers.error("any.invalid", {
-          details: "mediaToDelete must be a valid JSON array string.",
-        });
-      }
-    }),
+  mediaToDelete: Joi.string().optional().custom(parseJsonArray),
+});
+
+export const discountSchema = Joi.object({
+  code: Joi.string().uppercase().min(3).max(15).required(),
+  description: Joi.string().max(255).optional(),
+  discountType: Joi.string().valid("percentage", "fixed").required(),
+  value: Joi.number().positive().required().message({
+    "number.positive": "Discount must be greater than 0",
+  }),
+  expiresAt: Joi.date().greater("now").optional(),
+  usageLimit: Joi.number().integer().min(1).optional(),
+  isActive: Joi.boolean().default(true),
 });
