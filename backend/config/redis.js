@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { createClient } from "redis";
 
-const redisPort = parseInt(process.env.REDIS_PORT, 10) || 15226;
+const redisPort = parseInt(process.env.REDIS_PORT, 10);
 
 const redisClient = createClient({
   username: process.env.REDIS_USERNAME,
