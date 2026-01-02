@@ -8,6 +8,9 @@ import { productSchema } from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+
+router.route("/:slug").get(productController.getProductDetailsForCustomer);
+
 router.use(authenticate);
 
 router.route("/").post(
@@ -21,7 +24,6 @@ router.route("/").post(
   productController.createProduct
 );
 
-router.route("/:slug").get(productController.getProductDetailsForCustomer);
 router
   .route("/:productId")
   .get(authorizeRoles("admin"), productController.getProductDetailsAdmin);
