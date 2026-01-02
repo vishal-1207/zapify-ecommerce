@@ -11,10 +11,10 @@ import sendMail from "../utils/mailUtility.js";
  * @param {object} userData - userData consist of name, email, password which is required for account creation.
  * @return {object} - Return new user after successful registration.
  */
-export const registerService = async (userData, res) => {
+export const registerService = async (userData) => {
   const transaction = await db.sequelize.transaction();
   try {
-    const { fullname, username, email, password } = userData;
+    const { fullname, username, email, phoneNumber, password } = userData;
 
     const whereClause = [];
     if (email) whereClause.push({ email });
@@ -51,10 +51,7 @@ export const registerService = async (userData, res) => {
     // Create associated records.
     await db.Cart.create({ userId: user.id }, { transaction });
 
-    const payload = { userId: user.id, roles: user.roles };
-    const tokens = generateTokens(payload);
-
-    setTokensInCookies(res, tokens);
+    const tokens = await generateTokens(user, transaction);
 
     await transaction.commit();
 
@@ -62,12 +59,12 @@ export const registerService = async (userData, res) => {
     const subject = "Welcome to Zapify!";
     const html = `<h1>Hi ${fullname},</h1><p>Thank you for registering. Welcome to our community!</p>`;
     if (email) {
-      sendMail(email, subject, html).catch((err) =>
+      await sendMail(email, subject, html).catch((err) =>
         console.error("Failed to send welcome email:", err)
       );
     }
 
-    return { user: user, accessToken: tokens.accessToken };
+    return { user, tokens };
   } catch (error) {
     await transaction.rollback();
     console.error("Registration failed, transaction rolled back: ", error);
@@ -76,7 +73,7 @@ export const registerService = async (userData, res) => {
 };
 
 // Login service
-export const loginService = async (userData, res) => {
+export const loginService = async (userData) => {
   const { userId, password } = userData;
 
   if (!userId || !password) {
@@ -104,13 +101,7 @@ export const loginService = async (userData, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ApiError(401, "Invalid user credentials.");
 
-  const payload = {
-    userId: user.id,
-    roles: user.roles,
-  };
+  const tokens = await generateTokens(user);
 
-  const tokens = generateTokens(payload);
-  setTokensInCookies(res, tokens);
-
-  return { user, accessToken: tokens.accessToken };
+  return { user, tokens };
 };
