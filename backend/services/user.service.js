@@ -77,7 +77,7 @@ export const forgotPassword = async (email) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
   const subject = "Your Password Reset Request.";
   const html = `<p>You requested a password reset. Please click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`;
-  sendMail(email, subject, html).catch((error) => {
+  await sendMail(email, subject, html).catch((error) => {
     console.error("Failed to send password reset mail: ", error);
   });
 
