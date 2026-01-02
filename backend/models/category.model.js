@@ -51,6 +51,7 @@ export default (sequelize, DataTypes) => {
       constraints: false,
       scope: { associatedType: "category" },
       as: "media",
+      onDelete: "CASCADE",
     });
   };
   return Category;

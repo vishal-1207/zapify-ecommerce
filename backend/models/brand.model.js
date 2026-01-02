@@ -15,6 +15,7 @@ export default (sequelize, DataTypes) => {
       constraints: false,
       scope: { associatedType: "brand" },
       as: "media",
+      onDelete: "CASCADE",
     });
     Brand.hasMany(models.Product, { foreignKey: "brandId" });
   };
