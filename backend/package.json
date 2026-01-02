@@ -39,7 +39,7 @@
     "sanitize-filename": "^1.6.3",
     "sequelize": "^6.37.7",
     "slugify": "^1.6.6",
-    "stripe": "^18.5.0",
+    "stripe": "^20.1.0",
     "uuid": "^11.1.0",
     "xss": "^1.0.15"
   }
