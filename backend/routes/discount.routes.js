@@ -12,6 +12,13 @@ router
   .route("/apply")
   .post(authenticate, csrfProtection, discountController.applyDiscountToCart);
 
+router
+  .route("/remove")
+  .post(authenticate, discountController.removeDiscountFromCart);
+router
+  .route("/available")
+  .get(authenticate, discountController.getAvailableCoupons);
+
 router.use(authenticate, authorizeRoles("admin"));
 
 router
