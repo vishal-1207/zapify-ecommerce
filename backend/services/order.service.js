@@ -14,7 +14,14 @@ export const createOrderFromCart = async (userId, addressId) => {
   const transaction = await db.sequelize.transaction();
 
   try {
-    const { items: cartItems, totalAmount } = await getCart(userId);
+    const {
+      items: cartItems,
+      subtotal,
+      discount,
+      totalAmount,
+      couponDetails,
+    } = await getCart(userId);
+
     const address = await db.Address.findOne({
       where: { id: addressId, addressableId: userId, addressableType: "User" },
       transaction,
@@ -51,12 +58,24 @@ export const createOrderFromCart = async (userId, addressId) => {
       { transaction }
     );
 
+    if (couponDetails) {
+      await db.OrderDiscounts.create(
+        {
+          orderId: newOrder.id,
+          discountId: couponDetails.discountId,
+          appliedAmount: discount,
+        },
+        { transaction }
+      );
+    }
+
     // Create OrderItem records from cart items
     const orderItemsData = cartItems.map((item) => ({
       orderId: newOrder.id,
       offerId: item.offerId,
       quantity: item.quantity,
       priceAtTimeOfPurchase: item.details.price,
+      status: "pending",
     }));
     await db.OrderItem.bulkCreate(orderItemsData, { transaction });
 
