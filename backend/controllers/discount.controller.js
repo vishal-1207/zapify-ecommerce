@@ -11,21 +11,45 @@ export const applyDiscountToCart = asyncHandler(async (req, res) => {
 
   if (!code) throw new ApiError(400, "Discount code is required.");
 
-  const { totalAmount } = await cartService.getCart(req.user.id);
+  const { subTotal } = await cartService.getCart(req.user.id);
 
-  if (totalAmount <= 0) {
+  if (subTotal <= 0) {
     throw new ApiError(400, "Cannot apply discount to an empty cart.");
   }
 
-  const result = await discountService.validateAndCalculateDiscount(
+  await discountService.validateAndCalculateDiscount(
     code,
-    totalAmount,
+    subTotal,
     req.user.id
   );
 
+  const updatedCart = await cartService.applyCouponToCart(req.user.id, code);
+
   return res
     .status(200)
-    .json({ message: "Discount code applied successfully.", result });
+    .json({ message: "Ccoupon applied successfully.", updatedCart });
+});
+
+/**
+ * Remove a discount from Redis cart.
+ */
+export const removeDiscountFromCart = asyncHandler(async (req, res) => {
+  const updatedCart = await cartService.removeCouponFromCart(req.user.id);
+  return res.status(200).json({ message: "Discount removed.", updatedCart });
+});
+
+/**
+ * Fetches applicable/available coupons for customers.
+ */
+export const getAvailableCoupons = asyncHandler(async (req, res) => {
+  const { subtotal } = await cartService.getCart(req.user.id);
+  const coupons = await discountService.getApplicableCoupons(
+    req.user.id,
+    subtotal
+  );
+  return res
+    .status(200)
+    .json({ message: "Fetched availabe discount coupons.", coupons });
 });
 
 /**
