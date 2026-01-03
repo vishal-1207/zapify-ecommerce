@@ -41,7 +41,7 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
 
   //Check usage per user
   if (discount.usagePerUser != null) {
-    const userUsage = await db.OrderDiscount.count({
+    const userUsage = await db.OrderDiscounts.count({
       where: { discountId: discount.id },
       include: [
         {
@@ -107,6 +107,43 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
     value: parseFloat(discount.value),
     discountAmount: Number(discountAmount.toFixed(2)),
   };
+};
+
+/**
+ * Fetches a list of coupons applicable for the current user/cart.
+ * Used for the "Available Coupons" section in the UI.
+ */
+export const getApplicableDiscounts = async (userId, currentSubTotal) => {
+  const discounts = await db.Discount.findAll({
+    where: {
+      isActive: true,
+      [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: new Date() } }],
+    },
+  });
+
+  const applicable = [];
+
+  for (const discount of discounts) {
+    if (
+      discount.minOrderAmount &&
+      currentSubTotal < parseFloat(discount.minOrderAmount)
+    ) {
+      continue;
+    }
+
+    const userUsage = await db.OrderDiscounts.count({
+      where: { discountId: discount.id },
+      include: [{ model: db.Order, where: { userId }, required: true }],
+    });
+
+    if (discount.usagePerUser && userUsage >= discount.usagePerUser) {
+      continue;
+    }
+
+    applicable.push(discount);
+  }
+
+  return applicable;
 };
 
 /**
