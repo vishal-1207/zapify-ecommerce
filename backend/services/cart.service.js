@@ -2,6 +2,7 @@ import redisClient from "../config/redis.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
 import { invalidateCache } from "../utils/cache.js";
+import * as discountService from "../services/discount.service.js";
 
 const getCartKey = (userId) => `cart:${userId}`;
 
@@ -12,16 +13,28 @@ const getCartKey = (userId) => `cart:${userId}`;
  */
 export const getCart = async (userId) => {
   const cartKey = getCartKey(userId);
-  const cartItemsJSON = await redisClient.hGetAll(cartKey);
+  const cartData = await redisClient.hGetAll(cartKey);
 
-  if (Object.keys(cartItemsJSON).length === 0)
-    return { items: [], totalAmount: 0 };
+  if (Object.keys(cartData).length === 0)
+    return {
+      items: [],
+      subtotal: 0,
+      discount: 0,
+      totalAmount: 0,
+      appliedCoupon: null,
+    };
 
   const items = [];
-  let totalAmount = 0;
+  let subtotal = 0;
+  let appliedCoupon = null;
 
-  for (const key in cartItemsJSON) {
-    const item = JSON.parse(cartItemsJSON[key]);
+  for (const key in cartData) {
+    if (key === "meta:coupon") {
+      appliedCoupon = cartData[key];
+      continue;
+    }
+
+    const item = JSON.parse(cartData[key]);
 
     const offerDetails = await db.Offer.findByPk(item.offerId, {
       include: [
@@ -55,12 +68,40 @@ export const getCart = async (userId) => {
         );
       }
       items.push({ ...item, details: offerDetails });
-      totalAmount += offerDetails.price * item.quantity;
+      subtotal += offerDetails.price * item.quantity;
     } else {
       await redisClient.hDel(getCartKey(userId), `offer:${item.offerId}`);
     }
   }
-  return { items, totalAmount: parseFloat(totalAmount.toFixed(2)) };
+
+  let discountAmount = 0;
+  let couponDetails = null;
+
+  if (appliedCoupon) {
+    try {
+      const result = await discountService.validateAndCalculateDiscount(
+        appliedCoupon,
+        subtotal,
+        userId
+      );
+      discountAmount = result.discountAmount;
+      couponDetails = result;
+    } catch (error) {
+      await redisClient.hDel(cartKey, "meta:coupon");
+      appliedCoupon = null;
+    }
+  }
+
+  const totalAmount = Math.max(0, subtotal - discountAmount);
+
+  return {
+    items,
+    subtotal: parseFloat(subtotal.toFixed(2)),
+    discount: parseFloat(discountAmount.toFixed(2)),
+    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    appliedCoupon,
+    couponDetails,
+  };
 };
 
 /**
@@ -169,4 +210,23 @@ export const removeItemFromCart = async (userId, offerId) => {
  */
 export const clearCart = async (userId) => {
   await invalidateCache(getCartKey(userId));
+};
+
+/**
+ * Applies a discount coupon code to the Redis cart.
+ */
+export const applyCouponToCart = async (userId, code) => {
+  const cartKey = getCartKey(userId);
+  // Store the code in a special field 'meta:coupon'
+  await redisClient.hSet(cartKey, "meta:coupon", code);
+  return getCart(userId);
+};
+
+/**
+ * Removes a discount coupon code from the Redis cart.
+ */
+export const removeCouponFromCart = async (userId) => {
+  const cartKey = getCartKey(userId);
+  await redisClient.hDel(cartKey, "meta:coupon");
+  return getCart(userId);
 };
