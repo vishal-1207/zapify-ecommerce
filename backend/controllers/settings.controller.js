@@ -5,13 +5,13 @@ import * as settingsService from "../services/settings.service.js";
  * Controller to update the settings of the currently logged-in user.
  */
 export const updateUserSettings = asyncHandler(async (req, res) => {
-  const updatedUser = await settingsService.updateSellerSettings(
+  const settings = await settingsService.updateSellerSettings(
     req.user.id,
     req.body
   );
   return res
     .status(200)
-    .json({ message: "User settings updated successfully.", updatedUser });
+    .json({ message: "User settings updated successfully.", settings });
 });
 
 /**
