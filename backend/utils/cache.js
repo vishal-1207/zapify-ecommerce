@@ -32,7 +32,7 @@ export const getCache = async (key) => {
 export const setCache = async (key, data, ttlSeconds) => {
   try {
     const stringifiedData = JSON.stringify(data);
-    await redisClient.setEx(key, ttlSeconds, stringifiedData);
+    await redisClient.setEx(key, parseInt(ttlSeconds), stringifiedData);
   } catch (error) {
     console.error(`Redis Set Error for key ${key}: `, error);
   }
