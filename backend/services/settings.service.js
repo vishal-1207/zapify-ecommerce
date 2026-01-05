@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
+import { invalidateCache } from "../utils/cache.js";
 
 /**
  * Updates the settings for the currently authenticated user.
@@ -8,18 +9,13 @@ import ApiError from "../utils/ApiError.js";
  * @returns {Promise<User>} The updated user object.
  */
 export const updateUserSettings = async (userId, newSettings) => {
-  const user = await db.User.findByPk(userId);
-  if (!user) {
-    throw new ApiError(404, "User not found.");
-  }
+  const settings = await db.User.update(
+    { settings: newSettings },
+    { where: { id: userId } }
+  );
+  await invalidateCache(`user_session:${userId}`);
 
-  const updatedSettings = { ...user.settings, ...newSettings };
-  user.settings = updatedSettings;
-
-  user.changed("settings", true);
-  await user.save();
-
-  return userProfile;
+  return settings;
 };
 
 /**
