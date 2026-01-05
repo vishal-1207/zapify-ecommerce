@@ -8,24 +8,8 @@ const User = db.User;
 /**
  * Fetches the profile of the currently authenticated user.
  */
-export const currentUserDetailsController = asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.user.id, {
-    attributes: {
-      exclude: [
-        "password",
-        "verificationCode",
-        "verificationCodeExpiry",
-        "passwordResetToken",
-        "passwordResetExpires",
-        "scheduledForDeletionAt",
-      ],
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found.");
-  }
-
+export const getCurrentUserController = asyncHandler(async (req, res) => {
+  const user = req.user;
   res.json({ message: "User details fetched successfully.", user });
 });
 
