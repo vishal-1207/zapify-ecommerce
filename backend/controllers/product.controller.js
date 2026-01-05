@@ -9,10 +9,16 @@ import { searchProductsAlgolia } from "../services/algolia.service.js";
  * @param {*} isUpdate
  * @returns datat - parsed json data for product
  */
-const parseProductInput = (req, isUpdate = false) => {
-  const { categoryId, brand, name, description, price, specs = [] } = req.body;
-  const thumbnail = req.files?.thumbnail?.[0];
-  const gallery = req.files?.gallery;
+const parseProductInput = (req) => {
+  const {
+    categoryId,
+    brandId,
+    name,
+    description,
+    price,
+    stock,
+    specs = [],
+  } = req.body;
 
   let parsedSpecs = [];
   if (specs) {
@@ -23,25 +29,17 @@ const parseProductInput = (req, isUpdate = false) => {
     }
   }
 
-  if (!isUpdate) {
-    if (!thumbnail) throw new ApiError(400, "Product thumbnail is required.");
-    if (!gallery || gallery.length < 1)
-      throw new ApiError(400, "At least one product image is required.");
-  }
-
   return {
     data: {
       categoryId: parseInt(categoryId, 10),
-      brand,
+      brandId,
       name,
       description,
-      price: parseInt(price, 10),
+      price: price ? parseFloat(price) : undefined,
+      stock: stock ? parseInt(stock, 10) : undefined,
       specs: parsedSpecs,
     },
-    files: {
-      thumbnail,
-      gallery,
-    },
+    files: req.files || {},
   };
 };
 
@@ -49,9 +47,8 @@ const parseProductInput = (req, isUpdate = false) => {
  * Get method controller to fetch details for a product, which is presented to user on front end.
  */
 export const getProductDetailsForCustomer = asyncHandler(async (req, res) => {
-  const productSlug = req.params;
-
-  const product = await productService.getCustomerProductDetails(productSlug);
+  const slug = req.params;
+  const product = await productService.getCustomerProductDetails(slug);
   return res
     .status(200)
     .json({ message: "Product details fetched successfully.", product });
@@ -61,14 +58,8 @@ export const getProductDetailsForCustomer = asyncHandler(async (req, res) => {
  * Get method controller for admin to view/audit the product details.
  */
 export const getProductDetailsAdmin = asyncHandler(async (req, res) => {
-  const productId = req.params;
-
+  const { productId } = req.params;
   const product = await productService.getProductDetailsAdmin(productId);
-
-  if (!product) {
-    throw new ApiError(404, "Product not found.");
-  }
-
   return res
     .status(200)
     .json({ message: "Product details fetched succesfully.", product });
@@ -88,11 +79,12 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     stockQuantity,
     condition,
   } = req.body;
-  const files = req.files;
 
   const sellerProfile = await db.SellerProfile.findOne({
     where: { userId: req.user.id },
+    attributes: ["id"],
   });
+
   if (!sellerProfile) {
     throw new ApiError(403, "Forbidden: Seller profile required.");
   }
@@ -102,8 +94,9 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     description,
     categoryId,
     brandId,
-    specs: JSON.parse(specs || [""]),
+    specs: specs ? JSON.parse(specs) : [],
   };
+
   const offerData = {
     price: parseFloat(price),
     stockQuantity: parseInt(stockQuantity, 10),
@@ -114,7 +107,7 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     productData,
     offerData,
     sellerProfile.id,
-    files
+    req.files
   );
   return res.status(201).json({
     message: "Product successfully submitted for admin approval.",
@@ -128,14 +121,6 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
 export const getPendingProductsForReview = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const result = await productService.getPendingProductsForReview(page, limit);
-
-  if (result.total === 0) {
-    return res.status(200).json({
-      message:
-        "No pending products found. All products are verified. Nice work.",
-    });
-  }
-
   return res.status(200).json({
     message: `Found ${result.total} product(s) pending for review.`,
     ...result,
@@ -147,14 +132,13 @@ export const getPendingProductsForReview = asyncHandler(async (req, res) => {
  */
 export const reviewProduct = asyncHandler(async (req, res) => {
   const { decision } = req.body;
+  if (!decision) throw new ApiError(400, "Decision is required.");
+
   const product = await productService.reviewProductSuggestion(
     req.params.productId,
     decision
   );
-
-  return res
-    .status(200)
-    .json({ message: `Product has been ${decision}.`, product });
+  return res.status(200).json({ message: `Product ${decision}.`, product });
 });
 
 /**
@@ -162,15 +146,7 @@ export const reviewProduct = asyncHandler(async (req, res) => {
  */
 export const searchCatalog = asyncHandler(async (req, res) => {
   const { q = "", page = 1, limit = 10 } = req.query;
-
   const results = await searchProductsAlgolia(q, { page, limit });
-
-  if (results.products.length === 0) {
-    return res
-      .status(200)
-      .json({ message: "No products found matching your search.", results });
-  }
-
   return res
     .status(200)
     .json({ message: `Search results for "${q}" fetched.`, results });
@@ -182,15 +158,10 @@ export const searchCatalog = asyncHandler(async (req, res) => {
  */
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
-  const { createdProduct, productSpecs, thumbnailImage, galleryImages } =
-    await productService.adminCreateProduct(data, files);
-
+  const product = await productService.adminCreateProduct(data, files);
   return res.status(200).json({
     message: "Product added successfully.",
-    product: createdProduct,
-    productSpecs,
-    thumbnailImage,
-    galleryImages,
+    product,
   });
 });
 
@@ -198,19 +169,12 @@ export const createProduct = asyncHandler(async (req, res) => {
  * Admin controller for updating details for listed products.
  */
 export const updateProduct = asyncHandler(async (req, res) => {
-  const productId = parseInt(req.params.id, 10);
-  if (isNaN(productId)) throw new ApiError(400, "Invalid product Id");
-
-  const { data, files } = parseProductInput(req, true);
-  const { updatedProduct, updatedSpecs, updatedThumbnail, updaterGallery } =
-    await productService.updateProduct(productId, data, files);
-
+  const { productId } = req.params;
+  const { data, files } = parseProductInput(req);
+  const result = await productService.updateProduct(productId, data, files);
   return res.status(200).json({
     message: "Product updated successfully.",
-    product: updatedProduct,
-    productSpecs: updatedSpecs,
-    thumbnailImage: updatedThumbnail,
-    galleryImages: updaterGallery,
+    result,
   });
 });
 
@@ -233,14 +197,6 @@ export const getProductSuggestions = asyncHandler(async (req, res) => {
     page,
     limit
   );
-
-  if (suggestions.total === 0) {
-    return res.status(200).json({
-      message:
-        "No pending products found. All products are verified. Nice work.",
-    });
-  }
-
   return res
     .status(200)
     .json({ message: "Product suggestions list fetched.", suggestions });
