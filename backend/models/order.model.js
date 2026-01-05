@@ -5,6 +5,16 @@ export default (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    subtotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
     totalAmount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     status: {
       type: DataTypes.ENUM(
@@ -24,6 +34,7 @@ export default (sequelize, DataTypes) => {
 
   Order.associate = (models) => {
     Order.belongsTo(models.User, { foreignKey: "userId" });
+
     Order.belongsTo(models.Discounts, {
       through: models.OrderDiscounts,
       foreignKey: "orderId",
