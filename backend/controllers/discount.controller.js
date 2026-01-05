@@ -43,7 +43,7 @@ export const removeDiscountFromCart = asyncHandler(async (req, res) => {
  */
 export const getAvailableCoupons = asyncHandler(async (req, res) => {
   const { subtotal } = await cartService.getCart(req.user.id);
-  const coupons = await discountService.getApplicableCoupons(
+  const coupons = await discountService.getApplicableDiscounts(
     req.user.id,
     subtotal
   );
