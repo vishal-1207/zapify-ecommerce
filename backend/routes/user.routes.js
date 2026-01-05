@@ -9,7 +9,7 @@ router.use(authenticate);
 
 router
   .route("/profile")
-  .get(authorizeRoles("user"), userControllers.currentUserDetailsController);
+  .get(authorizeRoles("user"), userControllers.getCurrentUserController);
 
 router
   .route("/profile/edit")
