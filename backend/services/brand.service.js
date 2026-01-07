@@ -3,35 +3,51 @@ import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 
 export const addBrandService = async (data, file) => {
-  const { name, description } = data;
-  const logo = file.path;
+  const transaction = await db.sequelize.transaction();
 
-  const existingBrand = await db.Brand.findOne({
-    where: { name },
-  });
+  try {
+    const { name, description } = data;
+    const logo = file.path;
 
-  if (existingBrand) throw new ApiError(409, "Brand already exists.");
+    const existingBrand = await db.Brand.findOne(
+      {
+        where: { name },
+      },
+      { transaction }
+    );
 
-  const uploadResult = await uploadToCloudinary(
-    logo,
-    process.env.CLOUDINARY_BRAND_FOLDER
-  );
+    if (existingBrand) throw new ApiError(409, "Brand already exists.");
 
-  const brand = await db.Brand.create({
-    name,
-    description,
-  });
+    const uploadResult = await uploadToCloudinary(
+      logo,
+      process.env.CLOUDINARY_BRAND_FOLDER
+    );
 
-  const media = await db.Media.create({
-    publicId: uploadResult.public_id,
-    url: uploadResult.secure_url,
-    fileType: uploadResult.resource_type,
-    tag: "thumbnail",
-    associatedType: "brand",
-    associatedId: brand.id,
-  });
+    const brand = await db.Brand.create(
+      {
+        name,
+        description,
+      },
+      { transaction }
+    );
 
-  return { brand, media };
+    const media = await db.Media.create(
+      {
+        publicId: uploadResult.public_id,
+        url: uploadResult.secure_url,
+        fileType: uploadResult.resource_type,
+        tag: "thumbnail",
+        associatedType: "brand",
+        associatedId: brand.id,
+      },
+      { transaction }
+    );
+
+    return { brand, media };
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Failed to create brand.", error);
+  }
 };
 
 export const updateBrandService = async (id, data, file) => {
