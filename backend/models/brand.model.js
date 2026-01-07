@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
       as: "media",
       onDelete: "CASCADE",
     });
-    Brand.hasMany(models.Product, { foreignKey: "brandId" });
+    Brand.hasMany(models.Product, { as: "products", foreignKey: "brandId" });
   };
 
   return Brand;
