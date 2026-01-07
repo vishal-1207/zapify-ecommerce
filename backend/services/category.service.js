@@ -53,10 +53,9 @@ export const updateCategory = async (data, file) => {
     category.name = name || category.name;
 
     if (file) {
-      const oldImage = category.image;
-      if (oldImage) {
-        await cloudinary.uploader.destroy(oldImage.publicId);
-        await oldImage.destroy({ transaction });
+      if (category.image) {
+        await cloudinary.uploader.destroy(category.image.publicId);
+        await category.image.destroy({ transaction });
       }
       const upload = await uploadToCloudinary(
         file.path,
@@ -97,7 +96,6 @@ export const deleteCategory = async (id) => {
     });
     if (!category) throw new ApiError(404, "Category not found.");
 
-    // Check if any product is using this category
     const productCount = await db.Product.count({
       where: { categoryId: id },
       transaction,
@@ -105,7 +103,7 @@ export const deleteCategory = async (id) => {
     if (productCount > 0) {
       throw new ApiError(
         400,
-        `Cannot delete category: ${productCount} product(s) are still associated with it.`
+        `Cannot delete category. This category has ${productCount} associated products.`
       );
     }
 
@@ -116,7 +114,7 @@ export const deleteCategory = async (id) => {
     await category.destroy({ transaction });
 
     await transaction.commit();
-    return { message: "Category deleted successfully." };
+    return { message: "Category deleted." };
   } catch (error) {
     await transaction.rollback();
     if (error instanceof ApiError) throw error;
