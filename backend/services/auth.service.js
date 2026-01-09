@@ -1,9 +1,7 @@
 import db from "../models/index.js";
-import { Op } from "sequelize";
 import bcrypt from "bcrypt";
 import generateTokens from "../utils/token.utils.js";
 import ApiError from "../utils/ApiError.js";
-import setTokensInCookies from "../utils/setTokensInCookies.js";
 import sendMail from "../utils/mailUtility.js";
 
 /**
@@ -23,6 +21,7 @@ export const registerService = async (userData) => {
 
     const existingUser = await db.User.findOne({
       where: { [db.Sequelize.Op.or]: whereClause },
+      transaction,
     });
     if (existingUser) {
       throw new ApiError(
@@ -74,34 +73,40 @@ export const registerService = async (userData) => {
 
 // Login service
 export const loginService = async (userData) => {
-  const { userId, password } = userData;
+  const transaction = await db.sequelize.transaction();
 
-  if (!userId || !password) {
-    throw new ApiError(400, "Username/Email/Phone and password are required.");
+  try {
+    const { userId, password } = userData;
+
+    if (!userId || !password) {
+      throw new ApiError(
+        400,
+        "Username/Email/Phone and password are required."
+      );
+    }
+
+    // Find the user by username, email, OR phone number
+    const user = await db.User.findOne({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { username: userId },
+          { email: userId },
+          { phoneNumber: userId },
+        ],
+      },
+      transaction,
+    });
+
+    if (!user) throw new ApiError(404, "User not found.");
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new ApiError(401, "Invalid user credentials.");
+
+    const tokens = await generateTokens(user);
+
+    return { user, tokens };
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Login failed.");
   }
-
-  // Find the user by username, email, OR phone number
-  const user = await db.User.findOne({
-    where: {
-      [db.Sequelize.Op.or]: [
-        { username: userId },
-        { email: userId },
-        { phoneNumber: userId },
-      ],
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found.");
-  }
-
-  if (user.provider !== "local")
-    throw new ApiError(400, `Login via ${user.provider} account.`);
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new ApiError(401, "Invalid user credentials.");
-
-  const tokens = await generateTokens(user);
-
-  return { user, tokens };
 };

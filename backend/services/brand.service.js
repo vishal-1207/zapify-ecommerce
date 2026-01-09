@@ -13,7 +13,7 @@ export const addBrandService = async (data, file) => {
       {
         where: { name },
       },
-      { transaction }
+      transaction
     );
 
     if (existingBrand) throw new ApiError(409, "Brand already exists.");
@@ -51,84 +51,90 @@ export const addBrandService = async (data, file) => {
 };
 
 export const updateBrandService = async (id, data, file) => {
-  const { name, description } = data;
+  const transaction = await db.sequelize.transaction();
 
-  const existingBrand = await db.Brand.findByPk(id);
-  if (!existingBrand) {
-    throw new ApiError(404, "Brand not found.");
-  }
+  try {
+    const { name, description } = data;
 
-  if (name) {
-    const brand = await db.Brand.findOne({
-      where: { name },
+    const existingBrand = await db.Brand.findByPk(id, {
+      include: ["media"],
+      transaction,
     });
-
-    if (brand && brand.id !== id) {
-      throw new ApiError(409, "Brand with this name already exists.");
+    if (!existingBrand) {
+      throw new ApiError(404, "Brand not found.");
     }
 
-    brand.name = name;
-    brand.description = description || brand.description;
-    await brand.save();
-
-    if (file) {
-      const existingMedia = await db.Media.findOne({
-        where: {
-          associatedType: "brand",
-          associatedId: id,
-        },
+    if (name) {
+      const brand = await db.Brand.findOne({
+        where: { name },
+        transaction,
       });
 
-      if (existingMedia) {
-        if (existingMedia.publicId) {
-          await cloudinary.uploader.destroy(existingMedia.publicId, {
-            resource_type: "image",
-          });
-        }
-        await existingMedia.destroy();
+      if (brand && brand.id !== id) {
+        throw new ApiError(409, "Brand with this name already exists.");
       }
+
+      brand.name = name;
+      brand.description = description || brand.description;
+      await brand.save();
+
+      if (file) {
+        if (brand.media) {
+          if (brand.media.publicId) {
+            await cloudinary.uploader.destroy(brand.media.publicId, {
+              resource_type: "image",
+            });
+          }
+          await brand.media.destroy();
+        }
+      }
+
+      const uploadResult = await uploadToCloudinary(
+        image.path,
+        process.env.CLOUDINARY_BRAND_FOLDER
+      );
+
+      const media = await db.Media.create({
+        publicId: uploadResult.public_id,
+        url: uploadResult.secure_url,
+        fileType: uploadResult.resource_type,
+        tag: "thumbnail",
+        associatedType: "brand",
+        associatedId: category.id,
+      });
+
+      return { brand, media };
     }
-
-    const uploadResult = await uploadToCloudinary(
-      image.path,
-      process.env.CLOUDINARY_BRAND_FOLDER
-    );
-
-    const media = await db.Media.create({
-      publicId: uploadResult.public_id,
-      url: uploadResult.secure_url,
-      fileType: uploadResult.resource_type,
-      tag: "thumbnail",
-      associatedType: "brand",
-      associatedId: category.id,
-    });
-
-    return { brand, media };
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Failed to update brand.", error);
   }
 };
 
 export const deleteBrandService = async (id) => {
-  const brand = await db.Brand.findByPk(id);
+  const transaction = await db.sequelize.transaction();
 
-  if (!brand) {
-    throw new ApiError(404, "Brand not found.");
-  }
+  try {
+    const brand = await db.Brand.findByPk(id, {
+      include: ["media"],
+      transaction,
+    });
 
-  const media = await db.Media.findOne({
-    where: {
-      associatedType: "brand",
-      associatedId: id,
-    },
-  });
-
-  if (media) {
-    if (media.publicId) {
-      await cloudinary.uploader.destroy(media.publicId, {
-        resource_type: media.fileType || "image",
-      });
+    if (!brand) {
+      throw new ApiError(404, "Brand not found.");
     }
-  }
 
-  await media?.destroy();
-  await brand.destroy();
+    if (brand.media) {
+      if (brand.media.publicId) {
+        await cloudinary.uploader.destroy(brand.media.publicId, {
+          resource_type: media.fileType || "image",
+        });
+      }
+    }
+
+    await brand.destroy({ transaction });
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Failed to delete brand.", error);
+  }
 };
