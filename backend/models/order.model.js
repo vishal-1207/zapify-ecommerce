@@ -42,15 +42,16 @@ export default (sequelize, DataTypes) => {
       as: "appliedDiscount",
     });
     Order.hasMany(models.OrderItem, {
-      as: "OrderItems",
+      as: "orderItems",
       foreignKey: "orderId",
       onDelete: "CASCADE",
     });
     Order.hasMany(models.Shipment, {
-      as: "Shipments",
+      as: "shipments",
       foreignKey: "orderId",
     });
     Order.hasOne(models.Payment, {
+      as: "payments",
       foreignKey: "orderId",
       onDelete: "CASCADE",
     });

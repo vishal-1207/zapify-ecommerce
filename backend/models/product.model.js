@@ -108,12 +108,15 @@ export default (sequelize, DataTypes) => {
     Product.belongsTo(models.Category, { foreignKey: "categoryId" });
     Product.belongsTo(models.Brand, { foreignKey: "brandId" });
     Product.hasMany(models.Offer, {
-      as: "Offers",
+      as: "offers",
       foreignKey: "productId",
       onDelete: "CASCADE",
     });
-    Product.hasMany(models.ProductSpec, { foreignKey: "productId" });
-    Product.hasMany(models.Review, { foreignKey: "productId" });
+    Product.hasMany(models.ProductSpec, {
+      as: "specs",
+      foreignKey: "productId",
+    });
+    Product.hasMany(models.Review, { as: "reviews", foreignKey: "productId" });
     Product.hasMany(models.Media, {
       foreignKey: "associatedId",
       constraints: false,

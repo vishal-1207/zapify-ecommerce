@@ -31,13 +31,13 @@ export default (sequelize, DataTypes) => {
     Address.belongsTo(models.User, {
       foreignKey: "addressableId",
       constraints: false,
-      as: "User",
+      as: "user",
     });
 
     Address.belongsTo(models.SellerProfile, {
       foreignKey: "addressableId",
       constraints: false,
-      as: "SellerProfile",
+      as: "sellerProfile",
     });
   };
 

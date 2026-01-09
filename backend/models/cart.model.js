@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
 
   Cart.associate = (models) => {
     Cart.belongsTo(models.User, { foreignKey: "userId", onDelete: "CASCADE" });
-    Cart.hasMany(models.CartItem, { foreignKey: "cartId" });
+    Cart.hasMany(models.CartItem, { as: "cartItems", foreignKey: "cartId" });
   };
 
   return Cart;

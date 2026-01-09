@@ -104,13 +104,14 @@ export default (sequelize, DataTypes) => {
   };
 
   User.associate = (models) => {
-    User.hasOne(models.Cart, { foreignKey: "userId" });
+    User.hasOne(models.Cart, { as: "cart", foreignKey: "userId" });
     User.hasOne(models.SellerProfile, {
+      as: "sellerProfile",
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
-    User.hasMany(models.Order, { foreignKey: "userId" });
-    User.hasMany(models.Review, { foreignKey: "userId" });
+    User.hasMany(models.Order, { as: "orders", foreignKey: "userId" });
+    User.hasMany(models.Review, { as: "reviews", foreignKey: "userId" });
     User.hasMany(models.RefreshToken, {
       foreignKey: "userId",
       onDelete: "CASCADE",
