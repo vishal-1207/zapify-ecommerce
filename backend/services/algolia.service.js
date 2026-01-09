@@ -37,10 +37,10 @@ export const syncProductToAlgolia = async (productId) => {
   try {
     const product = await db.Product.findByPk(productId, {
       include: [
-        { model: db.Brand, as: "Brand" },
-        { model: db.Category, as: "Category" },
-        { model: db.Media, as: "Media" },
-        { model: db.Offer, as: "Offers", attributes: ["price"] },
+        { model: db.Brand, as: "brand" },
+        { model: db.Category, as: "category" },
+        { model: db.Media, as: "media" },
+        { model: db.Offer, as: "offers", attributes: ["price"] },
       ],
     });
 

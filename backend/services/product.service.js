@@ -43,7 +43,7 @@ export const getCustomerProductDetails = async (slug) => {
       },
       {
         model: db.ProductSpec,
-        as: "productSpecs",
+        as: "specs",
         attributes: ["key", "value"],
         separate: true,
       },
@@ -100,10 +100,10 @@ export const getCustomerProductDetails = async (slug) => {
 export const getProductDetailsAdmin = async (id) => {
   return db.Product.findByPk(id, {
     include: [
-      { model: db.Media, as: "Media" },
-      { model: db.ProductSpec, as: "ProductSpecs" },
-      { model: db.Brand, as: "Brand" },
-      { model: db.Category, as: "Category" },
+      { model: db.Media, as: "media" },
+      { model: db.ProductSpec, as: "specs" },
+      { model: db.Brand, as: "brand" },
+      { model: db.Category, as: "category" },
     ],
   });
 };

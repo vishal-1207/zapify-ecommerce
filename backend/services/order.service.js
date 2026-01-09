@@ -219,7 +219,7 @@ export const getOrdersForFulfillment = async (sellerId) => {
       },
       {
         model: db.Order,
-        as: "Order",
+        as: "order",
         attributes: ["id", "shippingAddress", "createdAt"],
       },
     ],

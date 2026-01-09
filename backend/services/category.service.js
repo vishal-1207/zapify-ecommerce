@@ -3,7 +3,9 @@ import uploadToCloudinary from "../utils/cloudinary.util.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-// CREATE CATEGORY SERVICE
+/**
+ * Category service to create or add a products category.
+ */
 export const addCategory = async (name, file) => {
   const transaction = await db.sequelize.transaction();
   try {
@@ -38,14 +40,15 @@ export const addCategory = async (name, file) => {
   }
 };
 
-// UPDATE CATEGORY SERVICE
-
+/**
+ * Category service to update details of a category.
+ */
 export const updateCategory = async (data, file) => {
   const { id, name } = data;
   const transaction = await db.sequelize.transaction();
   try {
     const category = await db.Category.findByPk(id, {
-      include: [{ model: db.Media, as: "image" }],
+      include: [{ model: db.Media, as: "media" }],
       transaction,
     });
     if (!category) throw new ApiError(404, "Category not found.");
@@ -53,9 +56,9 @@ export const updateCategory = async (data, file) => {
     category.name = name || category.name;
 
     if (file) {
-      if (category.image) {
-        await cloudinary.uploader.destroy(category.image.publicId);
-        await category.image.destroy({ transaction });
+      if (category.media) {
+        await cloudinary.uploader.destroy(category.media.publicId);
+        await category.media.destroy({ transaction });
       }
       const upload = await uploadToCloudinary(
         file.path,
@@ -86,12 +89,14 @@ export const updateCategory = async (data, file) => {
   }
 };
 
-// DELETE CATEGORY SERVICE
+/**
+ * Category service to delete or remove a category.
+ */
 export const deleteCategory = async (id) => {
   const transaction = await db.sequelize.transaction();
   try {
     const category = await db.Category.findByPk(id, {
-      include: [{ model: db.Media, as: "media" }],
+      include: ["media"],
       transaction,
     });
     if (!category) throw new ApiError(404, "Category not found.");
@@ -107,8 +112,8 @@ export const deleteCategory = async (id) => {
       );
     }
 
-    if (category.media?.[0]) {
-      await cloudinary.uploader.destroy(category.media[0].publicId);
+    if (category.media) {
+      await cloudinary.uploader.destroy(category.media.publicId);
     }
 
     await category.destroy({ transaction });
