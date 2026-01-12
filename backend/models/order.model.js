@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
   Order.associate = (models) => {
     Order.belongsTo(models.User, { foreignKey: "userId" });
 
-    Order.belongsTo(models.Discounts, {
+    Order.belongsTo(models.Discount, {
       through: models.OrderDiscounts,
       foreignKey: "orderId",
       otherKey: "discountId",
