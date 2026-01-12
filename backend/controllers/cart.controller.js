@@ -10,7 +10,11 @@ export const addItem = asyncHandler(async (req, res) => {
   if (!offerId || !quantity) {
     throw new ApiError(400, "offerId and quantity are required.");
   }
-  const cart = await cartService.addItemToCart(req.user.id, offerId, quantity);
+  const cart = await cartService.addItemToCart(
+    req.user.id,
+    offerId,
+    parseInt(quantity)
+  );
   return res.status(200).json({ message: "Item added to cart.", cart });
 });
 
@@ -35,7 +39,7 @@ export const updateItem = asyncHandler(async (req, res) => {
   const cart = await cartService.updateItemQuantity(
     req.user.id,
     offerId,
-    quantity
+    parseInt(quantity)
   );
   return res.status(200).json({ message: "Cart item quantity updated.", cart });
 });
