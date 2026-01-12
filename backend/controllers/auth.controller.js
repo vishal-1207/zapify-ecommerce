@@ -36,13 +36,11 @@ export const loginController = asyncHandler(async (req, res) => {
 
   setTokensInCookies(res, tokens);
 
-  return res
-    .status(200)
-    .json({
-      message: "Login successfull",
-      user,
-      accessToken: tokens.accessToken,
-    });
+  return res.status(200).json({
+    message: "Login successfull",
+    user,
+    accessToken: tokens.accessToken,
+  });
 });
 
 //Social Callback Handler Controller
@@ -63,38 +61,23 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
 });
 
 // Token Handler Controller
-export const refreshTokenHander = asyncHandler(async (req, res) => {
-  const oldRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-  if (!oldRefreshToken) {
-    throw new ApiError(401, "Unauthorized access.");
-  }
-  const payload = jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-  if (!payload) {
-    throw new ApiError(401, "Invalid or expired refresh token.");
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  // Look for token in cookies (browser) or body (Postman/Mobile)
+  const incomingToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+  if (!incomingToken) {
+    throw new ApiError(401, "Refresh token is missing.");
   }
 
-  const storedToken = await db.RefreshToken.findByPk(payload.tokenId);
-  if (!storedToken) throw new Error("Invalid refresh token");
+  const { user, accessToken, refreshToken } =
+    await authService.refreshAccessToken(incomingToken);
 
-  await storedToken.destroy();
+  // Set new cookies (Rotation)
+  setTokenCookies(res, accessToken, refreshToken);
 
-  const tokens = await generateTokens(payload.userId, payload.roles);
-  setTokensInCookies(res, { ...tokens });
-  res
-    .cookie("accessToken", tokens.accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 10 * 60 * 1000,
-    })
-    .cookie("refreshToken", tokens.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 10 * 24 * 60 * 60 * 1000,
-    })
+  return res
     .status(200)
-    .json({ accessToken, message: "Access token refreshed successfully." });
+    .json({ message: "Token refreshed successfully.", user, accessToken });
 });
 
 //Logout Controller
