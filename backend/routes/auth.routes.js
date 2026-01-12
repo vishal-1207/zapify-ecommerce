@@ -60,8 +60,8 @@ router
   );
 
 router
-  .route("/access-token")
-  .post(csrfProtection, limiter, authControllers.refreshTokenHander);
+  .route("/refresh-session")
+  .post(csrfProtection, limiter, authControllers.refreshAccessToken);
 router
   .route("/logout")
   .post(authenticate, csrfProtection, authControllers.logoutController);
