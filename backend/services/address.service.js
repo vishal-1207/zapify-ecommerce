@@ -17,6 +17,7 @@ export const createAddress = async (
     const existing = await db.Address.findOne({
       where: { addressableId, addressableType, type: "Business" },
     });
+
     if (existing) {
       throw new ApiError(
         409,
@@ -25,13 +26,24 @@ export const createAddress = async (
     }
   }
 
-  const address = db.Address.create({
-    ...addressData,
-    addressableId,
-    addressableType,
-  });
+  try {
+    const transaction = await db.sequelize.transaction();
 
-  return address;
+    const address = db.Address.create(
+      {
+        ...addressData,
+        addressableId,
+        addressableType,
+      },
+      { transaction }
+    );
+
+    await transaction.commit();
+    return address;
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Something went wrong: ", error);
+  }
 };
 
 /**
@@ -67,8 +79,17 @@ export const updateAddress = async (
   if (!address)
     throw new ApiError(404, "Address not found or does not belong to you.");
 
-  await address.update(updateData);
-  return address;
+  try {
+    const transaction = await db.sequelize.transaction();
+    await address.update(updateData);
+
+    await transaction.commit();
+
+    return address;
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Something went wrong. Failed to update address.");
+  }
 };
 
 /**
@@ -89,6 +110,14 @@ export const deleteAddress = async (
   if (!address)
     throw new ApiError(404, "Address not found or does not belong to you.");
 
-  await address.destroy();
-  return { message: "Address deleted successfully." };
+  try {
+    const transaction = await db.sequelize.transaction();
+    await address.destroy();
+    await transaction.commit();
+
+    return { message: "Address deleted successfully." };
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(500, "Something went wrong. Failed to delete address.");
+  }
 };

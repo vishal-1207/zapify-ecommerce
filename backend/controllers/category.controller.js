@@ -1,6 +1,7 @@
 import * as categoryService from "../services/category.service.js";
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Fetches all categories availabe.
@@ -24,6 +25,28 @@ export const getCategories = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json({ message: "Categories fetched successfully.", categories });
+});
+
+export const getCategoryDetails = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const category = await db.Category.findByPk(id, {
+    include: [
+      {
+        model: db.Media,
+        as: "media",
+        attributes: ["id", "publicId", "url", "fileType", "tag"],
+        where: {
+          associatedType: "category",
+        },
+      },
+    ],
+  });
+
+  if (!category) throw new ApiError(404, "No such category found.");
+
+  return res
+    .status(200)
+    .json({ message: "Category details fetched successfully.", category });
 });
 
 /**

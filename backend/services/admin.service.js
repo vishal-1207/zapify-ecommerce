@@ -294,8 +294,8 @@ export const getUsersList = async (role = "user", page, limit) => {
         "passwordResetToken",
         "passwordResetExpires",
       ],
-      order: [["createdAt", "DESC"]],
     },
+    order: [["createdAt", "DESC"]], // Corrected: Order moved to root level
   };
 
   if (role) {
@@ -303,12 +303,9 @@ export const getUsersList = async (role = "user", page, limit) => {
   }
 
   if (role === "seller") {
-    queryOptions.include = [
-      { model: db.SellerProfile, as: "SellerProfile" }, // No 'where' is needed!
-    ];
+    queryOptions.include = [{ model: db.SellerProfile, as: "SellerProfile" }];
   }
 
-  const result = await paginate(db.User, queryOptions, page, limit);
-
-  return result;
+  // Uses the paginate utility for paginated user list results
+  return await paginate(db.User, queryOptions, page, limit);
 };

@@ -7,8 +7,12 @@ import cloudinary from "../config/cloudinary.js";
  * Category service to create or add a products category.
  */
 export const addCategory = async (name, file) => {
-  const transaction = await db.sequelize.transaction();
+  const existingCategory = await db.findOne({ name });
+  if (existingCategory)
+    throw new ApiError(404, `${name} category already exists.`);
+
   try {
+    const transaction = await db.sequelize.transaction();
     const newCategory = await db.Category.create({ name }, { transaction });
 
     if (file) {
@@ -33,10 +37,7 @@ export const addCategory = async (name, file) => {
     return newCategory;
   } catch (error) {
     await transaction.rollback();
-    if (error.name === "SequelizeUniqueConstraintError") {
-      throw new ApiError(409, "A category with this name already exists.");
-    }
-    throw new ApiError(500, "Failed to create category draft.", error);
+    throw new ApiError(500, "Failed to create category.", error);
   }
 };
 
@@ -45,15 +46,16 @@ export const addCategory = async (name, file) => {
  */
 export const updateCategory = async (data, file) => {
   const { id, name } = data;
-  const transaction = await db.sequelize.transaction();
-  try {
-    const category = await db.Category.findByPk(id, {
-      include: [{ model: db.Media, as: "media" }],
-      transaction,
-    });
-    if (!category) throw new ApiError(404, "Category not found.");
 
-    category.name = name || category.name;
+  const category = await db.Category.findByPk(id, {
+    include: [{ model: db.Media, as: "media" }],
+  });
+
+  if (!category) throw new ApiError(404, "Category not found.");
+
+  try {
+    const transaction = await db.sequelize.transaction();
+    category.name = name;
 
     if (file) {
       if (category.media) {
@@ -93,13 +95,13 @@ export const updateCategory = async (data, file) => {
  * Category service to delete or remove a category.
  */
 export const deleteCategory = async (id) => {
-  const transaction = await db.sequelize.transaction();
+  const category = await db.Category.findByPk(id, {
+    include: ["media"],
+  });
+  if (!category) throw new ApiError(404, "Category not found.");
+
   try {
-    const category = await db.Category.findByPk(id, {
-      include: ["media"],
-      transaction,
-    });
-    if (!category) throw new ApiError(404, "Category not found.");
+    const transaction = await db.sequelize.transaction();
 
     const productCount = await db.Product.count({
       where: { categoryId: id },
@@ -114,10 +116,10 @@ export const deleteCategory = async (id) => {
 
     if (category.media) {
       await cloudinary.uploader.destroy(category.media.publicId);
+      await category.media.destroy({ transaction });
     }
 
     await category.destroy({ transaction });
-
     await transaction.commit();
     return { message: "Category deleted." };
   } catch (error) {
