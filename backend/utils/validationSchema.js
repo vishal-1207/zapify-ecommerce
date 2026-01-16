@@ -136,8 +136,8 @@ export const offerSchema = Joi.object({
 });
 
 export const suggestProductSchema = Joi.object({
-  productData: Joi.object(productSchema).required(),
-  offerData: Joi.object(offerSchema).required(),
+  productData: productSchema.required(),
+  offerData: offerSchema.required(),
 });
 
 export const categorySchema = Joi.object({
@@ -168,6 +168,10 @@ export const brandSchema = Joi.object({
       "string.min": "Brand name should be atleast 2 characters long.",
       "string.max": "Brand name cannot exceed 25 characters.",
     }),
+  description: Joi.string().max(500).required().messages({
+    "string.empty": "Brand description is required.",
+    "string.max": "Brand description cannot exceed 500 characters.",
+  }),
 });
 
 export const sellerProfileSchema = Joi.object({
@@ -212,7 +216,7 @@ export const discountSchema = Joi.object({
   code: Joi.string().uppercase().min(3).max(15).required(),
   description: Joi.string().max(255).optional(),
   discountType: Joi.string().valid("percentage", "fixed").required(),
-  value: Joi.number().positive().required().message({
+  value: Joi.number().positive().required().messages({
     "number.positive": "Discount must be greater than 0",
   }),
   minOrderAmount: Joi.number().min(0).optional(),
