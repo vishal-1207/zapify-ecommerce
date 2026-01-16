@@ -23,6 +23,7 @@ router
 
 router
   .route("/:id")
+  .get(authorizeRoles("admin"), brandController.getBrandDetails)
   .put(
     authorizeRoles("admin"),
     csrfProtection,

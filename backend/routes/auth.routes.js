@@ -60,7 +60,7 @@ router
   );
 
 router
-  .route("/refresh-session")
+  .route("/refresh-token")
   .post(csrfProtection, limiter, authControllers.refreshAccessToken);
 router
   .route("/logout")

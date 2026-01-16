@@ -23,6 +23,7 @@ router
 
 router
   .route("/:id")
+  .get(authorizeRoles("admin"), categoryController.getCategoryDetails)
   .put(
     authorizeRoles("admin"),
     csrfProtection,

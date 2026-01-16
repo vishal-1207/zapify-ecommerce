@@ -4,7 +4,10 @@ import csrfProtection from "../middleware/csrf.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import * as productController from "../controllers/product.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { productSchema } from "../utils/validationSchema.js";
+import {
+  productSchema,
+  suggestProductSchema,
+} from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
@@ -26,7 +29,22 @@ router.route("/").post(
 
 router
   .route("/:productId")
-  .get(authorizeRoles("admin"), productController.getProductDetailsAdmin);
+  .get(authorizeRoles("admin"), productController.getProductDetailsAdmin)
+  .patch(
+    authorizeRoles("admin"),
+    csrfProtection,
+    upload.fields([
+      { name: "thumbnail", maxCount: 1 },
+      { name: "gallery", maxCount: 10 },
+    ]),
+    validate(productSchema),
+    productController.updateProduct
+  )
+  .delete(
+    authorizeRoles("admin"),
+    csrfProtection,
+    productController.deleteProduct
+  );
 
 router.route("/catalog-search").get(productController.searchCatalog);
 
@@ -37,7 +55,7 @@ router.route("/suggest-product/:sellerId").post(
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
   ]),
-  validate(productSchema),
+  validate(suggestProductSchema),
   productController.suggestNewProduct
 );
 
@@ -50,25 +68,6 @@ router
     authorizeRoles("admin"),
     csrfProtection,
     productController.reviewProduct
-  );
-
-router.route("/edit/:productId").patch(
-  authorizeRoles("admin"),
-  csrfProtection,
-  upload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "gallery", maxCount: 10 },
-  ]),
-  validate(productSchema),
-  productController.updateProduct
-);
-
-router
-  .route("/:productId")
-  .delete(
-    authorizeRoles("seller", "admin"),
-    csrfProtection,
-    productController.deleteProduct
   );
 
 export default router;
