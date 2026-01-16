@@ -27,7 +27,6 @@ export default (sequelize, DataTypes) => {
       constraints: false,
       scope: { associatedType: "review" },
       as: "media",
-      onDelete: "CASCADE",
     });
   };
 

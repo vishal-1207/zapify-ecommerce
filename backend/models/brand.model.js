@@ -10,14 +10,13 @@ export default (sequelize, DataTypes) => {
   });
 
   Brand.associate = (models) => {
+    Brand.hasMany(models.Product, { as: "products", foreignKey: "brandId" });
     Brand.hasOne(models.Media, {
       foreignKey: "associatedId",
       constraints: false,
       scope: { associatedType: "brand" },
       as: "media",
-      onDelete: "CASCADE",
     });
-    Brand.hasMany(models.Product, { as: "products", foreignKey: "brandId" });
   };
 
   return Brand;
