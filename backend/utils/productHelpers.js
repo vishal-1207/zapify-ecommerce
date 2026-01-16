@@ -3,11 +3,6 @@ import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 import uploadToCloudinary from "./cloudinary.util.js";
 
-import db from "#models/index.js";
-import { ApiError } from "#utils/ApiError.js";
-import uploadToCloudinary from "#utils/cloudinary.util.js";
-import cloudinary from "#config/cloudinary.js";
-
 /**
  * INTERNAL GENERIC FUNCTION to create a product entry with its media and specs.
  * This is the core reusable logic used by both Admins (for catalog) and Sellers (for suggestions).
