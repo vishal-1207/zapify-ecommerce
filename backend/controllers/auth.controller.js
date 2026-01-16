@@ -6,6 +6,16 @@ import ApiError from "../utils/ApiError.js";
 import generateTokens from "../utils/token.utils.js";
 import setTokensInCookies from "../utils/setTokensInCookies.js";
 
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction || false,
+    sameSite: isProduction ? "None" : "Lax",
+    path: "/",
+  };
+};
+
 //Register Controller
 export const registerController = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
@@ -16,7 +26,8 @@ export const registerController = asyncHandler(async (req, res) => {
     password,
   });
 
-  setTokensInCookies(res, tokens);
+  const options = getCookieOptions();
+  setTokensInCookies(res, tokens, options);
 
   return res.status(201).json({
     message:
@@ -34,7 +45,8 @@ export const loginController = asyncHandler(async (req, res) => {
     password,
   });
 
-  setTokensInCookies(res, tokens);
+  const options = getCookieOptions();
+  setTokensInCookies(res, tokens, options);
 
   return res.status(200).json({
     message: "Login successfull",
@@ -52,7 +64,8 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
   }
 
   const tokens = await generateTokens(user.userId, user.roles);
-  setTokensInCookies(res, tokens);
+  const options = getCookieOptions();
+  setTokensInCookies(res, tokens, options);
   return res.status(200).json({
     message: "Login successful.",
     user,
@@ -62,22 +75,17 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
 
 // Token Handler Controller
 export const refreshAccessToken = asyncHandler(async (req, res) => {
-  // Look for token in cookies (browser) or body (Postman/Mobile)
   const incomingToken = req.cookies?.refreshToken || req.body.refreshToken;
-
-  if (!incomingToken) {
-    throw new ApiError(401, "Refresh token is missing.");
-  }
+  if (!incomingToken) throw new ApiError(401, "Refresh token missing.");
 
   const { user, accessToken, refreshToken } =
-    await authService.refreshAccessToken(incomingToken);
+    await authServices.refreshAccessToken(incomingToken);
 
-  // Set new cookies (Rotation)
-  setTokenCookies(res, accessToken, refreshToken);
+  const tokens = { accessToken, refreshToken };
+  const options = getCookieOptions();
+  setTokensInCookies(res, tokens, options);
 
-  return res
-    .status(200)
-    .json({ message: "Token refreshed successfully.", user, accessToken });
+  return res.status(200).json({ message: "Token refreshed.", user, tokens });
 });
 
 //Logout Controller
@@ -88,11 +96,9 @@ export const logoutController = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Refresh token not found.");
   }
 
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
-  });
+  const options = getCookieOptions();
+  res.clearCookie("accessToken", options);
+  res.clearCookie("refreshToken", options);
 
   const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
