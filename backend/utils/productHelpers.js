@@ -16,26 +16,36 @@ export const _createGenericProduct = async (
   productData,
   files,
   status,
-  transaction
+  transaction,
 ) => {
-  const { categoryId, brandId, name, description, specs = [] } = productData;
+  const {
+    categoryId,
+    brandId,
+    name,
+    model,
+    description,
+    price,
+    specs = [],
+  } = productData;
 
   const newProduct = await db.Product.create(
     {
       name,
+      model,
       description,
+      price,
+      status,
       categoryId,
       brandId,
-      status,
     },
-    { transaction }
+    { transaction },
   );
 
   if (files?.thumbnail && files.thumbnail.length > 0) {
     const thumbnailFile = files.thumbnail[0];
     const thumbnailUpload = await uploadToCloudinary(
       thumbnailFile.path,
-      process.env.CLOUDINARY_PRODUCT_FOLDER
+      process.env.CLOUDINARY_PRODUCT_FOLDER,
     );
 
     await db.Media.create(
@@ -47,13 +57,13 @@ export const _createGenericProduct = async (
         associatedType: "product",
         associatedId: newProduct.id,
       },
-      { transaction }
+      { transaction },
     );
   }
 
   if (files?.gallery && files.gallery.length > 0) {
     const uploadPromises = files.gallery.map((file) =>
-      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER)
+      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER),
     );
     const uploadResults = await Promise.all(uploadPromises);
 
@@ -90,10 +100,18 @@ export const _updateGenericProduct = async (
   productId,
   productData,
   files,
-  transaction
+  transaction,
 ) => {
-  const { categoryId, brandId, name, description, specs, mediaToDelete } =
-    productData;
+  const {
+    categoryId,
+    brandId,
+    name,
+    model,
+    description,
+    price,
+    specs,
+    mediaToDelete,
+  } = productData;
 
   const product = await db.Product.findByPk(productId, {
     include: [{ model: db.Media, as: "media" }],
@@ -102,10 +120,12 @@ export const _updateGenericProduct = async (
 
   if (!product) throw new ApiError(404, "Product not found.");
 
-  if (name) product.name = name;
-  if (brandId) product.brandId = brandId;
-  if (description) product.description = description;
   if (categoryId) product.categoryId = categoryId;
+  if (brandId) product.brandId = brandId;
+  if (name) product.name = name;
+  if (model) product.model = model;
+  if (description) product.description = description;
+  if (price) product.price = price;
 
   await product.save({ transaction });
 
@@ -120,7 +140,7 @@ export const _updateGenericProduct = async (
     const thumbnailFile = files.thumbnail[0];
     const thumbnailUpload = await uploadToCloudinary(
       thumbnailFile.path,
-      process.env.CLOUDINARY_PRODUCT_FOLDER
+      process.env.CLOUDINARY_PRODUCT_FOLDER,
     );
 
     await db.Media.create(
@@ -132,7 +152,7 @@ export const _updateGenericProduct = async (
         associatedType: "product",
         associatedId: product.id,
       },
-      { transaction }
+      { transaction },
     );
   }
 
@@ -143,7 +163,7 @@ export const _updateGenericProduct = async (
         : mediaToDelete;
 
     const mediaRecordsToDelete = product.media.filter((m) =>
-      idsToDelete.includes(m.id)
+      idsToDelete.includes(m.id),
     );
 
     if (mediaRecordsToDelete.length > 0) {
@@ -159,7 +179,7 @@ export const _updateGenericProduct = async (
 
   if (files?.gallery && files.gallery.length > 0) {
     const uploadPromises = files.gallery.map((file) =>
-      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER)
+      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER),
     );
     const uploadResults = await Promise.all(uploadPromises);
 
