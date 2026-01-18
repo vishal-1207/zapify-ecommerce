@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import db from "../models/index.js";
 import { syncProductToAlgolia } from "../services/algolia.service.js";
 import { configureAlgoliaIndex } from "../config/algolia.js";
+import { updateProductAggregates } from "../services/product.service.js";
 
 dotenv.config();
 
@@ -24,7 +25,6 @@ const runSync = async () => {
     console.log(`Found ${products.length} approved products to sync.`);
 
     for (const product of products) {
-      // First ensure SQL aggregates are upto date
       await updateProductAggregates(product.id);
       await syncProductToAlgolia(product.id);
       process.stdout.write(".");
