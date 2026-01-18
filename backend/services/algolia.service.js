@@ -6,26 +6,40 @@ import db from "../models/index.js";
  * @param {Product} product - The product instance with associations.
  * @returns {object} The flattened object for Algolia.
  */
-const formatProductsForAlgolia = async (product) => {
-  let bestPrice = 0;
-  if (product.Offers && product.Offers.length > 0) {
-    bestPrice = Math.min(...product.Offers.map((o) => parseFloat(o.price)));
+const formatProductForAlgolia = async (productData) => {
+  const product = productData?.get
+    ? productData.get({ plain: true })
+    : productData;
+
+  if (!product) return null;
+
+  const id = product.id;
+
+  if (!id) {
+    console.error(
+      "[Algolia] Formatting failed: No unique identifier found for product:",
+      product.name,
+    );
+    return null;
   }
 
   return {
-    objectId: product.id,
+    objectID: id,
     name: product.name,
     description: product.description,
     slug: product.slug,
-    brand: product.Brand?.name || "Unknown",
-    category: product.Category?.name || "Uncategorized",
-    image: product.Media?.find((m) => m.tag == "thumbnail")?.url || null,
+    brand: product.brand?.name || "Unknown",
+    category: product.category?.name || "Uncategorized",
+    image:
+      product.media?.find((m) => m.tag === "thumbnail")?.url ||
+      product.media?.[0]?.url ||
+      null,
     rating: parseFloat(product.averageRating) || 0,
     reviewCount: parseInt(product.reviewCount) || 0,
     status: product.status,
     price: parseFloat(product.minOfferPrice) || 0,
     popularity: parseFloat(product.popularityScore) || 0,
-    inStock: product.totalOfferStock > 0,
+    inStock: (parseInt(product.totalOfferStock) || 0) > 0,
   };
 };
 
@@ -44,19 +58,62 @@ export const syncProductToAlgolia = async (productId) => {
       ],
     });
 
-    if (!product) return;
-
-    // Only index 'approved' products
-    if (product.status !== "approved") {
-      await client.deleteObject({ indexName: INDEX_NAME, objectId: productId });
+    if (!product) {
+      console.warn(
+        `[Algolia] Sync skipped: Product ${productId} not found in DB.`,
+      );
       return;
     }
 
-    const algoliaObject = formatProductsForAlgolia(product);
-    await client.saveObject({ indexName: INDEX_NAME, algoliaObject });
+    if (product.status !== "approved") {
+      await client.deleteObject({ indexName: INDEX_NAME, objectID: productId });
+      return;
+    }
+
+    const record = await formatProductForAlgolia(product);
+    if (!record || !record.objectID) {
+      throw new Error("Formatted record is invalid or missing objectID.");
+    }
+
+    await client.saveObject({
+      indexName: INDEX_NAME,
+      body: record,
+    });
+
     console.log(`Synced product ${productId} to Algolia`);
   } catch (error) {
     console.error(`Failed to sync product ${productId} to Algolia: `, error);
+  }
+};
+
+/**
+ * Bulk syncs all products associated with a specific Brand or Category.
+ * Triggered when master records change their names to ensure search results
+ * reflect the new metadata.
+ */
+export const reSyncProductsByCriteria = async (criteria = {}) => {
+  try {
+    const products = await db.Product.findAll({
+      where: { ...criteria, status: "approved" },
+      attributes: ["id"],
+    });
+
+    if (products.length === 0) return;
+
+    console.log(
+      `[Algolia] Master data change detected. Re-syncing ${products.length} products...`,
+    );
+
+    for (const p of products) {
+      syncProductToAlgolia(p.id).catch((err) =>
+        console.error(
+          `[Algolia] Cascade sync failed for ${p.id}:`,
+          err.message,
+        ),
+      );
+    }
+  } catch (error) {
+    console.error(`[Algolia] Bulk sync process failed:`, error.message);
   }
 };
 
@@ -74,7 +131,7 @@ export const deleteProductFromAlgolia = async (productId) => {
   } catch (error) {
     console.error(
       `Failed to delete product ${productId} from Algolia: `,
-      error
+      error,
     );
   }
 };
