@@ -4,6 +4,26 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { searchProductsAlgolia } from "../services/algolia.service.js";
 
 /**
+ * Robust helper to parse JSON fields from multipart/form-data.
+ * Handles cases where the field might already be parsed by Joi middleware.
+ */
+const safeParseJSON = (value, fieldName) => {
+  if (!value) return [];
+  if (typeof value !== "string") return value; // Already parsed by middleware
+
+  try {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    return JSON.parse(trimmed);
+  } catch (error) {
+    throw new ApiError(
+      400,
+      `Invalid JSON format for ${fieldName}. Please check your syntax.`,
+    );
+  }
+};
+
+/**
  * Helper function for checking and parsing input data to process for services.
  * @param {*} req
  * @param {*} isUpdate
@@ -20,24 +40,15 @@ const parseProductInput = (req) => {
     specs = [],
   } = req.body;
 
-  let parsedSpecs = [];
-  if (specs) {
-    try {
-      parsedSpecs = JSON.parse(specs);
-    } catch (error) {
-      throw new ApiError(400, "Invalid JSON format for specs.");
-    }
-  }
-
   return {
     data: {
-      categoryId: parseInt(categoryId, 10),
+      categoryId,
       brandId,
       name,
       description,
       price: price ? parseFloat(price) : undefined,
       stock: stock ? parseInt(stock, 10) : undefined,
-      specs: parsedSpecs,
+      specs: safeParseJSON(specs, "specs"),
     },
     files: req.files || {},
   };
@@ -107,7 +118,7 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     productData,
     offerData,
     sellerProfile.id,
-    req.files
+    req.files,
   );
   return res.status(201).json({
     message: "Product successfully submitted for admin approval.",
@@ -136,7 +147,7 @@ export const reviewProduct = asyncHandler(async (req, res) => {
 
   const product = await productService.reviewProductSuggestion(
     req.params.productId,
-    decision
+    decision,
   );
   return res.status(200).json({ message: `Product ${decision}.`, product });
 });
@@ -195,7 +206,7 @@ export const getProductSuggestions = asyncHandler(async (req, res) => {
   const suggestions = await sellerService.getSellerProductSuggestions(
     req.user.id,
     page,
-    limit
+    limit,
   );
   return res
     .status(200)
