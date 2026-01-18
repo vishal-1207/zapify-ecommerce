@@ -6,7 +6,7 @@ export const INDEX_NAME = process.ALGOLIA_INDEX_NAME || "products";
 
 if (!APP_ID || !ADMIN_KEY) {
   console.warn(
-    "Algolia credentials missing. Search functionality may not work."
+    "Algolia credentials missing. Search functionality may not work.",
   );
 }
 
@@ -14,7 +14,7 @@ export const client = algoliasearch(APP_ID, ADMIN_KEY);
 
 export const configureAlgoliaIndex = async () => {
   try {
-    await productIndex.setSettings({
+    await client.setSettings({
       indexName: INDEX_NAME,
       indexSettings: {
         searchableAttributes: ["name", "brand", "category", "description"],
