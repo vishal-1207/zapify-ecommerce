@@ -7,6 +7,7 @@ import * as productHelpers from "../utils/productHelpers.js";
 import redisClient from "../config/redis.js";
 import { getCache, invalidateCache } from "../utils/cache.js";
 import { stringify } from "uuid";
+import { syncProductToAlgolia } from "./algolia.service.js";
 
 const CACHE_TTL = 3600;
 
@@ -116,7 +117,7 @@ export const createProductSuggestion = async (
   productData,
   offerData,
   sellerId,
-  files
+  files,
 ) => {
   const transaction = await sequelize.transaction();
   try {
@@ -124,7 +125,7 @@ export const createProductSuggestion = async (
       productData,
       files,
       "pending",
-      transaction
+      transaction,
     );
 
     await db.Offer.create(
@@ -133,7 +134,7 @@ export const createProductSuggestion = async (
         productId: newProduct.id,
         sellerId,
       },
-      transaction
+      transaction,
     );
 
     await transaction.commit();
@@ -147,7 +148,7 @@ export const createProductSuggestion = async (
         admin.id,
         "new_product_suggestion",
         `New product '${newProduct.name}' suggested.`,
-        "/admin/products/pending"
+        "/admin/products/pending",
       );
     }
 
@@ -192,7 +193,7 @@ export const getPendingProductsForReview = async (page, limit) => {
       order: [["createdAt", "DESC"]],
     },
     page,
-    limit
+    limit,
   );
 };
 
@@ -226,7 +227,7 @@ export const reviewProductSuggestion = async (productId, decision) => {
       sellerUser.id,
       `product_suggestion_${decision}`,
       message,
-      linkUrl
+      linkUrl,
     );
   }
 
@@ -243,12 +244,13 @@ export const adminCreateProduct = async (productData, files) => {
       productData,
       files,
       "approved",
-      transaction
+      transaction,
     );
     await transaction.commit();
     return newProduct;
   } catch (error) {
     await transaction.rollback();
+    console.log(error);
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
     }
@@ -266,7 +268,7 @@ export const updateProduct = async (productId, data, files) => {
       productId,
       data,
       files,
-      transaction
+      transaction,
     );
     await transaction.commit();
 
@@ -290,26 +292,82 @@ export const updateProduct = async (productId, data, files) => {
  * This will trigger the 'afterUpdate' hook on Product, which syncs to Algolia.
  */
 export const updateProductAggregates = async (productId) => {
-  const offers = await db.Offer.findAll({
-    where: { productId },
-    attributes: ["price", "stockQuantity"],
-  });
+  if (!productId) return;
 
-  const offersCount = offers.length;
-  const totalStock = offers.reduce((sum, o) => sum + o.quantityStock, 0);
-  const minPrice =
-    offersCount > 0 ? Math.min(...offers.map((o) => parseFloat(o.price))) : 0;
+  const transaction = await db.sequelize.transaction();
 
-  await db.Product.update(
-    {
-      minOfferPrice: minPrice,
-      totalOfferStock: totalStock,
-      offerCount: offersCount,
-    },
-    {
-      where: { id: productId },
-      individualHooks: true,
+  try {
+    const stats = await db.Offer.findAll({
+      where: { productId },
+      attributes: [
+        [
+          db.sequelize.fn(
+            "MIN",
+            db.sequelize.literal(
+              "CASE WHEN stockQuantity > 0 THEN price ELSE NULL END",
+            ),
+          ),
+          "minPrice",
+        ],
+        [
+          db.sequelize.fn("SUM", db.sequelize.col("stockQuantity")),
+          "totalStock",
+        ],
+        [db.sequelize.fn("COUNT", db.sequelize.col("id")), "count"],
+      ],
+      raw: true,
+      transaction,
+    });
+
+    const aggregateData = stats[0] || {};
+
+    const product = await db.Product.findByPk(productId, {
+      attributes: ["price"],
+      transaction,
+    });
+
+    if (!product) {
+      await transaction.rollback();
+      return;
     }
+
+    const finalMinPrice =
+      aggregateData.minPrice !== null
+        ? parseFloat(aggregateData.minPrice)
+        : parseFloat(product.price);
+
+    await db.Product.update(
+      {
+        minOfferPrice: finalMinPrice,
+        totalOfferStock: parseInt(aggregateData.totalStock, 10) || 0,
+        offerCount: parseInt(aggregateData.count, 10) || 0,
+      },
+      {
+        where: { id: productId },
+        transaction,
+      },
+    );
+
+    await transaction.commit();
+  } catch (error) {
+    if (transaction) {
+      try {
+        await transaction.rollback();
+      } catch (tranErr) {
+        console.error(
+          `[Aggregates] Transaction rollback failed for product ${productId}:`,
+          tranErr.message,
+        );
+      }
+    }
+    throw error;
+  }
+
+  syncProductToAlgolia(productId).catch((err) =>
+    console.error(
+      `[Aggregates] Algolia sync failed for ${productId}:`,
+      err.message,
+    ),
   );
 };
 
@@ -321,7 +379,7 @@ export const deleteProduct = async (productId) => {
   try {
     const { slug } = await productHelpers._deleteGenericProduct(
       productId,
-      transaction
+      transaction,
     );
     await transaction.commit();
 
@@ -358,7 +416,7 @@ export const getSellerProductSuggestions = async (userId, page, limit) => {
       order: ["createdAt", "DESC"],
     },
     page,
-    limit
+    limit,
   );
 
   return result;
