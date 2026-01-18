@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
       name: { type: DataTypes.STRING, allowNull: false },
       model: { type: DataTypes.STRING, allowNull: true },
       description: { type: DataTypes.TEXT, allowNull: false },
-      price: { type: DataTypes.DECIMAL(10, 2), allowNull: false }, // List price/MRP
+      price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
       status: {
         type: DataTypes.ENUM("draft", "pending", "approved", "rejected"),
         allowNull: false,
@@ -52,25 +52,22 @@ export default (sequelize, DataTypes) => {
     {
       hooks: {
         afterCreate: async (product) => {
-          const { syncProductToAlgolia } = await import(
-            "../services/algolia.service.js"
-          );
+          const { syncProductToAlgolia } =
+            await import("../services/algolia.service.js");
           syncProductToAlgolia(product.id).catch((e) => console.error(e));
         },
         afterUpdate: async (product) => {
-          const { syncProductToAlgolia } = await import(
-            "../services/algolia.service.js"
-          );
+          const { syncProductToAlgolia } =
+            await import("../services/algolia.service.js");
           syncProductToAlgolia(product.id).catch((e) => console.error(e));
         },
         afterDestroy: async (product) => {
-          const { deleteProductFromAlgolia } = await import(
-            "../services/algolia.service.js"
-          );
+          const { deleteProductFromAlgolia } =
+            await import("../services/algolia.service.js");
           deleteProductFromAlgolia(product.id).catch((e) => console.error(e));
         },
       },
-    }
+    },
   );
 
   Product.beforeCreate(async (product, options) => {
@@ -105,8 +102,14 @@ export default (sequelize, DataTypes) => {
   });
 
   Product.associate = (models) => {
-    Product.belongsTo(models.Category, { foreignKey: "categoryId" });
-    Product.belongsTo(models.Brand, { foreignKey: "brandId" });
+    Product.belongsTo(models.Category, {
+      foreignKey: "categoryId",
+      as: "category",
+    });
+    Product.belongsTo(models.Brand, {
+      foreignKey: "brandId",
+      as: "brand",
+    });
     Product.hasMany(models.Offer, {
       as: "offers",
       foreignKey: "productId",
