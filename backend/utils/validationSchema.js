@@ -83,33 +83,43 @@ export const userSettingsSchema = Joi.object({
 });
 
 export const productSchema = Joi.object({
+  categoryId: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required()
+    .messages({
+      "string.empty": "Category ID is required.",
+      "string.guid": "Category ID must be a valid UUID.",
+    }),
+  brandId: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required()
+    .messages({
+      "string.empty": "Brand ID is required.",
+      "string.guid": "Brand ID must be a valid UUID.",
+    }),
   name: Joi.string()
     .trim()
-    .min(10)
-    .max(150)
+    .min(5)
+    .max(255)
     .required()
     .custom(sanitize)
     .messages({ "string.empty": "Product name is required." }),
+  model: Joi.string().trim().max(100).allow(null, "").optional(),
   description: Joi.string()
     .trim()
     .min(50)
-    .max(2000)
+    .max(5000)
     .required()
     .custom(sanitize)
-    .messages({ "string.empty": "Description is required." }),
+    .messages({
+      "string.min": "Description must be at least 50 characters long.",
+      "any.required": "Description is required.",
+    }),
   price: Joi.number().positive().precision(2).required().messages({
     "number.base": "Price must be a valid number.",
     "number.empty": "Price is required.",
     "number.positive": "Price must be a positive value.",
   }),
-  categoryId: Joi.string()
-    .uuid()
-    .required()
-    .messages({ "string.empty": "Category ID is required." }),
-  brandId: Joi.string()
-    .uuid()
-    .required()
-    .messages({ "string.empty": "Brand ID is required." }),
   specs: Joi.string()
     .required()
     .custom(parseJsonArray)
