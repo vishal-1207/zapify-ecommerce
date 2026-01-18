@@ -2,6 +2,7 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import cloudinary from "../config/cloudinary.js";
+import { reSyncProductsByCriteria } from "./algolia.service.js";
 
 export const addBrandService = async (data, file) => {
   const transaction = await db.sequelize.transaction();
@@ -19,14 +20,14 @@ export const addBrandService = async (data, file) => {
         name,
         description,
       },
-      { transaction }
+      { transaction },
     );
 
     let media;
     if (file) {
       const uploadResult = await uploadToCloudinary(
         file.path,
-        process.env.CLOUDINARY_BRAND_FOLDER
+        process.env.CLOUDINARY_BRAND_FOLDER,
       );
 
       media = await db.Media.create(
@@ -38,7 +39,7 @@ export const addBrandService = async (data, file) => {
           associatedType: "brand",
           associatedId: brand.id,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -71,7 +72,7 @@ export const updateBrandService = async (id, data, file) => {
   }
 
   const brand = await db.Brand.findOne({
-    where: { name },
+    where: { name: existingBrand.name },
     transaction,
   });
 
@@ -79,9 +80,18 @@ export const updateBrandService = async (id, data, file) => {
     throw new ApiError(409, "Brand with this name already exists.");
   }
 
+  let media;
+  let nameChanged = false;
+
   try {
-    brand.name = name;
-    brand.description = description || brand.description;
+    if (name && name !== existingBrand.name) {
+      brand.name = name;
+      nameChanged = true;
+    }
+
+    if (description) {
+      brand.description = description;
+    }
 
     if (file) {
       if (brand.media) {
@@ -92,10 +102,10 @@ export const updateBrandService = async (id, data, file) => {
 
     const uploadResult = await uploadToCloudinary(
       file.path,
-      process.env.CLOUDINARY_BRAND_FOLDER
+      process.env.CLOUDINARY_BRAND_FOLDER,
     );
 
-    const media = await db.Media.create(
+    media = await db.Media.create(
       {
         publicId: uploadResult.public_id,
         url: uploadResult.secure_url,
@@ -104,12 +114,11 @@ export const updateBrandService = async (id, data, file) => {
         associatedType: "brand",
         associatedId: brand.id,
       },
-      { transaction }
+      { transaction },
     );
 
     await brand.save({ transaction });
     await transaction.commit();
-    return { brand, media };
   } catch (error) {
     await transaction.rollback();
     if (error instanceof ApiError) throw error;
@@ -120,6 +129,14 @@ export const updateBrandService = async (id, data, file) => {
 
     throw new ApiError(500, error.message || "Failed to update brand.");
   }
+
+  if (nameChanged) {
+    reSyncProductsByCriteria({ brandId: id }).catch((err) =>
+      console.error("Algolia Cascade Sync Error (Brand):", err.message),
+    );
+  }
+
+  return { brand, media };
 };
 
 export const deleteBrandService = async (id) => {
