@@ -5,6 +5,7 @@ import { invalidateCache } from "../utils/cache.js";
 import * as discountService from "../services/discount.service.js";
 
 const getCartKey = (userId) => `cart:${userId}`;
+const CART_TTL = 7 * 24 * 60 * 60;
 
 /**
  * Gets a user's cart from Redis and enriches it with data from MySQL.
@@ -15,7 +16,7 @@ export const getCart = async (userId) => {
   const cartKey = getCartKey(userId);
   const cartData = await redisClient.hGetAll(cartKey);
 
-  if (Object.keys(cartData).length === 0)
+  if (!cartData || Object.keys(cartData).length === 0) {
     return {
       items: [],
       subtotal: 0,
@@ -23,56 +24,87 @@ export const getCart = async (userId) => {
       totalAmount: 0,
       appliedCoupon: null,
     };
+  }
+
+  const redisItems = [];
+  let appliedCoupon = cartData["meta:coupon"] || null;
+
+  for (const [key, value] of Object.entries(cartData)) {
+    if (key === "meta:coupon") continue;
+    redisItems.push(JSON.parse(value));
+  }
+
+  const offerIds = redisItems.map((item) => item.offerId);
+
+  const offerDetails = await db.Offer.findAll({
+    where: { id: offerIds },
+    attributes: ["id", "price", "stockQuantity", "condition"],
+    include: [
+      {
+        model: db.Product,
+        as: "product",
+        attributes: ["id", "name", "slug"],
+        include: [
+          {
+            model: db.Media,
+            as: "media",
+            attributes: ["url"],
+            where: { tag: "thumbnail" },
+            required: false,
+          },
+        ],
+      },
+      {
+        model: db.SellerProfile,
+        as: "sellerProfile",
+        attributes: ["id", "storeName"],
+      },
+    ],
+  });
 
   const items = [];
   let subtotal = 0;
-  let appliedCoupon = null;
+  const updates = [];
 
-  for (const key in cartData) {
-    if (key === "meta:coupon") {
-      appliedCoupon = cartData[key];
+  for (const redisItem of redisItems) {
+    const detail = offerDetails.find((d) => d.id === redisItem.offerId);
+
+    if (!detail) {
+      updates.push(redisClient.hDel(cartKey, `offer:${redisItem.offerId}`));
       continue;
     }
 
-    const item = JSON.parse(cartData[key]);
+    let finalQty = redisItem.quantity;
+    let error = null;
 
-    const offerDetails = await db.Offer.findByPk(item.offerId, {
-      include: [
-        {
-          model: db.Product,
-          as: "product",
-          attributes: ["id", "name"],
-          include: [{ model: db.Media, as: "media" }],
-        },
-        {
-          model: db.SellerProfile,
-          as: "sellerProfile",
-          attributes: ["id", "storeName"],
-        },
-      ],
+    if (detail.stockQuantity <= 0) {
+      updates.push(redisClient.hDel(cartKey, `offer:${redisItem.offerId}`));
+      continue;
+    }
+
+    if (finalQty > detail.stockQuantity) {
+      finalQty = detail.stockQuantity;
+      error = `Only ${detail.stockQuantity} units left in stock.`;
+      updates.push(
+        redisClient.hSet(
+          cartKey,
+          `offer:${detail.id}`,
+          JSON.stringify({ offerId: detail.id, quantity: finalQty })
+        )
+      );
+    }
+
+    items.push({
+      offerId: detail.id,
+      quantity: finalQty,
+      error,
+      details: detail,
     });
 
-    if (offerDetails) {
-      if (item.quantity > offerDetails.stockQuantity) {
-        item.quantity = offerDetails.stockQuantity;
-        item.error = `Quantity reduced. Only ${offerDetails.stockQuantity} available.`;
-        if (offerDetails.stockQuantity === 0) {
-          await removeItemFromCart(userId, item.offerId);
-          continue;
-        }
-
-        await redisClient.hSet(
-          getCartKey(userId),
-          `offer:${item.offerId}`,
-          JSON.stringify({ offerId: item.offerId, quantity: item.quantity })
-        );
-      }
-      items.push({ ...item, details: offerDetails });
-      subtotal += offerDetails.price * item.quantity;
-    } else {
-      await redisClient.hDel(getCartKey(userId), `offer:${item.offerId}`);
-    }
+    subtotal += parseFloat(detail.price) * finalQty;
   }
+
+  if (updates.length > 0) Promise.all(updates).catch(() => null);
 
   let discountAmount = 0;
   let couponDetails = null;
@@ -92,13 +124,11 @@ export const getCart = async (userId) => {
     }
   }
 
-  const totalAmount = Math.max(0, subtotal - discountAmount);
-
   return {
     items,
-    subtotal: parseFloat(subtotal.toFixed(2)),
-    discount: parseFloat(discountAmount.toFixed(2)),
-    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    subtotal: Number(subtotal.toFixed(2)),
+    discount: Number(discountAmount.toFixed(2)),
+    totalAmount: Number(Math.max(0, subtotal - discountAmount).toFixed(2)),
     appliedCoupon,
     couponDetails,
   };
@@ -117,29 +147,25 @@ export const addItemToCart = async (userId, offerId, quantity) => {
 
   if (!offer) throw new ApiError(404, "Offer not found.");
 
-  if (offer.stockQuantity < quantity)
-    throw new ApiError(400, "Not enough stock available.");
-
   const cartKey = getCartKey(userId);
   const itemKey = `offer:${offerId}`;
 
   const existingItemJSON = await redisClient.hGet(cartKey, itemKey);
-  let newQuantity = quantity;
+  const currentQty = existingItemJSON
+    ? JSON.parse(existingItemJSON).quantity
+    : 0;
+  const newTotalQty = currentQty + quantity;
 
-  if (existingItemJSON) {
-    newQuantity += JSON.parse(existingItemJSON).quantity;
-  }
-
-  if (offer.stockQuantity < quantity) {
+  if (offer.stockQuantity < newTotalQty) {
     throw new ApiError(
       400,
-      "Total requested quantity exceeds available stock."
+      `Cannot add more. Total in cart (${newTotalQty}) exceeds stock.`
     );
   }
 
-  const cartItem = { offerId, quantity: newQuantity };
+  const cartItem = { offerId, quantity: newTotalQty };
   await redisClient.hSet(cartKey, itemKey, JSON.stringify(cartItem));
-  await redisClient.expire(cartKey, 7 * 24 * 60 * 60);
+  await redisClient.expire(cartKey, CART_TTL);
 
   return getCartKey(userId);
 };
@@ -153,24 +179,14 @@ export const addItemToCart = async (userId, offerId, quantity) => {
  * @returns
  */
 export const updateItemQuantity = async (userId, offerId, quantity) => {
-  const newQuantity = parseInt(quantity, 10);
+  if (quantity <= 0) return removeItemFromCart(userId, offerId);
 
-  if (isNaN(newQuantity) || newQuantity < 0) {
-    throw new ApiError(400, "Invalid quantity provided.");
-  }
-
-  if (newQuantity === 0) {
-    return removeItemFromCart(userId, offerId);
-  }
-
-  const offer = await db.Offer.findByPk(offerId);
+  const offer = await db.Offer.findByPk(offerId, {
+    attributes: ["id", "stockQuantity"],
+  });
   if (!offer) throw new ApiError(404, "Offer not found.");
-  if (offer.stockQuantity < newQuantity) {
-    throw new ApiError(
-      400,
-      `Not enough stock. Only ${offer.stockQuantity} items available.`
-    );
-  }
+  if (offer.stockQuantity < quantity)
+    throw new ApiError(400, "Insufficient stock.");
 
   const cartKey = getCartKey(userId);
   const itemKey = `offer:${offerId}`;
@@ -180,7 +196,7 @@ export const updateItemQuantity = async (userId, offerId, quantity) => {
     throw new ApiError(404, "Item not found in cart.");
   }
 
-  const cartItem = { offerId, quantity: newQuantity };
+  const cartItem = { offerId, quantity };
   await redisClient.hSet(cartKey, itemKey, JSON.stringify(cartItem));
 
   return getCart(userId);
@@ -195,12 +211,7 @@ export const updateItemQuantity = async (userId, offerId, quantity) => {
 export const removeItemFromCart = async (userId, offerId) => {
   const cartKey = getCartKey(userId);
   const itemKey = `offer:${offerId}`;
-
-  const result = await redisClient.hDel(cartKey, itemKey);
-  if (result === 0) {
-    throw new ApiError(404, "Item not found in cart to remove.");
-  }
-
+  await redisClient.hDel(cartKey, itemKey);
   return getCart(userId);
 };
 
