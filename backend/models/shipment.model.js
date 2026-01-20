@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
         "Shipped",
         "In Transit",
         "Delivered",
-        "Failed"
+        "Failed",
       ),
       defaultValue: "Processing",
       allowNull: false,
@@ -33,6 +33,7 @@ export default (sequelize, DataTypes) => {
     });
 
     Shipment.belongsTo(models.SellerProfile, {
+      as: "sellerProfile",
       foreignKey: "sellerProfileId",
       onDelete: "SET NULL",
     });
