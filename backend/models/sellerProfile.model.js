@@ -34,6 +34,26 @@ export default (sequelize, DataTypes) => {
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
+    SellerProfile.hasMany(models.Offer, {
+      as: "offers",
+      foreignKey: "sellerProfileId",
+    });
+    SellerProfile.hasMany(models.Shipment, {
+      as: "shipments",
+      foreignKey: "sellerProfileId",
+    });
+    SellerProfile.hasOne(models.Media, {
+      foreignKey: "associatedId",
+      constraints: false,
+      scope: { associatedType: "sellerProfile" },
+      as: "media",
+    });
+    SellerProfile.hasMany(models.Address, {
+      foreignKey: "addressableId",
+      constraints: false,
+      scope: { addressableType: "SellerProfile" },
+      as: "addresses",
+    });
   };
 
   return SellerProfile;
