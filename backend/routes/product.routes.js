@@ -16,19 +16,22 @@ router.route("/:slug").get(productController.getProductDetailsForCustomer);
 
 router.use(authenticate);
 
-router.route("/").post(
-  authorizeRoles("admin"),
-  csrfProtection,
-  upload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "gallery", maxCount: 10 },
-  ]),
-  validate(productSchema),
-  productController.createProduct
-);
+router
+  .route("/")
+  .get(productController.getAllProducts)
+  .post(
+    authorizeRoles("admin"),
+    csrfProtection,
+    upload.fields([
+      { name: "thumbnail", maxCount: 1 },
+      { name: "gallery", maxCount: 10 },
+    ]),
+    validate(productSchema),
+    productController.createProduct,
+  );
 
 router
-  .route("/:productId")
+  .route("/a/:productId")
   .get(authorizeRoles("admin"), productController.getProductDetailsAdmin)
   .patch(
     authorizeRoles("admin"),
@@ -38,12 +41,12 @@ router
       { name: "gallery", maxCount: 10 },
     ]),
     validate(productSchema),
-    productController.updateProduct
+    productController.updateProduct,
   )
   .delete(
     authorizeRoles("admin"),
     csrfProtection,
-    productController.deleteProduct
+    productController.deleteProduct,
   );
 
 router.route("/catalog-search").get(productController.searchCatalog);
@@ -56,7 +59,7 @@ router.route("/suggest-product/:sellerId").post(
     { name: "gallery", maxCount: 10 },
   ]),
   validate(suggestProductSchema),
-  productController.suggestNewProduct
+  productController.suggestNewProduct,
 );
 
 router
@@ -67,7 +70,7 @@ router
   .patch(
     authorizeRoles("admin"),
     csrfProtection,
-    productController.reviewProduct
+    productController.reviewProduct,
   );
 
 export default router;
