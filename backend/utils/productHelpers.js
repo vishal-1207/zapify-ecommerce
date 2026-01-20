@@ -28,6 +28,21 @@ export const _createGenericProduct = async (
     specs = [],
   } = productData;
 
+  const existingProduct = await db.Product.findOne({
+    where: {
+      name,
+      model,
+    },
+    transaction,
+  });
+
+  if (existingProduct) {
+    throw new ApiError(
+      409,
+      `A product with the name '${name}' and model '${model || "N/A"}' already exists in the catalog.`,
+    );
+  }
+
   const newProduct = await db.Product.create(
     {
       name,
