@@ -23,7 +23,7 @@ export default (sequelize, DataTypes) => {
           "New",
           "Used - New Like",
           "Used - Good",
-          "Refurbished"
+          "Refurbished",
         ),
         defaultValue: "New",
       },
@@ -36,41 +36,42 @@ export default (sequelize, DataTypes) => {
     {
       hooks: {
         afterCreate: async (offer) => {
-          const { updateProductAggregates } = await import(
-            "../services/product.service.js"
-          );
+          const { updateProductAggregates } =
+            await import("../services/product.service.js");
           await updateProductAggregates(offer.productId);
         },
         afterUpdate: async (offer) => {
-          const { updateProductAggregates } = await import(
-            "../services/product.service.js"
-          );
+          const { updateProductAggregates } =
+            await import("../services/product.service.js");
           await updateProductAggregates(offer.productId);
         },
         afterDestroy: async (offer) => {
-          const { updateProductAggregates } = await import(
-            "../services/product.service.js"
-          );
+          const { updateProductAggregates } =
+            await import("../services/product.service.js");
           await updateProductAggregates(offer.productId);
         },
       },
-    }
+    },
   );
 
   Offer.associate = (models) => {
     Offer.belongsTo(models.Product, {
+      as: "product",
       foreignKey: "productId",
       onDelete: "CASCADE",
     });
     Offer.belongsTo(models.SellerProfile, {
+      as: "sellerProfile",
       foreignKey: "sellerProfileId",
       onDelete: "CASCADE",
     });
 
     Offer.hasMany(models.CartItem, {
+      as: "cartItems",
       foreignKey: "offerId",
     });
     Offer.hasMany(models.OrderItem, {
+      as: "orderItems",
       foreignKey: "offerId",
     });
   };
