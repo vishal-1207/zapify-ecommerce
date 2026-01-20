@@ -55,10 +55,48 @@ const parseProductInput = (req) => {
 };
 
 /**
+ * Product controller to get all products with filters, pagination and sorting.
+ */
+export const getAllProducts = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    categoryId,
+    brandId,
+    minPrice,
+    maxPrice,
+    search,
+    sortBy = "createdAt",
+    sortOrder = "DESC",
+  } = req.query;
+
+  const isAdmin = req.user?.roles?.includes("admin");
+  const queryStatus = isAdmin ? status || "all" : "approved";
+
+  const result = await productService.getAllProducts({
+    page: parseInt(page),
+    limit: parseInt(limit),
+    status: queryStatus,
+    categoryId,
+    brandId,
+    minPrice,
+    maxPrice,
+    search,
+    sortBy,
+    sortOrder,
+  });
+
+  return res
+    .status(200)
+    .json({ message: "Products fetched successfully.", ...result });
+});
+
+/**
  * Get method controller to fetch details for a product, which is presented to user on front end.
  */
 export const getProductDetailsForCustomer = asyncHandler(async (req, res) => {
-  const slug = req.params;
+  const { slug } = req.params;
   const product = await productService.getCustomerProductDetails(slug);
   return res
     .status(200)
