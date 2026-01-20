@@ -24,8 +24,20 @@ export default (sequelize, DataTypes) => {
     },
     {
       indexes: [{ fields: ["orderId"] }, { fields: ["discountId"] }],
-    }
+    },
   );
+
+  OrderDiscounts.associate = (models) => {
+    OrderDiscounts.belongsTo(models.Order, {
+      foreignKey: "orderId",
+      as: "order",
+    });
+
+    OrderDiscounts.belongsTo(models.Discount, {
+      foreignKey: "discountId",
+      as: "discountDetails",
+    });
+  };
 
   return OrderDiscounts;
 };
