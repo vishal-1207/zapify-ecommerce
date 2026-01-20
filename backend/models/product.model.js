@@ -11,8 +11,8 @@ export default (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      name: { type: DataTypes.STRING, allowNull: false },
-      model: { type: DataTypes.STRING, allowNull: true },
+      name: { type: DataTypes.STRING, allowNull: false, unique: true },
+      model: { type: DataTypes.STRING, allowNull: true, unique: true },
       description: { type: DataTypes.TEXT, allowNull: false },
       price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
       status: {
@@ -51,6 +51,27 @@ export default (sequelize, DataTypes) => {
     },
     {
       hooks: {
+        beforeCreate: (product) => {
+          if (!product.slug) {
+            const combinedString =
+              `${product.name} ${product.model || ""}`.trim();
+            const baseSlug = slugify(combinedString, {
+              lower: true,
+              strict: true,
+            });
+            product.slug = `${baseSlug}-${nanoid(6)}`;
+          }
+        },
+        beforeUpdate: (product) => {
+          const combinedString =
+            `${product.name} ${product.model || ""}`.trim();
+          const baseSlug = slugify(combinedString, {
+            lower: true,
+            strict: true,
+          });
+          product.slug = `${baseSlug}-${nanoid(6)}`;
+        },
+
         afterCreate: async (product) => {
           const { syncProductToAlgolia } =
             await import("../services/algolia.service.js");
@@ -69,37 +90,6 @@ export default (sequelize, DataTypes) => {
       },
     },
   );
-
-  Product.beforeCreate(async (product, options) => {
-    const baseSlug = slugify(product.name, { lower: true, strict: true });
-    let finalSlug = `${baseSlug}-${nanoid(6)}`;
-    const exists = await Product.findOne({ where: { slug: finalSlug } });
-    if (exists) {
-      finalSlug = `${baseSlug}-${nanoid(6)}`;
-    }
-
-    product.slug = finalSlug;
-  });
-
-  Product.beforeUpdate(async (product, options) => {
-    if (product.changed("name")) {
-      const baseSlug = slugify(product.name, {
-        lower: true,
-        strict: true,
-      });
-      let finalSlug = `${baseSlug}-${nanoid(6)}`;
-
-      const exists = await Product.findOne({
-        where: { slug: finalSlug, id: { [Op.ne]: product.id } },
-      });
-
-      if (exists) {
-        finalSlug = `${baseSlug}-${nanoid(6)}`;
-      }
-
-      product.slug = finalSlug;
-    }
-  });
 
   Product.associate = (models) => {
     Product.belongsTo(models.Category, {
