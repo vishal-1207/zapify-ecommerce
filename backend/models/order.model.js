@@ -22,7 +22,7 @@ export default (sequelize, DataTypes) => {
         "processing",
         "shipped",
         "delivered",
-        "cancelled"
+        "cancelled",
       ),
       defaultValue: "pending",
     },
@@ -33,7 +33,7 @@ export default (sequelize, DataTypes) => {
   });
 
   Order.associate = (models) => {
-    Order.belongsTo(models.User, { foreignKey: "userId" });
+    Order.belongsTo(models.User, { as: "user", foreignKey: "userId" });
 
     Order.belongsTo(models.Discount, {
       through: models.OrderDiscounts,
