@@ -61,7 +61,7 @@ export default (sequelize, DataTypes) => {
         { fields: ["isActive"] },
         { fields: ["expiresAt"] },
       ],
-    }
+    },
   );
 
   Discount.associate = (models) => {
@@ -70,6 +70,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: "discountId",
       otherKey: "orderId",
       as: "orders",
+    });
+    Discount.hasMany(models.OrderDiscounts, {
+      foreignKey: "discountId",
+      as: "orderDiscounts",
     });
   };
 
