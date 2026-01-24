@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import { Op } from "sequelize";
 import slugify from "slugify";
 
 export default (sequelize, DataTypes) => {
