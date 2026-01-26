@@ -20,7 +20,7 @@ router
   .post(
     csrfProtection,
     validate(verifyCodeSchema),
-    otpControllers.verifyEmailController
+    otpControllers.verifyEmailController,
   );
 
 export default router;
