@@ -53,64 +53,6 @@ export const updateUserProfile = async (userId, profileData) => {
 };
 
 /**
- * Forgot password service to send users to change/reset their account password.
- * @param {email} - Require user email which will recieve password reset link mail.
- */
-export const forgotPassword = async (email) => {
-  const user = await db.User.findOne({ where: { email } });
-
-  if (!user) {
-    return {
-      message:
-        "If a user exists with this email, a password reset link has been sent.",
-    };
-  }
-
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  user.passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-  await user.save();
-
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-  const subject = "Your Password Reset Request.";
-  const html = `<p>You requested a password reset. Please click this link to reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`;
-  await sendMail(email, subject, html).catch((error) => {
-    console.error("Failed to send password reset mail: ", error);
-  });
-
-  return { message: "Password reset link sent." };
-};
-
-/**
- * Resets a user's password using a valid token.
- * @param {*} token
- * @param {*} newPassword
- */
-export const resetPassword = async (token, newPassword) => {
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-  const user = await db.User.findOne({
-    where: {
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { [db.Sequelize.Op.gt]: Date.now() },
-    },
-  });
-
-  if (!user) throw new ApiError(400, "Token is invalid or has expired.");
-
-  const saltRounds = parseInt(process.env.SALT_ROUNDS);
-  user.password = await bcrypt.hash(newPassword, saltRounds);
-  user.passwordResetToken = null;
-  user.passwordResetExpires = null;
-  await user.save();
-
-  return { message: "Password has been reset successfully." };
-};
-
-/**
  * User service to schedule user account deletion once the user has confirmed their account deletion.
  * @param {*} userId - User ID for which account deletion will be scheduled.
  * @param {*} gracePeriodInDays - Nmber of days after which the account will be permanently deleted.

@@ -16,17 +16,15 @@ router
   .patch(
     authorizeRoles("user"),
     csrfProtection,
-    userControllers.updateProfileController
+    userControllers.updateProfileController,
   );
-
-router.route("/forgot-password").post(userControllers.forgotPasswordController);
 
 router
   .route("/profile/delete")
   .delete(
     authorizeRoles("user"),
     csrfProtection,
-    userControllers.deleteUserController
+    userControllers.deleteUserController,
   );
 
 export default router;

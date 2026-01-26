@@ -25,12 +25,6 @@ export const updateProfileController = asyncHandler(async (req, res) => {
   });
 });
 
-export const forgotPasswordController = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  const result = await userServices.forgotPassword(email);
-  return res.status(200).json({ message: result.message, result });
-});
-
 export const deleteUserController = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
