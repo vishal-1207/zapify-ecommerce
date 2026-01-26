@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const sendOrderConfirmationEmail = async (order) => {
   if (!order?.User?.email) {
     console.error(
-      `Skipping confirmation email for order ${order.id}: No user email found.`
+      `Skipping confirmation email for order ${order.id}: No user email found.`,
     );
     return;
   }
@@ -21,7 +21,7 @@ const sendOrderConfirmationEmail = async (order) => {
   const subject = `Your Order Confirmation (#${order.id.slice(0, 8)})`;
   const itemsHtml = order.OrderItems.map(
     (item) =>
-      `<li>${item.quantity} x ${item.Offer.Product.name} (Sold by: ${item.Offer.SellerProfile.storeName}) - ₹${item.priceAtTimeOfPurchase}</li>`
+      `<li>${item.quantity} x ${item.Offer.Product.name} (Sold by: ${item.Offer.SellerProfile.storeName}) - ₹${item.priceAtTimeOfPurchase}</li>`,
   ).join("");
 
   const html = `
@@ -81,12 +81,12 @@ const notifySellersOfNewOrder = async (order) => {
 
     const subject = `New Sale! You have items to fulfill for Order #${order.id.slice(
       0,
-      8
+      8,
     )}`;
     const itemsHtml = items
       .map(
         (item) =>
-          `<li>${item.quantity} x ${item.Offer.Product.name} at ₹${item.priceAtTimeOfPurchase} each</li>`
+          `<li>${item.quantity} x ${item.Offer.Product.name} at ₹${item.priceAtTimeOfPurchase} each</li>`,
       )
       .join("");
 
@@ -94,7 +94,7 @@ const notifySellersOfNewOrder = async (order) => {
       <h1>You've made a sale!</h1>
       <p>Please prepare the following items from Order #${order.id.slice(
         0,
-        8
+        8,
       )} for shipment:</p>
       <ul>${itemsHtml}</ul>
       <p>Please update the shipment status in your seller dashboard once the items are dispatched.</p>
@@ -137,7 +137,7 @@ export const createStripePaymentIntent = async (orderId) => {
   if (payment && payment.gatewayTransactionId) {
     paymentIntent = await stripe.paymentIntents.update(
       payment.gatewayTransactionId,
-      paymentIntentData
+      paymentIntentData,
     );
   } else {
     paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
@@ -205,11 +205,11 @@ export const handleStripeWebhook = async (event) => {
         await order.save();
 
         sendOrderConfirmationEmail(order).catch((err) =>
-          console.error("Failed to send confirmation email:", err)
+          console.error("Failed to send confirmation email:", err),
         );
         // sendOrderConfirmationSms(order).catch(err => console.error("Failed to send confirmation SMS:", err)); // Uncomment to enable
         notifySellersOfNewOrder(order).catch((err) =>
-          console.error("Failed to notify sellers:", err)
+          console.error("Failed to notify sellers:", err),
         );
       }
     }
@@ -230,28 +230,31 @@ export const handleStripeWebhook = async (event) => {
   }
 };
 
-// Seller Payment History
 /**
  * Fetches a seller's transaction history (i.e., completed order items).
  */
 export const getSellerTransactions = async (userId) => {
   const profile = await getSellerProfile(userId);
-  return db.OrderItem.findAll({
-    where: { status: "Delivered" },
-    attributes: ["id", "priceAtTimeOfPurchase", "quantity", "updatedAt"],
-    include: [
-      {
-        model: db.Offer,
-        as: "offer",
-        where: { sellerProfileId: profile.id },
-        attributes: [],
-        include: [{ model: db.Product, as: "product", attributes: ["name"] }],
-      },
-      { model: db.Order, as: "order", attributes: ["id"] },
-    ],
-    order: [["updatedAt", "DESC"]],
-    limit: 100,
-    raw: true,
-    nest: true,
-  });
+  return paginate(
+    db.OrderItem.findAll({
+      where: { status: "Delivered" },
+      attributes: ["id", "priceAtTimeOfPurchase", "quantity", "updatedAt"],
+      include: [
+        {
+          model: db.Offer,
+          as: "offer",
+          where: { sellerProfileId: profile.id },
+          attributes: [],
+          include: [{ model: db.Product, as: "product", attributes: ["name"] }],
+        },
+        { model: db.Order, as: "order", attributes: ["id"] },
+      ],
+      order: [["updatedAt", "DESC"]],
+      limit: 100,
+      raw: true,
+      nest: true,
+    }),
+    page,
+    limit,
+  );
 };
