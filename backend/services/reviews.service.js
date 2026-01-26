@@ -29,12 +29,12 @@ const updateProductAverageRating = async (productId) => {
 
     await db.Product.update(
       { averageRating, reviewCount },
-      { where: { id: productId } }
+      { where: { id: productId } },
     );
   } catch (error) {
     console.error(
       `Failed to update average rating for product ${productId}:`,
-      error
+      error,
     );
   }
 };
@@ -63,14 +63,14 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
   if (orderItem.Order.userId !== userId)
     throw new ApiError(
       403,
-      "Forbidden: You can only review items you have purchased."
+      "Forbidden: You can only review items you have purchased.",
     );
 
   const existingReview = await db.Review.findOne({ where: { orderItemId } });
   if (existingReview) {
     throw new ApiError(
       409,
-      "You have already submitted a review for this item."
+      "You have already submitted a review for this item.",
     );
   }
 
@@ -85,12 +85,12 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
         orderItemId,
         productId: orderItem.Offer.productId,
       },
-      { transaction }
+      { transaction },
     );
 
     if (files && files.length > 0) {
       const uploadPromises = files.map((file) =>
-        uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER)
+        uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER),
       );
       const uploadResults = await Promise.all(uploadPromises);
 
@@ -149,7 +149,7 @@ export const updateUserReview = async (
   reviewId,
   userId,
   updateData,
-  newFiles
+  newFiles,
 ) => {
   const transaction = await db.sequelize.transaction();
 
@@ -158,7 +158,7 @@ export const updateUserReview = async (
     if (!review) {
       throw new ApiError(
         404,
-        "Review not found or you do not have permission to edit it."
+        "Review not found or you do not have permission to edit it.",
       );
     }
 
@@ -169,7 +169,7 @@ export const updateUserReview = async (
     if (mediaToDelete && mediaToDelete.length > 0) {
       const parsedMediaToDelete = JSON.parse(mediaToDelete);
       const mediaRecordsToDelete = review.media.filter((m) =>
-        parsedMediaToDelete.includes(m.id)
+        parsedMediaToDelete.includes(m.id),
       );
       if (mediaRecordsToDelete.length > 0) {
         const publicIds = mediaRecordsToDelete.map((m) => m.publicId);
@@ -185,7 +185,7 @@ export const updateUserReview = async (
 
     if (newFiles && newFiles.length > 0) {
       const uploadPromises = newFiles.map((file) =>
-        uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER)
+        uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER),
       );
       const uploadResults = await Promise.all(uploadPromises);
 
@@ -234,7 +234,7 @@ export const deleteUserReview = async (reviewId, userId) => {
     if (!review)
       throw new ApiError(
         404,
-        "Review not found or you do not have permission to delete it."
+        "Review not found or you do not have permission to delete it.",
       );
 
     const productId = review.productId;
@@ -273,7 +273,7 @@ export const getPendingReviews = async (page, limit) => {
       order: [["createdAt", "ASC"]],
     },
     page,
-    limit
+    limit,
   );
 
   return result;
@@ -286,7 +286,7 @@ export const getPendingReviews = async (page, limit) => {
  * @param {*} decision - Admin decision to either approve or reject a review.
  * @returns
  */
-export const approveOrRejectReview = async (reviewId, decision) => {
+export const moderateReview = async (reviewId, decision) => {
   const review = await db.Review.findOne({
     where: { id: reviewId, status: "pending" },
   });
@@ -337,6 +337,6 @@ export const getMyProductReviews = async (userId) => {
       order: [["createdAt", "DESC"]],
     },
     page,
-    limit
+    limit,
   );
 };

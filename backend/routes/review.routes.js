@@ -19,7 +19,7 @@ router
     csrfProtection,
     upload.array({ name: "gallery", maxCount: 5 }),
     validate(reviewSchema),
-    reviewControllers.createReviewController
+    reviewControllers.createReviewController,
   );
 
 router
@@ -29,12 +29,24 @@ router
     csrfProtection,
     upload.array({ name: "gallery", maxCount: 5 }),
     validate(reviewSchema),
-    reviewControllers.updateReviewController
+    reviewControllers.updateReviewController,
   )
   .delete(
     authorizeRoles("user"),
     csrfProtection,
-    reviewControllers.deleteReviewController
+    reviewControllers.deleteReviewController,
+  );
+
+router
+  .route("/admin/pending-reviews")
+  .get(authorizeRoles("admin"), reviewControllers.getPendingReviewsController);
+
+router
+  .route("/admin/review/:reviewId/moderate")
+  .post(
+    authorizeRoles("admin"),
+    csrfProtection,
+    reviewControllers.moderateReviewController,
   );
 
 export default router;

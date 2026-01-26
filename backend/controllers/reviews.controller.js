@@ -12,7 +12,7 @@ export const createReviewController = asyncHandler(async (req, res) => {
   const newReview = await reviewServices.createReview(
     userId,
     orderItemId,
-    reviewData
+    reviewData,
   );
   return res.status(201).json({ message: "Review submitted successfully." });
 });
@@ -37,7 +37,7 @@ export const updateReviewController = asyncHandler(async (req, res) => {
   const updatedReview = await reviewServices.updateUserReview(
     reviewId,
     userId,
-    req.body
+    req.body,
   );
   return res.status(201).json({ message: "Review updated successfully." });
 });
@@ -70,4 +70,18 @@ export const getPendingReviewsController = asyncHandler(async (req, res) => {
     message: `Found ${result.total} review(s) pending for review.`,
     ...result,
   });
+});
+
+/**
+ * Admin controller to review and moderate a user's review for a specific product.
+ */
+export const moderateReviewController = asyncHandler(async (req, res) => {
+  const { decision } = req.body;
+  if (!decision) throw new ApiError(400, "Decision is required.");
+
+  const review = await reviewServices.moderateReview(
+    req.params.reviewId,
+    decision,
+  );
+  return res.status(200).json({ message: `Review ${decision}.`, review });
 });
