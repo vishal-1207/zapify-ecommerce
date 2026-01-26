@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  const WishList = sequelize.define("WishList", {
+  const Wishlist = sequelize.define("Wishlist", {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -7,16 +7,16 @@ export default (sequelize, DataTypes) => {
     },
   });
 
-  WishList.associate = (models) => {
-    WishList.belongsTo(models.User, {
+  Wishlist.associate = (models) => {
+    Wishlist.belongsTo(models.User, {
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
-    WishList.belongsTo(models.Product, {
+    Wishlist.belongsTo(models.Product, {
       foreignKey: "productId",
       onDelete: "CASCADE",
     });
   };
 
-  return WishList;
+  return Wishlist;
 };
