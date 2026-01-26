@@ -88,6 +88,26 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: "Token refreshed.", user, tokens });
 });
 
+// Forgot Password Controller
+export const forgotPasswordController = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  await authServices.forgotPasswordService(email);
+
+  return res
+    .status(200)
+    .json({ message: "Password reset instructions sent to email." });
+});
+
+// Reset Password Controller
+export const resetPasswordController = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  await authServices.resetPasswordService(token, newPassword);
+
+  return res.status(200).json({ message: "Password reset successful." });
+});
+
 //Logout Controller
 export const logoutController = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;

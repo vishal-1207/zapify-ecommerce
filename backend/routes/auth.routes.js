@@ -16,7 +16,7 @@ router
     csrfProtection,
     validate(registerSchema),
     limiter,
-    authControllers.registerController
+    authControllers.registerController,
   );
 
 //Login routes for admin and user
@@ -26,7 +26,7 @@ router
     csrfProtection,
     validate(loginSchema),
     limiter,
-    authControllers.loginController
+    authControllers.loginController,
   );
 router
   .route("/login")
@@ -34,8 +34,16 @@ router
     csrfProtection,
     validate(loginSchema),
     limiter,
-    authControllers.loginController
+    authControllers.loginController,
   );
+
+router
+  .route("/forgot-password")
+  .post(csrfProtection, limiter, authControllers.forgotPasswordController);
+
+router
+  .route("/reset-password/:token")
+  .post(csrfProtection, limiter, authControllers.resetPasswordController);
 
 //Social auth routes
 router
@@ -45,7 +53,7 @@ router
   .route("/google/callback")
   .get(
     passport.authenticate("google", { session: false }),
-    authControllers.socialCallbackHandler
+    authControllers.socialCallbackHandler,
   );
 
 // GitHub OAuth
@@ -56,7 +64,7 @@ router
   .route("/github/callback")
   .get(
     passport.authenticate("github", { session: false }),
-    authControllers.socialCallbackHandler
+    authControllers.socialCallbackHandler,
   );
 
 router

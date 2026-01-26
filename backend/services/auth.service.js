@@ -50,7 +50,7 @@ export const registerService = async (userData) => {
         roles: ["user"],
         provider: "local",
       },
-      { transaction }
+      { transaction },
     );
 
     if (db.Cart) {
@@ -65,7 +65,7 @@ export const registerService = async (userData) => {
       const subject = "Welcome to Zapify!";
       const html = `<h1>Hi ${fullname},</h1><p>Thank you for registering. Welcome to our community!</p>`;
       sendMail(email, subject, html).catch((err) =>
-        console.error("Failed to send welcome email:", err.message)
+        console.error("Failed to send welcome email:", err.message),
       );
     }
 
@@ -86,7 +86,7 @@ export const loginService = async (userData) => {
   if (!userId || !password) {
     throw new ApiError(
       400,
-      "Identification (Email/Username/Phone) and password are required."
+      "Identification (Email/Username/Phone) and password are required.",
     );
   }
 
@@ -152,7 +152,7 @@ export const refreshAccessToken = async (incomingToken) => {
       await transaction.rollback();
       throw new ApiError(
         401,
-        "Session not found or already revoked. Please login again."
+        "Session not found or already revoked. Please login again.",
       );
     }
 
@@ -186,4 +186,75 @@ export const refreshAccessToken = async (incomingToken) => {
     console.error("Token Rotation Error:", error);
     throw new ApiError(500, "Internal server error during session refresh.");
   }
+};
+
+/**
+ * Forgot Password service to handle password reset requests.
+ */
+export const forgotPasswordService = async (email) => {
+  const user = await db.User.findOne({ where: { email } });
+
+  if (!user) {
+    throw new ApiError(
+      404,
+      "User with this email will receive a password reset link if the account exists.",
+    );
+  }
+
+  const resetToken = jwt.sign(
+    { id: user.id },
+    process.env.PASSWORD_RESET_SECRET,
+    { expiresIn: "1h" },
+  );
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+  const subject = "Password Reset Request";
+  const html = `<p>Hi ${user.fullname},</p>
+                <p>You requested a password reset. Click the link below to reset your password:</p>
+                <a href="${resetLink}">Reset Password</a>
+                <p>This link will expire in 1 hour.</p>`;
+
+  try {
+    await sendMail(email, subject, html);
+  } catch (mailError) {
+    console.error("Failed to send password reset email:", mailError);
+    throw new ApiError(
+      500,
+      "Failed to send password reset email. Please try again later.",
+    );
+  }
+
+  return { message: "Password reset email sent successfully." };
+};
+
+/**
+ * Reset Password service to update user's password.
+ */
+export const resetPasswordService = async (token, newPassword) => {
+  let decodedToken;
+
+  try {
+    decodedToken = jwt.verify(token, process.env.PASSWORD_RESET_SECRET);
+  } catch (jwtError) {
+    const message =
+      jwtError.name === "TokenExpiredError"
+        ? "Password reset token expired."
+        : "Invalid password reset token.";
+    throw new ApiError(401, message);
+  }
+
+  const user = await db.User.findByPk(decodedToken.id);
+
+  if (!user) {
+    throw new ApiError(404, "User account not found.");
+  }
+
+  const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
+  const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+  user.password = hashedPassword;
+  await user.save();
+
+  return { message: "Password has been reset successfully." };
 };
