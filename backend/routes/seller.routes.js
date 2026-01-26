@@ -3,6 +3,7 @@ import authenticate from "../middleware/auth.middleware.js";
 import csrfProtection from "../middleware/csrf.middleware.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 import * as sellerController from "../controllers/seller.controller.js";
+import { getSellerTransactions } from "../services/payment.service.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { sellerProfileSchema } from "../utils/validationSchema.js";
 
@@ -15,7 +16,7 @@ router
   .post(
     csrfProtection,
     validate(sellerProfileSchema),
-    sellerController.createSellerProfile
+    sellerController.createSellerProfile,
   );
 
 router
@@ -28,7 +29,7 @@ router
     authorizeRoles("seller"),
     csrfProtection,
     validate(sellerProfileSchema),
-    sellerController.updateSellerProfile
+    sellerController.updateSellerProfile,
   );
 
 router
@@ -36,29 +37,31 @@ router
   .delete(
     authorizeRoles("seller"),
     csrfProtection,
-    sellerController.deleteSellerProfile
+    sellerController.deleteSellerProfile,
   );
 
 // Dashboard
 router.get(
   "/dashboard/stats",
   authorizeRoles("seller"),
-  sellerController.getSellerDashboardStats
+  sellerController.getSellerDashboardStats,
 );
 router.get(
   "/dashboard/sales-analytics",
   authorizeRoles("seller"),
-  sellerController.getSellerSalesAnalytics
+  sellerController.getSellerSalesAnalytics,
 );
 router.get(
   "/dashboard/top-products",
   authorizeRoles("seller"),
-  sellerController.getSellerTopProducts
+  sellerController.getSellerTopProducts,
 );
 router.get(
   "/dashboard/category-performance",
   authorizeRoles("seller"),
-  sellerController.getSellerCategoryPerformance
+  sellerController.getSellerCategoryPerformance,
 );
+
+router.get("/transactions", authorizeRoles("seller"), getSellerTransactions);
 
 export default router;
