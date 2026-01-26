@@ -2,7 +2,6 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import cloudinary from "../config/cloudinary.js";
-import { reSyncProductsByCriteria } from "./algolia.service.js";
 
 export const addBrandService = async (data, file) => {
   const transaction = await db.sequelize.transaction();
@@ -80,13 +79,9 @@ export const updateBrandService = async (id, data, file) => {
     throw new ApiError(409, "Brand with this name already exists.");
   }
 
-  let media;
-  let nameChanged = false;
-
   try {
-    if (name && name !== existingBrand.name) {
+    if (name) {
       brand.name = name;
-      nameChanged = true;
     }
 
     if (description) {
@@ -105,7 +100,7 @@ export const updateBrandService = async (id, data, file) => {
       process.env.CLOUDINARY_BRAND_FOLDER,
     );
 
-    media = await db.Media.create(
+    const media = await db.Media.create(
       {
         publicId: uploadResult.public_id,
         url: uploadResult.secure_url,
@@ -119,6 +114,8 @@ export const updateBrandService = async (id, data, file) => {
 
     await brand.save({ transaction });
     await transaction.commit();
+
+    return { brand, media };
   } catch (error) {
     await transaction.rollback();
     if (error instanceof ApiError) throw error;
@@ -129,14 +126,6 @@ export const updateBrandService = async (id, data, file) => {
 
     throw new ApiError(500, error.message || "Failed to update brand.");
   }
-
-  if (nameChanged) {
-    reSyncProductsByCriteria({ brandId: id }).catch((err) =>
-      console.error("Algolia Cascade Sync Error (Brand):", err.message),
-    );
-  }
-
-  return { brand, media };
 };
 
 export const deleteBrandService = async (id) => {
