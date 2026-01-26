@@ -2,12 +2,13 @@ import db from "../models/index.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
+import { reSyncProductsByCriteria } from "./algolia.service.js";
 
 /**
  * Category service to create or add a products category.
  */
 export const addCategory = async (name, file) => {
-  const existingCategory = await db.findOne({ name });
+  const existingCategory = await db.Category.findOne({ name });
   if (existingCategory)
     throw new ApiError(404, `${name} category already exists.`);
 
@@ -18,7 +19,7 @@ export const addCategory = async (name, file) => {
     if (file) {
       const upload = await uploadToCloudinary(
         file.path,
-        process.env.CLOUDINARY_CATEGORY_FOLDER
+        process.env.CLOUDINARY_CATEGORY_FOLDER,
       );
       await db.Media.create(
         {
@@ -29,7 +30,7 @@ export const addCategory = async (name, file) => {
           associatedType: "category",
           associatedId: newCategory.id,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -55,7 +56,9 @@ export const updateCategory = async (data, file) => {
 
   try {
     const transaction = await db.sequelize.transaction();
-    category.name = name;
+    if (name) {
+      category.name = name;
+    }
 
     if (file) {
       if (category.media) {
@@ -64,7 +67,7 @@ export const updateCategory = async (data, file) => {
       }
       const upload = await uploadToCloudinary(
         file.path,
-        process.env.CLOUDINARY_CATEGORY_FOLDER
+        process.env.CLOUDINARY_CATEGORY_FOLDER,
       );
       await db.Media.create(
         {
@@ -75,7 +78,7 @@ export const updateCategory = async (data, file) => {
           associatedType: "category",
           associatedId: category.id,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -110,7 +113,7 @@ export const deleteCategory = async (id) => {
     if (productCount > 0) {
       throw new ApiError(
         400,
-        `Cannot delete category. This category has ${productCount} associated products.`
+        `Cannot delete category. This category has ${productCount} associated products.`,
       );
     }
 
