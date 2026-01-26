@@ -89,7 +89,7 @@ export default (sequelize, DataTypes) => {
           }
         },
       },
-    }
+    },
   );
 
   User.prototype.toJSON = function () {
@@ -117,7 +117,7 @@ export default (sequelize, DataTypes) => {
       onDelete: "CASCADE",
     });
     User.belongsToMany(models.Product, {
-      through: models.WishList,
+      through: models.Wishlist,
       foreignKey: "userId",
       otherKey: "productId",
       as: "wishListedProducts",

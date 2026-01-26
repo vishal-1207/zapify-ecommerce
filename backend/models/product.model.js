@@ -117,7 +117,7 @@ export default (sequelize, DataTypes) => {
     });
     Product.belongsToMany(models.User, {
       foreignKey: "productId",
-      through: models.WishList,
+      through: models.Wishlist,
       otherKey: "userId",
       as: "wishListedByUsers",
       onDelete: "CASCADE",
