@@ -34,7 +34,7 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
     if (usageCount >= discount.usageLimit) {
       throw new ApiError(
         400,
-        "The discount code has reached its maximum usage limit."
+        "The discount code has reached its maximum usage limit.",
       );
     }
   }
@@ -68,7 +68,7 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
   ) {
     throw new ApiError(
       400,
-      `Minimum order value ₹${discount.minOrderAmount} required`
+      `Minimum order value ₹${discount.minOrderAmount} required`,
     );
   }
 
@@ -87,7 +87,7 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
       if (subtotal < parseFloat(discount.value)) {
         throw new ApiError(
           400,
-          `Cart value must be at least ₹${discount.value} to apply this coupon`
+          `Cart value must be at least ₹${discount.value} to apply this coupon`,
         );
       }
 
@@ -174,7 +174,7 @@ export const getAllDiscounts = async (page = 1, limit = 10) => {
       order: [["createdAt", "DESC"]],
     },
     page,
-    limit
+    limit,
   );
 };
 
@@ -230,4 +230,45 @@ export const deleteDiscount = async (id) => {
 
   await discount.destroy();
   return { message: "Discount deleted successfully." };
+};
+
+import { getSellerProfile } from "./seller.service.js";
+
+/**
+ * Service for a seller to create/update a Lightning Deal on their offer.
+ * Moves deal logic from offer.service.js to here.
+ * @param {string} userId - The ID of the seller (user).
+ * @param {string} offerId - The ID of the offer to update.
+ * @param {object} dealData - { dealPrice, dealStartDate, dealEndDate }
+ */
+export const createSellerDeal = async (userId, offerId, dealData) => {
+  const profile = await getSellerProfile(userId);
+  const offer = await db.Offer.findOne({
+    where: { id: offerId, sellerProfileId: profile.id },
+  });
+
+  if (!offer) {
+    throw new ApiError(404, "Offer not found or you do not have permission.");
+  }
+
+  const { dealPrice, dealStartDate, dealEndDate } = dealData;
+
+  if (dealPrice !== undefined) {
+    if (
+      dealPrice !== null &&
+      parseFloat(dealPrice) >= parseFloat(offer.price)
+    ) {
+      throw new ApiError(
+        400,
+        "Deal price must be lower than the regular price.",
+      );
+    }
+    offer.dealPrice = dealPrice;
+  }
+
+  if (dealStartDate !== undefined) offer.dealStartDate = dealStartDate;
+  if (dealEndDate !== undefined) offer.dealEndDate = dealEndDate;
+
+  await offer.save();
+  return offer;
 };

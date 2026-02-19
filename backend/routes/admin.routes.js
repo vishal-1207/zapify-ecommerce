@@ -21,4 +21,12 @@ router
 
 router.route("/list/:role").get(adminController.getUsers);
 
+router
+  .route("/users/:userId/status")
+  .patch(adminController.updateUserStatus);
+
+router.route("/users/:userId").delete(adminController.deleteUser);
+
+router.route("/orders").get(adminController.getAllOrders);
+
 export default router;

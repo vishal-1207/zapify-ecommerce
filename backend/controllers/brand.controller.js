@@ -4,24 +4,10 @@ import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 export const getBrands = asyncHandler(async (req, res) => {
-  const brands = await db.Brand.findAll({
-    attributes: ["id", "name", "description"],
-    order: [["name", "ASC"]],
-    include: [
-      {
-        model: db.Media,
-        as: "media",
-        attributes: ["id", "publicId", "url", "fileType", "tag"],
-        where: {
-          associatedType: "brand",
-        },
-      },
-    ],
+  const isAdmin = req.user?.roles?.includes("admin");
+  const brands = await brandServices.getAllBrands({
+    includeInactive: isAdmin
   });
-
-  if (!brands || brands.length === 0) {
-    throw new ApiError(404, "No brands found.");
-  }
 
   return res
     .status(200)
@@ -30,7 +16,12 @@ export const getBrands = asyncHandler(async (req, res) => {
 
 export const getBrandDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const brand = await db.Brand.findByPk(id, {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  
+  const whereCondition = isUUID ? { id } : { slug: id };
+
+  const brand = await db.Brand.findOne({
+    where: whereCondition,
     include: [
       {
         model: db.Media,
@@ -39,6 +30,7 @@ export const getBrandDetails = asyncHandler(async (req, res) => {
         where: {
           associatedType: "brand",
         },
+        required: false,
       },
     ],
   });
@@ -75,6 +67,16 @@ export const updateBrand = asyncHandler(async (req, res) => {
 
 export const deleteBrand = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
   await brandServices.deleteBrandService(id);
   return res.status(200).json({ message: "Brand deleted successfully." });
+});
+
+export const toggleStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const brand = await brandServices.toggleBrandStatus(id);
+  return res.status(200).json({
+    message: `Brand ${brand.isActive ? "enabled" : "disabled"}.`,
+    brand,
+  });
 });

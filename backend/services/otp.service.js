@@ -37,7 +37,11 @@ export const sendVerificationCode = async (userId, method) => {
       throw new ApiError(400, "User does not have an email adderss.");
 
     const subject = "Your Verification Code";
-    const html = `<p>Your verification code for <strong>Zapify</strong> is: <strong>${code}</strong>. It will expire in 10 minutes.</p>`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const html = `
+      <p>Your verification code for <strong>Zapify</strong> is: <strong>${code}</strong>. It will expire in 10 minutes.</p>
+      <p>Or click <a href="${frontendUrl}/verify-email">here</a> to verify.</p>
+    `;
     await sendMail(user.email, subject, html);
     return { message: "Verification code sent successfully to your email." };
   }

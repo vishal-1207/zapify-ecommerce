@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import * as addressService from "../services/address.service.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 /**
  * A helper function to dynamically get the address owner (addressableId)
@@ -37,7 +38,7 @@ const addAddressFactory = (addressableType) =>
     );
     return res
       .status(201)
-      .json({ message: "Address added successfully.", newAddress });
+      .json(new ApiResponse(201, newAddress, "Address added successfully."));
   });
 
 /**
@@ -53,7 +54,7 @@ const getAddressesFactory = (addressableType) =>
     );
     return res
       .status(200)
-      .json({ message: "Addresses fetched successfully.", addresses });
+      .json(new ApiResponse(200, addresses, "Addresses fetched successfully."));
   });
 
 /**
@@ -71,7 +72,7 @@ const updateAddressFactory = (addressableType) =>
     );
     return res
       .status(200)
-      .json({ message: "Address updated successfully.", updatedAddress });
+      .json(new ApiResponse(200, updatedAddress, "Address updated successfully."));
   });
 
 /**
@@ -86,7 +87,9 @@ const deleteAddressFactory = (addressableType) =>
       addressableId,
       addressableType
     );
-    return res.status(200).json({ message: result.message, result });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, result.message));
   });
 
 // --- Customer Address Controllers ---

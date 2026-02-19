@@ -7,19 +7,28 @@ import { validate } from "../middleware/validate.middleware.js";
 import {
   productSchema,
   suggestProductSchema,
+  suggestProductFlatSchema,
 } from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-router.route("/:slug").get(productController.getProductDetailsForCustomer);
+// 1. Specific Public Routes
+router.route("/catalog-search").get(productController.searchCatalog);
 
-router.use(authenticate);
+// 2. Specific Protected Routes (prevent collision with :slug)
+router.route("/suggestions").get(
+  authenticate,
+  authorizeRoles("seller"),
+  productController.getProductSuggestions
+);
 
+// 3. Root Routes relative to /product
 router
   .route("/")
-  .get(productController.getAllProducts)
+  .get(productController.getAllProducts) // Public
   .post(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.fields([
@@ -30,10 +39,27 @@ router
     productController.createProduct,
   );
 
+// 4. Generic Slug Route (Public) - Must be after specific single-segment routes
+router.route("/:slug").get(productController.getProductDetailsForCustomer);
+
+// 5. Other Protected Routes
+router.route("/suggest-product/:sellerId").post(
+  authenticate,
+  authorizeRoles("seller"),
+  csrfProtection,
+  upload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "gallery", maxCount: 10 },
+  ]),
+  validate(suggestProductFlatSchema),
+  productController.suggestNewProduct,
+);
+
 router
   .route("/a/:productId")
-  .get(authorizeRoles("admin"), productController.getProductDetailsAdmin)
+  .get(authenticate, authorizeRoles("admin"), productController.getProductDetailsAdmin)
   .patch(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.fields([
@@ -44,30 +70,28 @@ router
     productController.updateProduct,
   )
   .delete(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     productController.deleteProduct,
   );
 
-router.route("/catalog-search").get(productController.searchCatalog);
-
-router.route("/suggest-product/:sellerId").post(
-  authorizeRoles("seller"),
-  csrfProtection,
-  upload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "gallery", maxCount: 10 },
-  ]),
-  validate(suggestProductSchema),
-  productController.suggestNewProduct,
-);
+router
+  .route("/a/:productId/toggle-status")
+  .patch(
+    authenticate,
+    authorizeRoles("admin"),
+    csrfProtection,
+    productController.toggleProductStatus
+  );
 
 router
   .route("/review/pending")
-  .get(authorizeRoles("admin"), productController.getPendingProductsForReview);
+  .get(authenticate, authorizeRoles("admin"), productController.getPendingProductsForReview);
 router
   .route("/review/:productId")
   .patch(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     productController.reviewProduct,

@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import paginate from "../utils/paginate.js";
+import { Op } from "sequelize";
 
 /**
  * Admin dashboard service to counts of pending reviews and products, total sellers and revenues for stats card
@@ -12,9 +13,11 @@ export const getAdminDashboardStats = async () => {
   const pendingReviews = await db.Review.count({
     where: { status: "pending" },
   });
-  const totalSellers = await db.User.count({ where: { role: "seller" } });
+  const totalSellers = await db.User.count({
+    where: db.sequelize.literal(`JSON_CONTAINS(roles, '"seller"')`),
+  });
   const totalRevenue = await db.Order.sum("totalAmount", {
-    where: { status: "Delivered" },
+    where: { status: "delivered" },
   });
 
   return {
@@ -151,14 +154,18 @@ export const getSignupAnalytics = async (days) => {
       [
         db.sequelize.fn(
           "SUM",
-          db.sequelize.literal("CASE WHEN role = 'user' THEN 1 ELSE 0 END")
+          db.sequelize.literal(
+            "CASE WHEN JSON_CONTAINS(roles, '\"user\"') THEN 1 ELSE 0 END"
+          )
         ),
         "newUsers",
       ],
       [
         db.sequelize.fn(
           "SUM",
-          db.sequelize.literal("CASE WHEN role = 'seller' THEN 1 ELSE 0 END")
+          db.sequelize.literal(
+            "CASE WHEN JSON_CONTAINS(roles, '\"seller\"') THEN 1 ELSE 0 END"
+          )
         ),
         "newSellers",
       ],
@@ -299,13 +306,81 @@ export const getUsersList = async (role = "user", page, limit) => {
   };
 
   if (role) {
-    queryOptions.where.role = role;
+    // Use Op.like for broader compatibility (works for both JSON string and simple string)
+    // Matches "user" in ["user"] or ["admin", "user"]
+    queryOptions.where.roles = { [Op.like]: `%${role}%` };
   }
 
   if (role === "seller") {
-    queryOptions.include = [{ model: db.SellerProfile, as: "SellerProfile" }];
+    queryOptions.include = [{ model: db.SellerProfile, as: "sellerProfile" }];
   }
 
   // Uses the paginate utility for paginated user list results
   return await paginate(db.User, queryOptions, page, limit);
+};
+
+/**
+ * Update user status service
+ */
+export const updateUserStatusService = async (userId, status) => {
+  const user = await db.User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+
+  // Assuming we use 'isActive' boolean or a status field. 
+  // The User model currently doesn't have a 'status' field, but it has 'roles'. 
+  // Blocking might mean removing access. 
+  // Let's assume we want to add a 'isBlocked' field or similar, OR use 'paranoid' soft delete for blocking?
+  // User model has 'scheduledForDeletionAt'.
+  // For now, let's assume valid status is 'blocked' or 'active' and we might toggling a boolean if it existed.
+  // Wait, I saw User model. It doesn't have `status` or `isBlocked`.
+  // It has `paranoid: true`. 
+  // Let's implement Block as SOFT DELETE for now? OR we should add `isBlocked` to model?
+  // The user prompt asked for Block/Unblock. Soft delete is separate (DELETE /user/:id).
+  // I should probably add `isBlocked` to User model to support this cleanly. 
+  // For now, I will use a placeholder implementation that throws if we can't persist it, 
+  // BUT I will add `isBlocked` to the model in the next step to be correct.
+  
+  // For this step, I'll update the 'roles' to include 'blocked' maybe? No that's hacky.
+  // Let's UPDATE the User model to include `isBlocked`.
+  
+  if (status === 'blocked') {
+    user.isBlocked = true;
+  } else {
+    user.isBlocked = false;
+  }
+  await user.save();
+  return user;
+};
+
+/**
+ * Soft delete user service
+ */
+export const deleteUserService = async (userId) => {
+  const user = await db.User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+  await user.destroy(); // Soft delete because paranoid is true
+  return true;
+};
+
+/**
+ * Get all orders service
+ */
+export const getAllOrdersService = async (page = 1, limit = 10, status) => {
+  const queryOptions = {
+    where: {},
+    include: [
+      {
+        model: db.User,
+        as: "user",
+        attributes: ["id", "fullname", "email"],
+      },
+    ],
+    order: [["createdAt", "DESC"]],
+  };
+
+  if (status) {
+    queryOptions.where.status = status;
+  }
+
+  return await paginate(db.Order, queryOptions, page, limit);
 };

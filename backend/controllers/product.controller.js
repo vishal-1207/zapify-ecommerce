@@ -2,6 +2,9 @@ import * as productService from "../services/product.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { searchProductsAlgolia } from "../services/algolia.service.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import db from "../models/index.js";
+import * as sellerService from "../services/seller.service.js";
 
 /**
  * Robust helper to parse JSON fields from multipart/form-data.
@@ -87,11 +90,24 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     search,
     sortBy,
     sortOrder,
+    includeInactive: isAdmin, // Only admins can see inactive products
   });
 
   return res
     .status(200)
-    .json({ message: "Products fetched successfully.", ...result });
+    .json(new ApiResponse(200, result, "Products fetched successfully."));
+});
+
+export const toggleProductStatus = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const product = await productService.toggleProductStatus(productId);
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      product,
+      `Product ${product.isActive ? "enabled" : "disabled"} successfully.`,
+    ),
+  );
 });
 
 /**
@@ -102,7 +118,7 @@ export const getProductDetailsForCustomer = asyncHandler(async (req, res) => {
   const product = await productService.getCustomerProductDetails(slug);
   return res
     .status(200)
-    .json({ message: "Product details fetched successfully.", product });
+    .json(new ApiResponse(200, product, "Product details fetched successfully."));
 });
 
 /**
@@ -113,7 +129,7 @@ export const getProductDetailsAdmin = asyncHandler(async (req, res) => {
   const product = await productService.getProductDetailsAdmin(productId);
   return res
     .status(200)
-    .json({ message: "Product details fetched succesfully.", product });
+    .json(new ApiResponse(200, product, "Product details fetched succesfully."));
 });
 
 /**
@@ -128,6 +144,7 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     specs,
     price,
     stockQuantity,
+    totalOfferStock,
     condition,
   } = req.body;
 
@@ -145,12 +162,12 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     description,
     categoryId,
     brandId,
-    specs: specs ? JSON.parse(specs) : [],
+    specs: typeof specs === "string" ? JSON.parse(specs) : specs || [],
   };
 
   const offerData = {
     price: parseFloat(price),
-    stockQuantity: parseInt(stockQuantity, 10),
+    stockQuantity: parseInt(stockQuantity || totalOfferStock || 0, 10),
     condition,
   };
 
@@ -160,10 +177,13 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
     sellerProfile.id,
     req.files,
   );
-  return res.status(201).json({
-    message: "Product successfully submitted for admin approval.",
-    newProduct,
-  });
+  return res.status(201).json(
+    new ApiResponse(
+      201,
+      newProduct,
+      "Product successfully submitted for admin approval.",
+    ),
+  );
 });
 
 /**
@@ -172,10 +192,13 @@ export const suggestNewProduct = asyncHandler(async (req, res) => {
 export const getPendingProductsForReview = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const result = await productService.getPendingProductsForReview(page, limit);
-  return res.status(200).json({
-    message: `Found ${result.total} product(s) pending for review.`,
-    ...result,
-  });
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      result,
+      `Found ${result.total} product(s) pending for review.`,
+    ),
+  );
 });
 
 /**
@@ -189,7 +212,9 @@ export const reviewProduct = asyncHandler(async (req, res) => {
     req.params.productId,
     decision,
   );
-  return res.status(200).json({ message: `Product ${decision}.`, product });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, product, `Product ${decision}.`));
 });
 
 /**
@@ -200,7 +225,7 @@ export const searchCatalog = asyncHandler(async (req, res) => {
   const results = await searchProductsAlgolia(q, { page, limit });
   return res
     .status(200)
-    .json({ message: `Search results for "${q}" fetched.`, results });
+    .json(new ApiResponse(200, results, `Search results for "${q}" fetched.`));
 });
 
 /**
@@ -210,10 +235,9 @@ export const searchCatalog = asyncHandler(async (req, res) => {
 export const createProduct = asyncHandler(async (req, res) => {
   const { data, files } = parseProductInput(req);
   const product = await productService.adminCreateProduct(data, files);
-  return res.status(200).json({
-    message: "Product added successfully.",
-    product,
-  });
+  return res.status(200).json(
+    new ApiResponse(200, product, "Product added successfully."),
+  );
 });
 
 /**
@@ -223,10 +247,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
   const { productId } = req.params;
   const { data, files } = parseProductInput(req);
   const result = await productService.updateProduct(productId, data, files);
-  return res.status(200).json({
-    message: "Product updated successfully.",
-    result,
-  });
+  return res.status(200).json(
+    new ApiResponse(200, result, "Product updated successfully."),
+  );
 });
 
 /**
@@ -235,7 +258,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 export const deleteProduct = asyncHandler(async (req, res) => {
   const productId = req.params.productId;
   const result = await productService.deleteProduct(productId);
-  return res.status(200).json({ message: result.message });
+  return res.status(200).json(new ApiResponse(200, null, result.message));
 });
 
 /**
@@ -250,5 +273,7 @@ export const getProductSuggestions = asyncHandler(async (req, res) => {
   );
   return res
     .status(200)
-    .json({ message: "Product suggestions list fetched.", suggestions });
+    .json(
+      new ApiResponse(200, suggestions, "Product suggestions list fetched."),
+    );
 });

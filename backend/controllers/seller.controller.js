@@ -1,5 +1,26 @@
+import * as orderService from "../services/order.service.js";
 import * as sellerService from "../services/seller.service.js";
+import * as offerService from "../services/offer.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+
+/**
+ * Get all orders for a seller (OrderItems)
+ */
+export const getSellerOrders = asyncHandler(async (req, res) => {
+  const result = await orderService.getSellerOrdersHistory(req.user.id, req.query);
+  return res.status(200).json(new ApiResponse(200, result, "Seller orders fetched successfully."));
+});
+
+/**
+ * Update status of a specific order item
+ */
+export const updateSellerOrderItemStatus = asyncHandler(async (req, res) => {
+  const { orderItemId } = req.params;
+  const { status } = req.body;
+  const result = await orderService.updateOrderItemStatus(req.user.id, orderItemId, status);
+  return res.status(200).json(new ApiResponse(200, result, "Order item status updated successfully."));
+});
 
 /**
  * Creates a new store/seller profile for seller.
@@ -101,3 +122,37 @@ export const getSellerCategoryPerformance = asyncHandler(async (req, res) => {
     .status(200)
     .json({ message: "Category performance fetched.", categoryData });
 });
+
+// Offer Management Controllers
+
+/**
+ * Get all offers for a seller
+ */
+/**
+ * Get all offers for a seller
+ */
+export const getSellerOffers = asyncHandler(async (req, res) => {
+  const result = await offerService.getSellerOffers(req.user.id, req.query);
+  return res.status(200).json(new ApiResponse(200, result, "Offers fetched successfully."));
+});
+
+/**
+ * Update a seller offer
+ */
+export const updateSellerOffer = asyncHandler(async (req, res) => {
+  const { offerId } = req.params;
+  const updatedOffer = await offerService.updateOfferDetails(req.user.id, offerId, req.body);
+  return res.status(200).json({ message: "Offer updated successfully.", offer: updatedOffer });
+});
+
+/**
+ * Delete a seller offer
+ */
+// ... existing code ...
+export const deleteSellerOffer = asyncHandler(async (req, res) => {
+  const { offerId } = req.params;
+  const result = await offerService.deleteProductOffer(req.user.id, offerId);
+  return res.status(200).json(result);
+});
+
+

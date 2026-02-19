@@ -15,10 +15,12 @@ export const csrfToken = asyncHandler(async (req, res) => {
       sameSite: "strict",
     });
 
-    res.cookie("csrf_token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
+    // Set XSRF-TOKEN for frontend to read and send back in header
+    // Must be httpOnly: false so JavaScript can read it
+    res.cookie("XSRF-TOKEN", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production", // Secure in production
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
     return res.status(200).json({ csrfToken: token });

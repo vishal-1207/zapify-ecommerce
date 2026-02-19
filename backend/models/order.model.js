@@ -5,6 +5,11 @@ export default (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    orderId: {
+      type: DataTypes.STRING,
+      allowNull: true, // Allow null for existing records, but new ones should have it
+      unique: true,
+    },
     subtotal: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,

@@ -32,6 +32,21 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "draft",
       },
+      dealPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        comment: "The discounted price for a lightning deal.",
+      },
+      dealStartDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "Start time of the deal.",
+      },
+      dealEndDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "End time of the deal.",
+      },
     },
     {
       hooks: {

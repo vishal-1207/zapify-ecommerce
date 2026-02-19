@@ -29,7 +29,7 @@ export const createAddress = async (
   try {
     const transaction = await db.sequelize.transaction();
 
-    const address = db.Address.create(
+    const address = await db.Address.create(
       {
         ...addressData,
         addressableId,
@@ -47,10 +47,23 @@ export const createAddress = async (
 };
 
 /**
- * Fetches address for a specific entity based on address type and id.
- * @param {*} addressableId
- * @param {*} addressableType
- * @returns
+ * Fetches all addresses for a specific entity based on address type and id.
+ * @param {string} addressableId
+ * @param {string} addressableType
+ * @returns {Promise<Array<Address>>} List of addresses
+ */
+export const getAddresses = async (addressableId, addressableType) => {
+  const addresses = await db.Address.findAll({
+    where: { addressableId, addressableType },
+  });
+  return addresses;
+};
+
+/**
+ * Fetches a single address for a specific entity based on address type and id.
+ * @param {string} addressableId
+ * @param {string} addressableType
+ * @returns {Promise<Address>}
  */
 export const getAddress = async (addressableId, addressableType) => {
   const address = await db.Address.findOne({

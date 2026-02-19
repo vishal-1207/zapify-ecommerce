@@ -1,9 +1,10 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
-import { User } from "../models/index.js";
+import db from "../models/index.js";
 import { generateUniqueName } from "../utils/passport.util.js";
 
+const initializePassport = () => {
 //Google Passport Strategy
 passport.use(
   new GoogleStrategy(
@@ -14,19 +15,32 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const generatedUsername = await generateUniqueName();
-        const user = await User.findOrCreate({
-          where: { provider: "google", providerId: profile.id },
-          defaults: {
-            fullname: profile.displayName,
-            username: generatedUsername,
-            email: profile.emails[0].value,
-            roles: ["user"],
-            provider: "google",
-            providerId: profile.id,
-          },
+        const generatedUsername = await generateUniqueName(profile.displayName);
+        // Check if user exists by email
+        const existingUser = await db.User.findOne({
+          where: { email: profile.emails[0].value },
         });
-        done(null, user[0]);
+
+        if (existingUser) {
+          if (existingUser.provider !== "google") {
+            return done(null, false, {
+              message: `Account already exists with ${existingUser.provider}. Please login with ${existingUser.provider}.`,
+            });
+          }
+          // Same provider, log them in
+          return done(null, existingUser);
+        }
+
+        const user = await db.User.create({
+          fullname: profile.displayName,
+          username: generatedUsername,
+          email: profile.emails[0].value,
+          password: "",
+          roles: ["user"],
+          provider: "google",
+          providerId: profile.id,
+        });
+        done(null, user);
       } catch (err) {
         done(err, null);
       }
@@ -44,24 +58,46 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const generatedUsername = generateUniqueName();
-        const user = await User.findOrCreate({
-          where: { provider: "github", providerId: profile.id },
-          defaults: {
-            fullname: profile.displayName,
-            username: generatedUsername,
-            email: profile.emails[0].value,
-            roles: ["user"],
-            provider: "github",
-            providerId: profile.id,
-          },
+        const generatedUsername = await generateUniqueName(
+          profile.displayName || profile.username || "github-user"
+        );
+        const email =
+          profile.emails && profile.emails[0]
+            ? profile.emails[0].value
+            : `${generatedUsername}@github.placeholder.com`;
+
+        // Check if user exists by email
+        const existingUser = await db.User.findOne({ where: { email } });
+        if (existingUser) {
+          if (existingUser.provider !== "github") {
+            return done(null, false, {
+              message: `Account already exists with ${existingUser.provider}. Please login with ${existingUser.provider}.`,
+            });
+          }
+          return done(null, existingUser);
+        }
+
+        const user = await db.User.create({
+          fullname: profile.displayName || profile.username || "Github User",
+          username: generatedUsername,
+          email: email,
+          password: "",
+          roles: ["user"],
+          provider: "github",
+          providerId: profile.id,
         });
-        done(null, user[0]);
+        done(null, user);
       } catch (err) {
+        if (err.name === "SequelizeValidationError") {
+          console.error("Sequelize Validation Error:", err.errors);
+        } else {
+          console.error("GitHub Auth Error:", err);
+        }
         done(err, null);
       }
     }
   )
 );
+}
 
-export default passport;
+export default initializePassport;

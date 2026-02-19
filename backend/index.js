@@ -1,5 +1,7 @@
 import db from "./models/index.js";
 import express from "express";
+import pino from "pino-http";
+import compression from "compression";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import redisClient from "./config/redis.js";
@@ -19,20 +21,52 @@ import offerRoutes from "./routes/offer.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
+import wishlistRoutes from "./routes/wishlist.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { startCleanupService } from "./services/cleanup.service.js";
 import otpRoutes from "./routes/otp.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import passport from "passport";
+import fs from "fs";
+import cors from "cors";
+import initializePassport from "./config/passport.js";
 
 const app = express();
+// Trigger restart
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(helmet());
+app.use(
+  pino({
+    level: "info",
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:standard",
+        ignore: "pid,hostname",
+      },
+    },
+  }),
+);
+app.use(
+  compression({
+    level: 6,
+    threshold: 100,
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+initializePassport();
 app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
@@ -44,6 +78,7 @@ app.use("/api/notification", notificationRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/brand", brandRoutes);
 app.use("/api/product", productRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/offer", offerRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/cart", cartRoutes);
@@ -62,12 +97,16 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    // Test Redis connection
+    if (!fs.existsSync("uploads")) {
+      console.log("⏳ Creating 'uploads' directory...");
+      fs.mkdirSync("uploads");
+      console.log("✅ 'uploads' directory created.");
+    }
+
     await redisClient.ping();
     console.log("Redis client connected...");
 
-    // Sync SQL database
-    await db.sequelize.sync({ force: true });
+    await db.sequelize.sync();
     console.log("Database synced...");
 
     startCleanupService();

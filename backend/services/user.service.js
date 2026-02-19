@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
+import bcrypt from "bcrypt";
 
 const User = db.User;
 

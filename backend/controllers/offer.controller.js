@@ -8,8 +8,8 @@ import db from "../models/index.js";
  */
 export const getOffersList = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const offers = await offerServices.getAllOffers(userId);
-  res.status(200).json({ message: "Offers fetched successfully.", offers });
+  const result = await offerServices.getSellerOffers(userId, req.query);
+  res.status(200).json({ message: "Offers fetched successfully.", ...result });
 });
 
 /**
@@ -37,14 +37,14 @@ export const createOffer = asyncHandler(async (req, res) => {
   if (!sellerProfile) {
     throw new ApiError(
       403,
-      "Forbidden: You must have an seller profile to perform this action."
+      "Forbidden: You must have an seller profile to perform this action.",
     );
   }
 
   const newOffer = await offerServices.createOfferForProduct(
     productId,
     sellerProfile.id,
-    offerData
+    offerData,
   );
   return res
     .status(201)
@@ -62,7 +62,7 @@ export const getOfferDetailsController = asyncHandler(async (req, res) => {
   if (!sellerProfile) {
     throw new ApiError(
       403,
-      "Forbidden: You must have a seller profile to perform this action."
+      "Forbidden: You must have a seller profile to perform this action.",
     );
   }
 
@@ -83,7 +83,7 @@ export const updateOfferController = asyncHandler(async (req, res) => {
   if (!sellerProfile) {
     throw new ApiError(
       403,
-      "Forbidden: You must have a seller profile to perform this action."
+      "Forbidden: You must have a seller profile to perform this action.",
     );
   }
 
@@ -91,7 +91,7 @@ export const updateOfferController = asyncHandler(async (req, res) => {
   const updatedOffer = await offerServices.updateOfferDetails(
     offerId,
     sellerProfile.id,
-    req.body
+    req.body,
   );
 
   return res
@@ -109,14 +109,14 @@ export const deleteOfferController = asyncHandler(async (req, res) => {
   if (!sellerProfile) {
     throw new ApiError(
       403,
-      "Forbidden: You must have a seller profile to perform this action."
+      "Forbidden: You must have a seller profile to perform this action.",
     );
   }
 
   const { offerId } = req.params;
   const result = await offerServices.deleteProductOffer(
     offerId,
-    sellerProfile.id
+    sellerProfile.id,
   );
 
   return res.status(200).json({ message: result.message, result });

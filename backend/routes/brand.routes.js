@@ -8,12 +8,13 @@ import { brandSchema } from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
-router.use(authenticate);
 
+// Public routes
 router
   .route("/")
   .get(brandController.getBrands)
   .post(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
@@ -23,14 +24,24 @@ router
 
 router
   .route("/:id")
-  .get(authorizeRoles("admin"), brandController.getBrandDetails)
+  .get(brandController.getBrandDetails) // Public access for Brand Store page
   .put(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     upload.single("image"),
     validate(brandSchema),
     brandController.updateBrand
   )
-  .delete(authorizeRoles("admin"), csrfProtection, brandController.deleteBrand);
+  .delete(authenticate, authorizeRoles("admin"), csrfProtection, brandController.deleteBrand);
+
+router
+  .route("/:id/toggle-status")
+  .patch(
+    authenticate,
+    authorizeRoles("admin"),
+    csrfProtection,
+    brandController.toggleStatus
+  );
 
 export default router;

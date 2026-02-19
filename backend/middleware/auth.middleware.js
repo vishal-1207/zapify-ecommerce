@@ -59,6 +59,21 @@ const authenticate = asyncHandler(async (req, res, next) => {
       await setCache(cacheKey, JSON.stringify(user), 3600);
     }
 
+    // Ensure roles is an array
+    if (user && typeof user.roles === 'string') {
+        try {
+            user.roles = JSON.parse(user.roles);
+        } catch (e) {
+            console.error("Failed to parse user roles:", e);
+            user.roles = ["user"];
+        }
+    }
+    
+    // Fallback if roles is missing
+    if (user && !user.roles) {
+        user.roles = ["user"];
+    }
+
     req.user = user;
     next();
   } catch (error) {

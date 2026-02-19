@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import * as orderService from "../services/order.service.js";
 
 /**
@@ -14,9 +15,13 @@ export const placeOrder = asyncHandler(async (req, res) => {
   }
 
   const newOrder = await orderService.createOrderFromCart(userId, addressId);
-  return res
-    .status(201)
-    .json({ message: "Order created successfully. Proceed to payment." });
+  return res.status(201).json(
+    new ApiResponse(
+      201,
+      newOrder,
+      "Order created successfully. Proceed to payment.",
+    ),
+  );
 });
 
 /**
@@ -26,7 +31,7 @@ export const getOrdersForCustomer = asyncHandler(async (req, res) => {
   const orders = await orderService.getOrdersForCustomer(req.user.id);
   return res
     .status(200)
-    .json({ message: "Order history fetched successfully.", orders });
+    .json(new ApiResponse(200, orders, "Order history fetched successfully."));
 });
 
 /**
@@ -40,7 +45,9 @@ export const getOrderDetailsForCustomer = asyncHandler(async (req, res) => {
   );
   return res
     .status(200)
-    .json({ message: "Order details fetched successfully.", orderDetails });
+    .json(
+      new ApiResponse(200, orderDetails, "Order details fetched successfully."),
+    );
 });
 
 /**
@@ -54,24 +61,28 @@ export const getOrderTrackingDetails = asyncHandler(async (req, res) => {
   );
   return res
     .status(200)
-    .json({ message: "Tracking details fetched.", trackingDetails });
+    .json(new ApiResponse(200, trackingDetails, "Tracking details fetched."));
 });
 
 export const getActiveOrders = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const orders = await orderService.getActiveOrders(req.user.id, page, limit);
-  return res.status(200).json({ message: "Active orders fetched", orders });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, orders, "Active orders fetched"));
 });
 
 /**
  * Controller to get order history (completed) for seller.
  */
 export const getSellerOrdersHistory = asyncHandler(async (req, res) => {
-  const sellerId = req.params;
+  const { sellerId } = req.params;
   const orderList = await orderService.getSellerOrdersHistory(sellerId);
   return res
     .status(200)
-    .json({ message: "Order history list fetched successfully.", orderList });
+    .json(
+      new ApiResponse(200, orderList, "Order history list fetched successfully."),
+    );
 });
 
 /**
@@ -82,10 +93,13 @@ export const getOrdersForFulfillment = asyncHandler(async (req, res) => {
   const fulfillmentOrderDetails = await orderService.getOrdersForFulfillment(
     sellerId
   );
-  return res.status(200).json({
-    message: "Fulfillment order details fetched.",
-    fulfillmentOrderDetails,
-  });
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      fulfillmentOrderDetails,
+      "Fulfillment order details fetched.",
+    ),
+  );
 });
 
 /**
@@ -106,5 +120,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     status,
     trackingData
   );
-  return res.status(200).json({ message: "Order status updated.", item });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, item, "Order status updated."));
 });

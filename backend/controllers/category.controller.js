@@ -2,34 +2,32 @@ import * as categoryService from "../services/category.service.js";
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 /**
  * Fetches all categories availabe.
  */
 export const getCategories = asyncHandler(async (req, res) => {
-  const categories = await db.Category.findAll({
-    attributes: ["id", "name"],
-    order: [["name", "ASC"]],
-    include: [
-      {
-        model: db.Media,
-        as: "media",
-        attributes: ["id", "publicId", "url", "fileType", "tag"],
-        where: {
-          associatedType: "category",
-        },
-      },
-    ],
+  // Check if admin to decide whether to include inactive categories
+  const isAdmin = req.user?.roles?.includes("admin");
+  
+  const categories = await categoryService.getAllCategories({
+    includeInactive: isAdmin
   });
 
   res
     .status(200)
-    .json({ message: "Categories fetched successfully.", categories });
+    .json(new ApiResponse(200, categories, "Categories fetched successfully."));
 });
 
 export const getCategoryDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const category = await db.Category.findByPk(id, {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  
+  const whereCondition = isUUID ? { id } : { slug: id };
+
+  const category = await db.Category.findOne({
+    where: whereCondition,
     include: [
       {
         model: db.Media,
@@ -46,7 +44,7 @@ export const getCategoryDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json({ message: "Category details fetched successfully.", category });
+    .json(new ApiResponse(200, category, "Category details fetched successfully."));
 });
 
 /**
@@ -59,7 +57,7 @@ export const addCategory = asyncHandler(async (req, res) => {
   const category = await categoryService.addCategory(name, image);
   return res
     .status(200)
-    .json({ message: "Category created successfully.", category });
+    .json(new ApiResponse(200, category, "Category created successfully."));
 });
 
 /**
@@ -76,14 +74,31 @@ export const updateCategory = asyncHandler(async (req, res) => {
   );
   res
     .status(200)
-    .json({ message: "Category updated successfully.", updatedCategory });
+    .json(
+      new ApiResponse(200, updatedCategory, "Category updated successfully."),
+    );
 });
 
 /**
  * Allows admin to delete a existing category.
  */
 export const deleteCategory = asyncHandler(async (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
+
   await categoryService.deleteCategory(id);
-  return res.status(200).json({ message: "Category deleted successfully." });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Category deleted successfully."));
+});
+
+export const toggleStatus = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const category = await categoryService.toggleCategoryStatus(id);
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      category,
+      `Category ${category.isActive ? "enabled" : "disabled"}.`,
+    ),
+  );
 });

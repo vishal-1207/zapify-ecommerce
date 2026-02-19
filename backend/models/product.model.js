@@ -10,8 +10,8 @@ export default (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      name: { type: DataTypes.STRING, allowNull: false, unique: true },
-      model: { type: DataTypes.STRING, allowNull: true, unique: true },
+      name: { type: DataTypes.STRING, allowNull: false },
+      model: { type: DataTypes.STRING, allowNull: true },
       description: { type: DataTypes.TEXT, allowNull: false },
       price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
       status: {
@@ -19,7 +19,12 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "pending",
       },
-      slug: { type: DataTypes.STRING, allowNull: true, unique: true },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        allowNull: false,
+      },
+      slug: { type: DataTypes.STRING, allowNull: true },
 
       averageRating: {
         type: DataTypes.DECIMAL(3, 2),
@@ -87,6 +92,17 @@ export default (sequelize, DataTypes) => {
           deleteProductFromAlgolia(product.id).catch((e) => console.error(e));
         },
       },
+      indexes: [
+        { unique: true, fields: ["name"], name: "products_name_unique" },
+        { unique: true, fields: ["model"], name: "products_model_unique" },
+        { unique: true, fields: ["slug"], name: "products_slug_unique" },
+        { fields: ["status"] },
+        { fields: ["isActive"] },
+        { fields: ["categoryId"] },
+        { fields: ["brandId"] },
+        { fields: ["createdAt"] },
+        { fields: ["minOfferPrice"] },
+      ],
     },
   );
 

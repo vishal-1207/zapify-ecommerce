@@ -49,23 +49,53 @@ router
 router
   .route("/google")
   .get(passport.authenticate("google", { scope: ["profile", "email"] }));
-router
-  .route("/google/callback")
-  .get(
-    passport.authenticate("google", { session: false }),
-    authControllers.socialCallbackHandler,
-  );
+router.get(
+  "/google/callback",
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        const message = info?.message || "Authentication failed";
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        return res.redirect(
+          `${frontendUrl}/login?error=${encodeURIComponent(message)}`
+        );
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  authControllers.socialCallbackHandler
+);
 
 // GitHub OAuth
 router
   .route("/github")
   .get(passport.authenticate("github", { scope: ["user:email"] }));
-router
-  .route("/github/callback")
-  .get(
-    passport.authenticate("github", { session: false }),
-    authControllers.socialCallbackHandler,
-  );
+router.get(
+  "/github/callback",
+  (req, res, next) => {
+    passport.authenticate("github", { session: false }, (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        const message = info?.message || "Authentication failed";
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        return res.redirect(
+          `${frontendUrl}/login?error=${encodeURIComponent(message)}`
+        );
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  authControllers.socialCallbackHandler
+);
+
+router.post("/social/exchange", authControllers.exchangeTicket);
 
 router
   .route("/refresh-token")

@@ -8,11 +8,10 @@ export default (sequelize, DataTypes) => {
         primaryKey: true,
       },
       fullname: { type: DataTypes.STRING, allowNull: false },
-      username: { type: DataTypes.STRING, allowNull: false, unique: true },
+      username: { type: DataTypes.STRING, allowNull: false },
       email: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
         validate: {
           isEmail: true,
         },
@@ -20,7 +19,6 @@ export default (sequelize, DataTypes) => {
       phoneNumber: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
       password: { type: DataTypes.STRING, allowNull: true },
       roles: {
@@ -35,7 +33,6 @@ export default (sequelize, DataTypes) => {
       providerId: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
       verificationCode: {
         type: DataTypes.STRING,
@@ -66,6 +63,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      isBlocked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
       passwordResetToken: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -82,6 +83,12 @@ export default (sequelize, DataTypes) => {
     },
     {
       paranoid: true,
+      indexes: [
+        { unique: true, fields: ["username"], name: "users_username_unique" },
+        { unique: true, fields: ["email"], name: "users_email_unique" },
+        { unique: true, fields: ["phoneNumber"], name: "users_phone_number_unique" },
+        { unique: true, fields: ["providerId"], name: "users_provider_id_unique" },
+      ],
       hooks: {
         beforeValidate: (user) => {
           if (!user.email && !user.phoneNumber) {

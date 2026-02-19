@@ -1,5 +1,6 @@
 import { searchProductsAlgolia } from "../services/algolia.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const searchStorefront = asyncHandler(async (req, res) => {
   const {

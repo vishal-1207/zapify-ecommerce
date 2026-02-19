@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
     },
     publicId: { type: DataTypes.STRING, allowNull: false },
     url: { type: DataTypes.STRING, allowNull: false },
-    fileType: { type: DataTypes.ENUM("image", "video"), allowNull: false },
+    fileType: { type: DataTypes.ENUM("image", "video", "raw"), allowNull: false },
     tag: {
       type: DataTypes.ENUM("thumbnail", "gallery"),
       allowNull: false,

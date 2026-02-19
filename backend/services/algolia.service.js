@@ -40,6 +40,8 @@ const formatProductForAlgolia = async (productData) => {
     price: parseFloat(product.minOfferPrice) || 0,
     popularity: parseFloat(product.popularityScore) || 0,
     inStock: (parseInt(product.totalOfferStock) || 0) > 0,
+    totalOfferStock: parseInt(product.totalOfferStock) || 0,
+    sellerProfileIds: product.offers?.map((o) => o?.sellerProfileId).filter(Boolean) || [],
   };
 };
 
@@ -54,7 +56,13 @@ export const syncProductToAlgolia = async (productId) => {
         { model: db.Brand, as: "brand" },
         { model: db.Category, as: "category" },
         { model: db.Media, as: "media" },
-        { model: db.Offer, as: "offers", attributes: ["price"] },
+        { 
+            model: db.Offer, 
+            as: "offers", 
+            attributes: ["price", "sellerProfileId"],
+            where: { status: "active" },
+            required: false 
+        },
       ],
     });
 
@@ -65,10 +73,12 @@ export const syncProductToAlgolia = async (productId) => {
       return;
     }
 
-    if (product.status !== "approved") {
-      await client.deleteObject({ indexName: INDEX_NAME, objectID: productId });
-      return;
-    }
+    // We now index ALL products (including pending) so sellers can search their own catalog.
+    // Public search must filter by status:approved.
+    // if (product.status !== "approved") {
+    //   await client.deleteObject({ indexName: INDEX_NAME, objectID: productId });
+    //   return;
+    // }
 
     const record = await formatProductForAlgolia(product);
     if (!record || !record.objectID) {
@@ -156,16 +166,68 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     searchOptions.filters += " AND " + filterConditions.join(" AND ");
   }
 
-  const { hits, nbHits, nbPages } = await client.searchSingleIndex({
-    indexName: INDEX_NAME,
-    searchOptions,
-  });
+  try {
+    const { hits, nbHits, nbPages } = await client.searchSingleIndex({
+      indexName: INDEX_NAME,
+      searchOptions,
+    });
 
-  return {
-    products: hits,
-    total: nbHits,
-    page: parseInt(page),
-    limit: parseInt(limit),
-    totalPages: nbPages,
-  };
+    return {
+      products: hits,
+      total: nbHits,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: nbPages,
+    };
+  } catch (error) {
+    console.warn("[Algolia] Search failed, falling back to Database:", error.message);
+    
+    // Database Fallback
+    const offset = (page - 1) * limit;
+    const whereClause = {
+        status: "approved",
+        [db.Sequelize.Op.or]: [
+            { name: { [db.Sequelize.Op.like]: `%${query}%` } },
+            { description: { [db.Sequelize.Op.like]: `%${query}%` } },
+             // Add model search if exists in schema, otherwise remove
+             // { model: { [db.Sequelize.Op.like]: `%${query}%` } } 
+        ]
+    };
+
+    if (category) {
+        // This requires joining with Category model or having categoryId
+        // For simplicity in fallback, we might skip complex filters or implementation needed
+    }
+
+    const { count, rows } = await db.Product.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        include: [
+            { model: db.Brand, as: "brand" },
+            { model: db.Category, as: "category" },
+            { model: db.Media, as: "media" }
+        ]
+    });
+
+    // Format DB results to match Algolia structure (somewhat)
+    const formattedProducts = rows.map(p => ({
+        objectID: p.id,
+        name: p.name,
+        description: p.description,
+        brand: p.brand?.name,
+        category: p.category?.name,
+        image: p.media?.find(m => m.tag === 'thumbnail')?.url || p.media?.[0]?.url,
+        price: parseFloat(p.minOfferPrice) || 0,
+        totalOfferStock: p.totalOfferStock
+    }));
+
+    return {
+        products: formattedProducts,
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+    };
+  }
 };

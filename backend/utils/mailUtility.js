@@ -50,9 +50,15 @@ const sendMail = async (to, subject, html) => {
   try {
     let transporter;
 
-    if (process.env.NODE_ENV === "production") {
+    if (
+      process.env.EMAIL_HOST &&
+      process.env.EMAIL_USER &&
+      process.env.EMAIL_PASS
+    ) {
+      // Use Production (Brevo/SMTP) if credentials are provided in .env
       transporter = createProductionTransporter();
     } else {
+      // Fallback to Ethereal if no credentials
       transporter = await createDevelopmentTransporter();
     }
 
@@ -69,13 +75,13 @@ const sendMail = async (to, subject, html) => {
 
     const info = await transporter.sendMail(mailOptions);
 
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !process.env.EMAIL_HOST) {
       console.log(
-        "Email sent (dev mode), preview URL: %s",
+        "Email sent (Ethereal), preview URL: %s",
         nodemailer.getTestMessageUrl(info)
       );
     } else {
-      console.log("Email sent successfully (prod mode): ", info.response);
+      console.log("Email sent successfully: ", info.messageId);
     }
 
     return info;

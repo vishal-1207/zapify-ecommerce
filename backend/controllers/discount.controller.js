@@ -20,7 +20,7 @@ export const applyDiscountToCart = asyncHandler(async (req, res) => {
   await discountService.validateAndCalculateDiscount(
     code,
     subTotal,
-    req.user.id
+    req.user.id,
   );
 
   const updatedCart = await cartService.applyCouponToCart(req.user.id, code);
@@ -45,7 +45,7 @@ export const getAvailableCoupons = asyncHandler(async (req, res) => {
   const { subtotal } = await cartService.getCart(req.user.id);
   const coupons = await discountService.getApplicableDiscounts(
     req.user.id,
-    subtotal
+    subtotal,
   );
   return res
     .status(200)
@@ -89,12 +89,12 @@ export const getDiscount = asyncHandler(async (req, res) => {
 export const updateDiscount = asyncHandler(async (req, res) => {
   const updatedDiscount = await discountService.updateDiscount(
     req.params.id,
-    req.body
+    req.body,
   );
   return res
     .status(200)
     .json(
-      new ApiResponse(200, updatedDiscount, "Discount updated successfully.")
+      new ApiResponse(200, updatedDiscount, "Discount updated successfully."),
     );
 });
 
@@ -107,7 +107,7 @@ export const toggleStatus = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, discount, `Discount code has been ${statusMsg}.`)
+      new ApiResponse(200, discount, `Discount code has been ${statusMsg}.`),
     );
 });
 
@@ -117,4 +117,23 @@ export const toggleStatus = asyncHandler(async (req, res) => {
 export const deleteDiscount = asyncHandler(async (req, res) => {
   const result = await discountService.deleteDiscount(req.params.id);
   return res.status(200).json(new ApiResponse(200, result, result.message));
+});
+
+/**
+ * Controller for sellers to create/update a Lightning Deal.
+ */
+export const createSellerDeal = asyncHandler(async (req, res) => {
+  const { offerId } = req.params;
+  const dealData = req.body;
+  const userId = req.user.id;
+
+  const updatedOffer = await discountService.createSellerDeal(
+    userId,
+    offerId,
+    dealData,
+  );
+
+  return res
+    .status(200)
+    .json({ message: "Deal updated successfully.", updatedOffer });
 });

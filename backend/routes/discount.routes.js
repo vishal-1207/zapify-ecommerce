@@ -27,7 +27,7 @@ router
   .post(
     csrfProtection,
     validate(discountSchema),
-    discountController.createDiscount
+    discountController.createDiscount,
   );
 
 router
@@ -37,5 +37,13 @@ router
   .delete(discountController.deleteDiscount);
 
 router.patch("/:id/toggle", discountController.toggleStatus);
+
+// Seller Deal Routes
+router.post(
+  "/seller-deal/:offerId",
+  authenticate,
+  authorizeRoles("seller"),
+  discountController.createSellerDeal,
+);
 
 export default router;

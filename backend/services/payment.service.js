@@ -186,17 +186,20 @@ export const handleStripeWebhook = async (event) => {
           },
           {
             model: db.OrderItem,
-            as: "orderItem",
+            as: "orderItems",
             include: [
               {
                 model: db.Offer,
-                as: "offer",
                 include: [
                   { model: db.Product, as: "product" },
                   { model: db.SellerProfile, as: "sellerProfile" },
                 ],
               },
             ],
+          },
+          {
+            model: db.Payment,
+            as: "payments",
           },
         ],
       });
@@ -242,7 +245,6 @@ export const getSellerTransactions = async (userId) => {
       include: [
         {
           model: db.Offer,
-          as: "offer",
           where: { sellerProfileId: profile.id },
           attributes: [],
           include: [{ model: db.Product, as: "product", attributes: ["name"] }],

@@ -9,22 +9,25 @@ router.use(authenticate);
 
 router
   .route("/profile")
-  .get(authorizeRoles("user"), userControllers.getCurrentUserController);
+  .get(
+    authorizeRoles("user", "admin", "seller"),
+    userControllers.getCurrentUserController
+  );
 
 router
   .route("/profile/edit")
   .patch(
-    authorizeRoles("user"),
+    authorizeRoles("user", "admin", "seller"),
     csrfProtection,
-    userControllers.updateProfileController,
+    userControllers.updateProfileController
   );
 
 router
   .route("/profile/delete")
   .delete(
-    authorizeRoles("user"),
+    authorizeRoles("user", "admin", "seller"),
     csrfProtection,
-    userControllers.deleteUserController,
+    userControllers.deleteUserController
   );
 
 export default router;

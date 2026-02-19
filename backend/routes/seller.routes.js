@@ -5,7 +5,7 @@ import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 import * as sellerController from "../controllers/seller.controller.js";
 import { getSellerTransactions } from "../services/payment.service.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { sellerProfileSchema } from "../utils/validationSchema.js";
+import { sellerProfileSchema, updateOfferSchema } from "../utils/validationSchema.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -63,5 +63,27 @@ router.get(
 );
 
 router.get("/transactions", authorizeRoles("seller"), getSellerTransactions);
+
+// Offer Management
+router.get("/offers", authorizeRoles("seller"), sellerController.getSellerOffers);
+
+router.patch(
+  "/offers/:offerId",
+  authorizeRoles("seller"),
+  csrfProtection,
+  validate(updateOfferSchema),
+  sellerController.updateSellerOffer
+);
+
+router.delete(
+  "/offers/:offerId",
+  authorizeRoles("seller"),
+  csrfProtection,
+  sellerController.deleteSellerOffer
+);
+
+// Order Management
+router.get("/orders", authorizeRoles("seller"), sellerController.getSellerOrders);
+router.patch("/orders/:orderItemId/status", authorizeRoles("seller"), csrfProtection, sellerController.updateSellerOrderItemStatus);
 
 export default router;

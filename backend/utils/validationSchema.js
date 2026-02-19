@@ -22,6 +22,8 @@ export const registerSchema = Joi.object({
     .custom(sanitize)
     .messages({
       "string.empty": "Name is required.",
+      "string.min": "Name must be at least 3 characters long.",
+      "string.pattern.base": "Name can only contain alphabets and spaces.",
     }),
   username: Joi.string()
     .min(6)
@@ -30,7 +32,9 @@ export const registerSchema = Joi.object({
     .custom(sanitize)
     .messages({
       "string.empty": "Username is required.",
-      "string.min": "Username must be atleast 6 characters long.",
+      "string.min": "Username must be at least 6 characters long.",
+      "string.pattern.base":
+        "Username can only contain alphanumeric characters and underscores.",
     }),
   email: Joi.string().email().required().custom(sanitize).messages({
     "string.empty": "Email is required.",
@@ -40,10 +44,17 @@ export const registerSchema = Joi.object({
     .pattern(/^\+[1-9]\d{1,14}$/)
     .optional()
     .custom(sanitize),
-  password: Joi.string().min(8).required().custom(sanitize).messages({
-    "string.empty": "Password is required.",
-    "string.min": "Password must be atleast 8 characters long.",
-  }),
+  password: Joi.string()
+    .min(8)
+    .required()
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/)
+    .custom(sanitize)
+    .messages({
+      "string.empty": "Password is required.",
+      "string.min": "Password must be at least 8 characters long.",
+      "string.pattern.base":
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    }),
 }).or("email", "phoneNumber");
 
 export const loginSchema = Joi.object({
@@ -236,3 +247,61 @@ export const discountSchema = Joi.object({
   expiresAt: Joi.date().greater("now").optional(),
   isActive: Joi.boolean().default(true),
 });
+
+export const suggestProductFlatSchema = Joi.object({
+  name: Joi.string()
+    .trim()
+    .min(5)
+    .max(255)
+    .required()
+    .custom(sanitize)
+    .messages({ "string.empty": "Product name is required." }),
+  model: Joi.string().trim().max(100).allow(null, "").optional(),
+  description: Joi.string()
+    .trim()
+    .min(50)
+    .max(5000)
+    .required()
+    .custom(sanitize)
+    .messages({
+      "string.min": "Description must be at least 50 characters long.",
+      "any.required": "Description is required.",
+    }),
+  price: Joi.number().positive().precision(2).required().messages({
+    "number.base": "Price must be a valid number.",
+    "number.empty": "Price is required.",
+    "number.positive": "Price must be a positive value.",
+  }),
+  totalOfferStock: Joi.number().integer().min(0).optional(),
+  stockQuantity: Joi.number().integer().min(0).optional(),
+  categoryId: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required()
+    .messages({
+      "string.empty": "Category ID is required.",
+      "string.guid": "Category ID must be a valid UUID.",
+    }),
+  brandId: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required()
+    .messages({
+      "string.empty": "Brand ID is required.",
+      "string.guid": "Brand ID must be a valid UUID.",
+    }),
+  specs: Joi.string()
+    .required()
+    .custom(parseJsonArray)
+    .messages({ "any.invalid": "Specs must be a valid JSON array string." }),
+  condition: Joi.string()
+    .valid("New", "Used - Like New", "Used - Good", "Refurbished")
+    .optional()
+    .default("New"),
+  mediaToDelete: Joi.string().optional().custom(parseJsonArray),
+});
+
+export const updateOfferSchema = Joi.object({
+  price: Joi.number().positive().precision(2).optional(),
+  stockQuantity: Joi.number().integer().min(0).optional(),
+  status: Joi.string().valid("draft", "active").optional(),
+});
+

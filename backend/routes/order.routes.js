@@ -3,12 +3,14 @@ import * as orderControllers from "../controllers/order.controller.js";
 import authenticate from "../middleware/auth.middleware.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
+import isVerified from "../middleware/isVerified.middleware.js";
+
 const router = express.Router();
 router.use(authenticate);
 
 router
   .route("/")
-  .post(orderControllers.placeOrder)
+  .post(isVerified, orderControllers.placeOrder)
   .get(orderControllers.getOrdersForCustomer);
 
 router.route("/:orderId").get(orderControllers.getOrderDetailsForCustomer);

@@ -8,11 +8,14 @@ import { categorySchema } from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
+// Public Routes
+router.route("/").get(categoryController.getCategories);
+
+// Protected Routes (Admin)
 router.use(authenticate);
 
 router
   .route("/")
-  .get(categoryController.getCategories)
   .post(
     authorizeRoles("admin"),
     csrfProtection,
@@ -35,6 +38,14 @@ router
     authorizeRoles("admin"),
     csrfProtection,
     categoryController.deleteCategory
+  );
+
+router
+  .route("/:id/toggle-status")
+  .patch(
+    authorizeRoles("admin"),
+    csrfProtection,
+    categoryController.toggleStatus
   );
 
 export default router;

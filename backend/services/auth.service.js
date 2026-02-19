@@ -4,6 +4,7 @@ import generateTokens from "../utils/token.utils.js";
 import ApiError from "../utils/ApiError.js";
 import sendMail from "../utils/mailUtility.js";
 import jwt from "jsonwebtoken";
+import * as otpServices from "./otp.service.js";
 
 /**
  * Register service creates a new user and store it in the database.
@@ -49,6 +50,7 @@ export const registerService = async (userData) => {
         password: hashedPassword,
         roles: ["user"],
         provider: "local",
+        isEmailVerified: true,
       },
       { transaction },
     );
@@ -67,6 +69,13 @@ export const registerService = async (userData) => {
       sendMail(email, subject, html).catch((err) =>
         console.error("Failed to send welcome email:", err.message),
       );
+
+      // Send Verification Email
+      otpServices
+        .sendVerificationCode(user.id, "email")
+        .catch((err) =>
+          console.error("Failed to send verification email:", err.message),
+        );
     }
 
     return { user, tokens };

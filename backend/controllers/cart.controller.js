@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import * as cartService from "../services/cart.service.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 /**
  * Controller to add a new item to the cart.
@@ -15,7 +16,9 @@ export const addItem = asyncHandler(async (req, res) => {
     offerId,
     parseInt(quantity)
   );
-  return res.status(200).json({ message: "Item added to cart.", cart });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cart, "Item added to cart."));
 });
 
 /**
@@ -23,7 +26,9 @@ export const addItem = asyncHandler(async (req, res) => {
  */
 export const getCartDetails = asyncHandler(async (req, res) => {
   const cart = await cartService.getCart(req.user.id);
-  return res.status(200).json({ message: "Cart details fetched.", cart });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cart, "Cart details fetched."));
 });
 
 /**
@@ -41,7 +46,9 @@ export const updateItem = asyncHandler(async (req, res) => {
     offerId,
     parseInt(quantity)
   );
-  return res.status(200).json({ message: "Cart item quantity updated.", cart });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cart, "Cart item quantity updated."));
 });
 
 /**
@@ -50,7 +57,9 @@ export const updateItem = asyncHandler(async (req, res) => {
 export const removeItem = asyncHandler(async (req, res) => {
   const { offerId } = req.params;
   const cart = await cartService.removeItemFromCart(req.user.id, offerId);
-  return res.status(200).json({ message: "Item removed from cart.", cart });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, cart, "Item removed from cart."));
 });
 
 /**
@@ -58,5 +67,7 @@ export const removeItem = asyncHandler(async (req, res) => {
  */
 export const emptyCart = asyncHandler(async (req, res) => {
   await cartService.clearCart(req.user.id);
-  return res.status(200).json({ message: "Cart cleared successfully." });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Cart cleared successfully."));
 });

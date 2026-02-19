@@ -143,9 +143,31 @@ export const getCart = async (userId) => {
  * @returns
  */
 export const addItemToCart = async (userId, offerId, quantity) => {
-  const offer = await db.Offer.findByPk(offerId);
+  let offer = await db.Offer.findByPk(offerId);
 
-  if (!offer) throw new ApiError(404, "Offer not found.");
+  // If offer not found, check if offerId is actually a productId
+  if (!offer) {
+    const product = await db.Product.findByPk(offerId);
+    if (product) {
+      // Find the cheapest offer for this product
+      const cheapestOffer = await db.Offer.findOne({
+        where: { 
+          productId: product.id,
+          stockQuantity: { [db.Sequelize.Op.gt]: 0 }
+        },
+        order: [['price', 'ASC']],
+      });
+      
+      if (!cheapestOffer) {
+        throw new ApiError(404, "No available offers found for this product.");
+      }
+      
+      offer = cheapestOffer;
+      offerId = cheapestOffer.id; // Update offerId to the actual offer ID
+    } else {
+      throw new ApiError(404, "Offer not found.");
+    }
+  }
 
   const cartKey = getCartKey(userId);
   const itemKey = `offer:${offerId}`;

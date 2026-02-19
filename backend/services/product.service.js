@@ -6,10 +6,112 @@ import { createNotification } from "../services/notification.service.js";
 import * as productHelpers from "../utils/productHelpers.js";
 import redisClient from "../config/redis.js";
 import { getCache, invalidateCache } from "../utils/cache.js";
-import { stringify } from "uuid";
 import { syncProductToAlgolia } from "./algolia.service.js";
+import { Op } from "sequelize";
 
 const CACHE_TTL = 3600;
+
+/**
+ * Fetches all products with comprehensive filtering and pagination.
+ * Optimized for both Storefront (Approved) and Admin (All) views.
+ */
+export const getAllProducts = async (filters = {}) => {
+  const {
+    page = 1,
+    limit = 10,
+    status = "approved",
+    categoryId,
+    brandId,
+    minPrice,
+    maxPrice,
+    search,
+    sortBy = "createdAt",
+    sortOrder = "DESC",
+    includeInactive = false,
+  } = filters;
+
+  const offset = (page - 1) * limit;
+
+  const whereCondition = {};
+
+  if (status !== "all") {
+    whereCondition.status = status;
+  }
+
+  if (!includeInactive) {
+    whereCondition.isActive = true;
+  }
+
+  if (categoryId) whereCondition.categoryId = categoryId;
+  if (brandId) whereCondition.brandId = brandId;
+
+  if (minPrice || maxPrice) {
+    whereCondition.minOfferPrice = {};
+    if (minPrice) whereCondition.minOfferPrice[Op.gte] = parseFloat(minPrice);
+    if (maxPrice) whereCondition.minOfferPrice[Op.lte] = parseFloat(maxPrice);
+  }
+
+  if (search) {
+    whereCondition[Op.or] = [
+      { name: { [Op.like]: `%${search}%` } },
+      { model: { [Op.like]: `%${search}%` } },
+    ];
+  }
+
+  const { count, rows } = await db.Product.findAndCountAll({
+    where: whereCondition,
+    limit: parseInt(limit),
+    offset: parseInt(offset),
+    order: [[sortBy, sortOrder]],
+    attributes: [
+      "id",
+      "name",
+      "price",
+      "model",
+      "slug",
+      "status",
+      "averageRating",
+      "reviewCount",
+      "minOfferPrice",
+      "totalOfferStock",
+      "createdAt",
+      "isActive",
+    ],
+    include: [
+      {
+        model: db.Media,
+        as: "media",
+        attributes: ["url", "tag"],
+        where: { tag: "thumbnail" },
+        required: false,
+        limit: 1,
+      },
+      {
+        model: db.Brand,
+        as: "brand",
+        attributes: ["id", "name", "slug"],
+        where: includeInactive ? {} : { isActive: true },
+        required: !includeInactive, // Inner join if filtering active, so products with inactive brand are hidden
+      },
+      {
+        model: db.Category,
+        as: "category",
+        attributes: ["id", "name", "slug"],
+        where: includeInactive ? {} : { isActive: true },
+        required: !includeInactive,
+      },
+    ],
+    distinct: true,
+  });
+
+  return {
+    products: rows,
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: parseInt(page),
+    limit: parseInt(limit),
+  };
+};
 
 /**
  * Gets a single product's public details, including all available offers from sellers.
@@ -18,16 +120,29 @@ const CACHE_TTL = 3600;
 export const getCustomerProductDetails = async (slug) => {
   const cacheKey = `product:${slug}`;
 
-  const cachedProduct = await getCache(cacheKey);
-  if (cachedProduct) {
-    return JSON.parse(cachedProduct);
+  try {
+    const cachedProduct = await getCache(cacheKey);
+    if (cachedProduct) {
+      return cachedProduct;
+    }
+  } catch (error) {
+    console.error("Cache retrieval error:", error);
   }
 
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  const whereCondition = {
+      status: "approved",
+      isActive: true,
+      ...(isUUID ? { id: slug } : { slug })
+  };
+
   const product = await db.Product.findOne({
-    where: { slug, status: "approved" },
+    where: whereCondition,
     attributes: [
       "id",
       "name",
+      "price",
+      "model",
       "description",
       "slug",
       "averageRating",
@@ -48,7 +163,7 @@ export const getCustomerProductDetails = async (slug) => {
         attributes: ["key", "value"],
         separate: true,
       },
-      { model: db.Brand, as: "brand", attributes: ["id", "name"] },
+      { model: db.Brand, as: "brand", attributes: ["id", "name", "slug"] },
       {
         model: db.Category,
         as: "category",
@@ -63,7 +178,7 @@ export const getCustomerProductDetails = async (slug) => {
         include: [
           {
             model: db.User,
-            as: "reviewer",
+            as: "user",
             attributes: ["id", "fullname"],
           },
         ],
@@ -71,7 +186,9 @@ export const getCustomerProductDetails = async (slug) => {
       {
         model: db.Offer,
         as: "offers",
-        attributes: ["id  ", "price", "stockQuantity", "condition"],
+        where: { status: "active" }, // Only show active offers
+        required: false, // Left join, so product shows up even if no active offers
+        attributes: ["id", "price", "stockQuantity", "condition"],
         include: [
           {
             model: db.SellerProfile,
@@ -89,7 +206,11 @@ export const getCustomerProductDetails = async (slug) => {
 
   const plainProduct = product.get({ plain: true });
 
-  await redisClient.set(cacheKey, stringify(plainProduct), { EX: CACHE_TTL });
+  await redisClient
+    .set(cacheKey, JSON.stringify(plainProduct), {
+      EX: CACHE_TTL,
+    })
+    .catch((err) => console.error("[Cache] Write Error:", err.message));
 
   return plainProduct;
 };
@@ -175,7 +296,7 @@ export const getPendingProductsForReview = async (page, limit) => {
     {
       where: { status: "pending" },
       include: [
-        { model: db.ProductSpecs, as: "specs" },
+        { model: db.ProductSpec, as: "specs" },
         { model: db.Brand, as: "brand", attributes: ["name"] },
         { model: db.Category, as: "category", attributes: ["name"] },
         {
@@ -204,21 +325,40 @@ export const getPendingProductsForReview = async (page, limit) => {
 export const reviewProductSuggestion = async (productId, decision) => {
   const product = await db.Product.findOne({
     where: { id: productId, status: "pending" },
+    include: [{ model: db.Offer, as: "offers", include: ["sellerProfile"] }],
   });
 
   if (!product) {
     throw new ApiError(404, "Product not found.");
   }
 
-  if (decision !== "approved" || decision !== "rejected") {
+  if (decision !== "approved" && decision !== "rejected") {
     throw new ApiError(400, "Decision must be approved or rejected.");
   }
 
-  product.status = decision;
-  await db.Product.save();
+  const transaction = await db.sequelize.transaction();
+  try {
+      product.status = decision;
+      await product.save({ transaction });
 
-  const sellerProfile = product.Offers[0]?.SellerProfile;
-  const sellerUser = sellerProfile?.User;
+      if (decision === "approved" && product.offers && product.offers.length > 0) {
+          for (const offer of product.offers) {
+              offer.status = "active";
+              await offer.save({ transaction });
+          }
+      }
+      
+      await transaction.commit();
+  } catch (error) {
+      await transaction.rollback();
+      throw error;
+  }
+
+  // Initial sync to Algolia is handled by hook, but aggregate update might be needed
+  // if stock > 0. The hook on Offer update will trigger aggregate update.
+
+  const sellerProfile = product.offers?.[0]?.sellerProfile;
+  const sellerUser = await db.User.findByPk(sellerProfile?.userId); // Need to fetch user
 
   if (sellerUser) {
     const message = `Your product suggestion '${product.name}' has been ${decision}.`;
@@ -298,7 +438,7 @@ export const updateProductAggregates = async (productId) => {
 
   try {
     const stats = await db.Offer.findAll({
-      where: { productId },
+      where: { productId, status: "active" },
       attributes: [
         [
           db.sequelize.fn(
@@ -369,6 +509,32 @@ export const updateProductAggregates = async (productId) => {
       err.message,
     ),
   );
+};
+
+/**
+ * Toggles the isActive status of a product.
+ */
+export const toggleProductStatus = async (productId) => {
+  const product = await db.Product.findByPk(productId);
+  if (!product) throw new ApiError(404, "Product not found.");
+
+  product.isActive = !product.isActive;
+  await product.save();
+
+  if (product.slug) {
+    await invalidateCache(`product:${product.slug}`);
+  }
+  
+  // Sync changes to Algolia (remove if inactive, update if active)
+  if (!product.isActive) {
+      const { deleteProductFromAlgolia } = await import("./algolia.service.js");
+      deleteProductFromAlgolia(product.id).catch(e => console.error(e));
+  } else {
+      const { syncProductToAlgolia } = await import("./algolia.service.js");
+      syncProductToAlgolia(product.id).catch(e => console.error(e));
+  }
+
+  return product;
 };
 
 /**

@@ -2,6 +2,7 @@ import db from "../models/index.js";
 import * as userServices from "../services/user.service.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 const User = db.User;
 
@@ -10,7 +11,9 @@ const User = db.User;
  */
 export const getCurrentUserController = asyncHandler(async (req, res) => {
   const user = req.user;
-  res.json({ message: "User details fetched successfully.", user });
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User details fetched successfully."));
 });
 
 export const updateProfileController = asyncHandler(async (req, res) => {
@@ -19,10 +22,11 @@ export const updateProfileController = asyncHandler(async (req, res) => {
 
   const updatedProfile = await userServices.updateUserProfile(userId, data);
 
-  return res.status(200).json({
-    message: "Profile updated successfully.",
-    user: updatedProfile,
-  });
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedProfile, "Profile updated successfully."),
+    );
 });
 
 export const deleteUserController = asyncHandler(async (req, res) => {
@@ -34,5 +38,7 @@ export const deleteUserController = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json({ message: "Account deletion process initiated.", result });
+    .json(
+      new ApiResponse(200, result, "Account deletion process initiated."),
+    );
 });

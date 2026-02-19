@@ -11,7 +11,10 @@ const generateRandomSuffix = (count) => {
 };
 
 export const generateUniqueName = async (fullName) => {
-  const baseUsername = fullName.toLowerCase();
+  let baseUsername = fullName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!baseUsername) {
+    baseUsername = "user";
+  }
 
   let username = baseUsername;
   while (await db.User.findOne({ where: { username } })) {
