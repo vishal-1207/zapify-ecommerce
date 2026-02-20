@@ -50,7 +50,7 @@ export const registerService = async (userData) => {
         password: hashedPassword,
         roles: ["user"],
         provider: "local",
-        isEmailVerified: true,
+        isEmailVerified: false,
       },
       { transaction },
     );

@@ -234,6 +234,10 @@ export const deleteDiscount = async (id) => {
 
 import { getSellerProfile } from "./seller.service.js";
 
+import { invalidateCache } from "../utils/cache.js";
+
+// ... existing imports
+
 /**
  * Service for a seller to create/update a Lightning Deal on their offer.
  * Moves deal logic from offer.service.js to here.
@@ -245,6 +249,7 @@ export const createSellerDeal = async (userId, offerId, dealData) => {
   const profile = await getSellerProfile(userId);
   const offer = await db.Offer.findOne({
     where: { id: offerId, sellerProfileId: profile.id },
+    include: [{ model: db.Product, as: "product", attributes: ["slug"] }],
   });
 
   if (!offer) {
@@ -270,5 +275,11 @@ export const createSellerDeal = async (userId, offerId, dealData) => {
   if (dealEndDate !== undefined) offer.dealEndDate = dealEndDate;
 
   await offer.save();
+
+  // Invalidate Product Cache so the deal shows up immediately on PDP
+  if (offer.product && offer.product.slug) {
+    await invalidateCache(`product:${offer.product.slug}`);
+  }
+
   return offer;
 };

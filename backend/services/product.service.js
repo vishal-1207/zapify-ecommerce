@@ -100,6 +100,20 @@ export const getAllProducts = async (filters = {}) => {
         where: includeInactive ? {} : { isActive: true },
         required: !includeInactive,
       },
+      {
+        model: db.Offer,
+        as: "offers",
+        where: { status: "active" },
+        required: false,
+        attributes: [
+          "id",
+          "price",
+          "dealPrice",
+          "dealStartDate",
+          "dealEndDate",
+          "stockQuantity",
+        ],
+      },
     ],
     distinct: true,
   });
@@ -129,11 +143,14 @@ export const getCustomerProductDetails = async (slug) => {
     console.error("Cache retrieval error:", error);
   }
 
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  const isUUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      slug,
+    );
   const whereCondition = {
-      status: "approved",
-      isActive: true,
-      ...(isUUID ? { id: slug } : { slug })
+    status: "approved",
+    isActive: true,
+    ...(isUUID ? { id: slug } : { slug }),
   };
 
   const product = await db.Product.findOne({
@@ -188,7 +205,15 @@ export const getCustomerProductDetails = async (slug) => {
         as: "offers",
         where: { status: "active" }, // Only show active offers
         required: false, // Left join, so product shows up even if no active offers
-        attributes: ["id", "price", "stockQuantity", "condition"],
+        attributes: [
+          "id",
+          "price",
+          "stockQuantity",
+          "condition",
+          "dealPrice",
+          "dealStartDate",
+          "dealEndDate",
+        ],
         include: [
           {
             model: db.SellerProfile,
@@ -338,20 +363,24 @@ export const reviewProductSuggestion = async (productId, decision) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-      product.status = decision;
-      await product.save({ transaction });
+    product.status = decision;
+    await product.save({ transaction });
 
-      if (decision === "approved" && product.offers && product.offers.length > 0) {
-          for (const offer of product.offers) {
-              offer.status = "active";
-              await offer.save({ transaction });
-          }
+    if (
+      decision === "approved" &&
+      product.offers &&
+      product.offers.length > 0
+    ) {
+      for (const offer of product.offers) {
+        offer.status = "active";
+        await offer.save({ transaction });
       }
-      
-      await transaction.commit();
+    }
+
+    await transaction.commit();
   } catch (error) {
-      await transaction.rollback();
-      throw error;
+    await transaction.rollback();
+    throw error;
   }
 
   // Initial sync to Algolia is handled by hook, but aggregate update might be needed
@@ -524,14 +553,14 @@ export const toggleProductStatus = async (productId) => {
   if (product.slug) {
     await invalidateCache(`product:${product.slug}`);
   }
-  
+
   // Sync changes to Algolia (remove if inactive, update if active)
   if (!product.isActive) {
-      const { deleteProductFromAlgolia } = await import("./algolia.service.js");
-      deleteProductFromAlgolia(product.id).catch(e => console.error(e));
+    const { deleteProductFromAlgolia } = await import("./algolia.service.js");
+    deleteProductFromAlgolia(product.id).catch((e) => console.error(e));
   } else {
-      const { syncProductToAlgolia } = await import("./algolia.service.js");
-      syncProductToAlgolia(product.id).catch(e => console.error(e));
+    const { syncProductToAlgolia } = await import("./algolia.service.js");
+    syncProductToAlgolia(product.id).catch((e) => console.error(e));
   }
 
   return product;

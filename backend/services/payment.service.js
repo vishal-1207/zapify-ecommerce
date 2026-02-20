@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import { getSellerProfile } from "./seller.service.js";
+import paginate from "../utils/paginate.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -236,10 +237,11 @@ export const handleStripeWebhook = async (event) => {
 /**
  * Fetches a seller's transaction history (i.e., completed order items).
  */
-export const getSellerTransactions = async (userId) => {
+export const getSellerTransactions = async (userId, page = 1, limit = 10) => {
   const profile = await getSellerProfile(userId);
   return paginate(
-    db.OrderItem.findAll({
+    db.OrderItem,
+    {
       where: { status: "Delivered" },
       attributes: ["id", "priceAtTimeOfPurchase", "quantity", "updatedAt"],
       include: [
@@ -249,13 +251,12 @@ export const getSellerTransactions = async (userId) => {
           attributes: [],
           include: [{ model: db.Product, as: "product", attributes: ["name"] }],
         },
-        { model: db.Order, as: "order", attributes: ["id"] },
+        { model: db.Order, attributes: ["id"] },
       ],
       order: [["updatedAt", "DESC"]],
-      limit: 100,
       raw: true,
       nest: true,
-    }),
+    },
     page,
     limit,
   );

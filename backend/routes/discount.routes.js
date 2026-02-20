@@ -3,7 +3,7 @@ import authenticate from "../middleware/auth.middleware.js";
 import csrfProtection from "../middleware/csrf.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { discountSchema } from "../utils/validationSchema.js";
-import authorizeRoles from "../middleware/authorizeRoles.middleware";
+import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 import * as discountController from "../controllers/discount.controller.js";
 
 const router = express.Router();
@@ -18,6 +18,14 @@ router
 router
   .route("/available")
   .get(authenticate, discountController.getAvailableCoupons);
+
+// Seller Deal Routes
+router.post(
+  "/seller-deal/:offerId",
+  authenticate,
+  authorizeRoles("seller"),
+  discountController.createSellerDeal,
+);
 
 router.use(authenticate, authorizeRoles("admin"));
 
@@ -37,13 +45,5 @@ router
   .delete(discountController.deleteDiscount);
 
 router.patch("/:id/toggle", discountController.toggleStatus);
-
-// Seller Deal Routes
-router.post(
-  "/seller-deal/:offerId",
-  authenticate,
-  authorizeRoles("seller"),
-  discountController.createSellerDeal,
-);
 
 export default router;

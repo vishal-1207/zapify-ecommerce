@@ -12,6 +12,7 @@ import sellerRoutes from "./routes/seller.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import brandRoutes from "./routes/brand.routes.js";
+import discountRoutes from "./routes/discount.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
 import tokenRoutes from "./routes/token.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
@@ -88,6 +89,7 @@ app.use("/api/seller", sellerRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/otp", otpRoutes);
+app.use("/api/discount", discountRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello world.");

@@ -38,7 +38,15 @@ export const getCart = async (userId) => {
 
   const offerDetails = await db.Offer.findAll({
     where: { id: offerIds },
-    attributes: ["id", "price", "stockQuantity", "condition"],
+    attributes: [
+      "id",
+      "price",
+      "stockQuantity",
+      "condition",
+      "dealPrice",
+      "dealStartDate",
+      "dealEndDate",
+    ],
     include: [
       {
         model: db.Product,
@@ -89,19 +97,37 @@ export const getCart = async (userId) => {
         redisClient.hSet(
           cartKey,
           `offer:${detail.id}`,
-          JSON.stringify({ offerId: detail.id, quantity: finalQty })
-        )
+          JSON.stringify({ offerId: detail.id, quantity: finalQty }),
+        ),
       );
+    }
+
+    // Check for active deal
+    let currentPrice = parseFloat(detail.price);
+    let isDealActive = false;
+
+    if (detail.dealPrice && detail.dealStartDate && detail.dealEndDate) {
+      const now = new Date();
+      const start = new Date(detail.dealStartDate);
+      const end = new Date(detail.dealEndDate);
+      if (now >= start && now <= end) {
+        currentPrice = parseFloat(detail.dealPrice);
+        isDealActive = true;
+      }
     }
 
     items.push({
       offerId: detail.id,
       quantity: finalQty,
       error,
-      details: detail,
+      details: {
+        ...detail.toJSON(), // Ensure we pass the plain object
+        activePrice: currentPrice,
+        isDealActive,
+      },
     });
 
-    subtotal += parseFloat(detail.price) * finalQty;
+    subtotal += currentPrice * finalQty;
   }
 
   if (updates.length > 0) Promise.all(updates).catch(() => null);
@@ -114,7 +140,7 @@ export const getCart = async (userId) => {
       const result = await discountService.validateAndCalculateDiscount(
         appliedCoupon,
         subtotal,
-        userId
+        userId,
       );
       discountAmount = result.discountAmount;
       couponDetails = result;
@@ -151,17 +177,17 @@ export const addItemToCart = async (userId, offerId, quantity) => {
     if (product) {
       // Find the cheapest offer for this product
       const cheapestOffer = await db.Offer.findOne({
-        where: { 
+        where: {
           productId: product.id,
-          stockQuantity: { [db.Sequelize.Op.gt]: 0 }
+          stockQuantity: { [db.Sequelize.Op.gt]: 0 },
         },
-        order: [['price', 'ASC']],
+        order: [["price", "ASC"]],
       });
-      
+
       if (!cheapestOffer) {
         throw new ApiError(404, "No available offers found for this product.");
       }
-      
+
       offer = cheapestOffer;
       offerId = cheapestOffer.id; // Update offerId to the actual offer ID
     } else {
@@ -181,7 +207,7 @@ export const addItemToCart = async (userId, offerId, quantity) => {
   if (offer.stockQuantity < newTotalQty) {
     throw new ApiError(
       400,
-      `Cannot add more. Total in cart (${newTotalQty}) exceeds stock.`
+      `Cannot add more. Total in cart (${newTotalQty}) exceeds stock.`,
     );
   }
 
