@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { formatCurrency } from "../../utils/currency";
 import { Loader2, CheckCircle, Tag, Package, AlertCircle } from "lucide-react";
 
@@ -40,8 +41,10 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
             {product.name}
           </h4>
           <div className="text-sm text-gray-500 mt-1 flex gap-3">
-             <span>Brand: {product.brand || "Generic"}</span>
-             <span>ID: {product.objectID?.slice(0, 8) || product.id?.slice(0, 8)}</span>
+            <span>Brand: {product.brand || "Generic"}</span>
+            <span>
+              ID: {product.objectID?.slice(0, 8) || product.id?.slice(0, 8)}
+            </span>
           </div>
         </div>
       </div>
@@ -68,11 +71,14 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
               placeholder="0.00"
             />
           </div>
-           {product.price > 0 && (
-              <p className="mt-1 text-xs text-gray-500">
-                  Lowest Offer: <span className="font-medium text-green-600">{formatCurrency(product.price)}</span>
-              </p>
-           )}
+          {product.price > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              Lowest Offer:{" "}
+              <span className="font-medium text-green-600">
+                {formatCurrency(product.price)}
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Stock */}

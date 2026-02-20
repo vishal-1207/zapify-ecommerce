@@ -19,27 +19,32 @@ import {
   ArrowLeft,
   MinusCircle,
 } from "lucide-react";
-import api from "../../api/axios";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  toggleProductStatus,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getAdminProductDetails,
-  getAllProducts,
-  getPendingProducts,
-} from "../../api/products";
+  fetchAdminProducts,
+  approveProductAction,
+  rejectProductAction,
+  toggleProductStatusAction,
+  deleteProductAction,
+} from "../../store/admin/adminSlice";
+import api from "../../api/axios";
+import { updateProduct, getAdminProductDetails } from "../../api/products";
 import { getAllCategories } from "../../api/categories";
 import { getAllBrands } from "../../api/brands";
 import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
 
 const AdminProducts = () => {
+  const dispatch = useDispatch();
+  const {
+    products,
+    loading,
+    error: reduxError,
+  } = useSelector((state) => state.admin);
+
   const [activeTab, setActiveTab] = useState("all");
-  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,24 +55,15 @@ const AdminProducts = () => {
     fetchCategoriesAndBrands();
   }, [activeTab]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let data;
-      if (activeTab === "pending") {
-        data = await getPendingProducts();
-      } else {
-        data = await getAllProducts();
-      }
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to fetch products");
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (reduxError) {
+      toast.error(reduxError);
+      setError(reduxError);
     }
+  }, [reduxError]);
+
+  const fetchProducts = () => {
+    dispatch(fetchAdminProducts(activeTab));
   };
 
   const fetchCategoriesAndBrands = async () => {
@@ -84,60 +80,39 @@ const AdminProducts = () => {
   };
 
   const handleApprove = async (productId) => {
-    try {
-      await api.patch(`/product/review/${productId}`, {
-        status: "active",
-        adminComment: "Approved by admin",
-      });
-      fetchProducts();
+    const resultAction = await dispatch(approveProductAction(productId));
+    if (approveProductAction.fulfilled.match(resultAction)) {
       toast.success("Product approved");
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to approve product");
-      toast.error(msg);
+      fetchProducts();
     }
   };
 
   const handleReject = async (productId) => {
-    if (!window.confirm("Are you sure you want to reject this product?")) return;
-    try {
-      await api.patch(`/product/review/${productId}`, {
-        status: "rejected",
-        adminComment: "Rejected by admin",
-      });
-      fetchProducts();
+    if (!window.confirm("Are you sure you want to reject this product?"))
+      return;
+    const resultAction = await dispatch(rejectProductAction(productId));
+    if (rejectProductAction.fulfilled.match(resultAction)) {
       toast.success("Product rejected");
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to reject product");
-      toast.error(msg);
+      fetchProducts();
     }
   };
 
   const handleDelete = async (productId) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    try {
-      await deleteProduct(productId);
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+    const resultAction = await dispatch(deleteProductAction(productId));
+    if (deleteProductAction.fulfilled.match(resultAction)) {
       toast.success("Product deleted");
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to delete product");
-      toast.error(msg);
     }
   };
 
   const handleToggleStatus = async (productId) => {
-    try {
-      const response = await toggleProductStatus(productId);
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId ? { ...p, isActive: response.product.isActive } : p
-        )
-      );
+    const resultAction = await dispatch(toggleProductStatusAction(productId));
+    if (toggleProductStatusAction.fulfilled.match(resultAction)) {
+      const { isActive } = resultAction.payload;
       toast.success(
-        `Product ${response.product.isActive ? "enabled" : "disabled"} successfully`
+        `Product ${isActive ? "enabled" : "disabled"} successfully`,
       );
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to toggle status");
-      toast.error(msg);
     }
   };
 
@@ -181,7 +156,7 @@ const AdminProducts = () => {
   };
 
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
@@ -204,7 +179,9 @@ const AdminProducts = () => {
             <p className="font-medium text-gray-800 line-clamp-1">
               {product.name}
             </p>
-            <p className="text-xs text-gray-500">ID: {product.id.slice(0, 8)}...</p>
+            <p className="text-xs text-gray-500">
+              ID: {product.id.slice(0, 8)}...
+            </p>
           </div>
         </div>
       ),
@@ -234,8 +211,8 @@ const AdminProducts = () => {
             product.status === "active" || product.status === "approved"
               ? "bg-green-100 text-green-800"
               : product.status === "pending"
-              ? "bg-orange-100 text-orange-800"
-              : "bg-red-100 text-red-800"
+                ? "bg-orange-100 text-orange-800"
+                : "bg-red-100 text-red-800"
           }`}
         >
           {product.status}
@@ -248,7 +225,9 @@ const AdminProducts = () => {
         <button
           onClick={() => handleToggleStatus(product.id)}
           title={
-            product.isActive ? "Disable (Hide from shop)" : "Enable (Show in shop)"
+            product.isActive
+              ? "Disable (Hide from shop)"
+              : "Enable (Show in shop)"
           }
           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
             product.isActive
@@ -352,24 +331,24 @@ const AdminProducts = () => {
         }
       />
 
-       {/* Modal */}
-       <Modal
-         isOpen={isModalOpen}
-         onClose={handleCloseModal}
-         title={editingProduct ? "Edit Product" : "Add New Product"}
-         maxWidth="max-w-2xl"
-       >
-         <ProductForm
-            initialData={editingProduct}
-            categories={categories}
-            brands={brands}
-            onSubmit={async (formData) => {
-                await handleSubmit(formData);
-            }}
-            onCancel={handleCloseModal}
-            isLoading={loading}
-            showStock={false}
-         />
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingProduct ? "Edit Product" : "Add New Product"}
+        maxWidth="max-w-2xl"
+      >
+        <ProductForm
+          initialData={editingProduct}
+          categories={categories}
+          brands={brands}
+          onSubmit={async (formData) => {
+            await handleSubmit(formData);
+          }}
+          onCancel={handleCloseModal}
+          isLoading={loading}
+          showStock={false}
+        />
       </Modal>
     </div>
   );

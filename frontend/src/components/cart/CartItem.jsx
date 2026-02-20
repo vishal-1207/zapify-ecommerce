@@ -9,9 +9,16 @@ const CartItem = ({ item }) => {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-4">
       {/* Image */}
-      <Link to={`/product/${item.slug}`} className="w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden p-2">
+      <Link
+        to={`/product/${item.slug}`}
+        className="w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden p-2"
+      >
         <img
-          src={item.media?.[0]?.url || item.image || "https://placehold.co/400?text=No+Image"}
+          src={
+            item.media?.[0]?.url ||
+            item.image ||
+            "https://placehold.co/400?text=No+Image"
+          }
           alt={item.name}
           className="w-full h-full object-contain mix-blend-multiply"
         />
@@ -19,14 +26,43 @@ const CartItem = ({ item }) => {
 
       {/* Details */}
       <div className="flex-grow text-center sm:text-left">
-        <Link to={`/product/${item.slug}`} className="font-bold text-gray-900 hover:text-indigo-600 transition line-clamp-1">
+        <Link
+          to={`/product/${item.slug}`}
+          className="font-bold text-gray-900 hover:text-indigo-600 transition line-clamp-1"
+        >
           {item.name}
         </Link>
         <p className="text-sm text-gray-500 mb-2">
-           {item.category?.name || "Category"}
+          {item.category?.name || "Category"}
         </p>
-        <div className="font-bold text-indigo-600">
-           {formatCurrency(Number(item.price || 0))}
+        <div className="flex flex-col">
+          <div className="font-bold text-indigo-600">
+            {formatCurrency(Number(item.price || 0))}
+          </div>
+
+          {Number(item.price) < Number(item.originalPrice) && (
+            <div className="text-xs text-gray-500">
+              <span className="line-through mr-1">
+                {formatCurrency(Number(item.originalPrice || 0))}
+              </span>
+              <span className="text-green-600 font-bold">
+                {Math.round(
+                  ((Number(item.originalPrice) - Number(item.price)) /
+                    Number(item.originalPrice)) *
+                    100,
+                )}
+                % off
+              </span>
+            </div>
+          )}
+
+          {item.isDealActive && (
+            <div className="mt-1">
+              <span className="text-xs text-red-600 font-bold bg-red-50 px-1 rounded border border-red-100">
+                Lightning Deal
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -56,9 +92,9 @@ const CartItem = ({ item }) => {
 
       {/* Subtotal & Remove */}
       <div className="flex items-center gap-4 sm:ml-4">
-          <div className="hidden sm:block font-bold text-gray-900 w-20 text-right">
-              {formatCurrency((Number(item.price) || 0) * item.qty)}
-          </div>
+        <div className="hidden sm:block font-bold text-gray-900 w-20 text-right">
+          {formatCurrency((Number(item.price) || 0) * item.qty)}
+        </div>
 
         {/* Remove Button */}
         <button

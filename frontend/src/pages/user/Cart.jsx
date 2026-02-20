@@ -60,15 +60,20 @@ const Cart = () => {
               ))}
             </div>
           </div>
-            <Link to="/shop" className="inline-flex items-center gap-2 mt-6 text-indigo-600 font-bold hover:underline">
-                <ArrowLeft size={18} /> Continue Shopping
-            </Link>
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 mt-6 text-indigo-600 font-bold hover:underline"
+          >
+            <ArrowLeft size={18} /> Continue Shopping
+          </Link>
         </div>
 
         {/* Order Summary */}
         <div className="lg:w-1/3">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Order Summary</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">
+              Order Summary
+            </h2>
 
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-gray-600">
@@ -97,10 +102,10 @@ const Cart = () => {
               Proceed to Checkout
             </button>
             <div className="flex justify-center gap-4 text-gray-400">
-                 {/* Payment Icons Placeholder */}
-                 <div className="w-8 h-5 bg-gray-100 rounded"></div>
-                 <div className="w-8 h-5 bg-gray-100 rounded"></div>
-                 <div className="w-8 h-5 bg-gray-100 rounded"></div>
+              {/* Payment Icons Placeholder */}
+              <div className="w-8 h-5 bg-gray-100 rounded"></div>
+              <div className="w-8 h-5 bg-gray-100 rounded"></div>
+              <div className="w-8 h-5 bg-gray-100 rounded"></div>
             </div>
           </div>
         </div>

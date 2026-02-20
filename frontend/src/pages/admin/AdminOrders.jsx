@@ -1,29 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { formatCurrency } from "../../utils/currency";
-import api from "../../api/axios";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAdminOrders } from "../../store/admin/adminSlice";
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const dispatch = useDispatch();
+  const {
+    orders,
+    loading,
+    ordersTotalPages: totalPages,
+    error: reduxError,
+  } = useSelector((state) => state.admin);
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/admin/orders?page=${page}&limit=10`);
-      setOrders(res.data.result || []);
-      setTotalPages(res.data.totalPages || 1);
-    } catch (error) {
-      console.error("Failed to fetch orders", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetchOrders();
-  }, [page]);
+    dispatch(fetchAdminOrders({ page, limit: 10 }));
+  }, [page, dispatch]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -52,19 +45,26 @@ const AdminOrders = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-4 font-mono text-xs text-indigo-600">
                       #{order.id.slice(0, 8)}
                     </td>
                     <td className="px-6 py-4">
                       <div>
                         {order.user ? (
-                           <>
-                             <p className="font-medium text-gray-800">{order.user.fullname}</p>
-                             <p className="text-xs text-gray-500">{order.user.email}</p>
-                           </>
+                          <>
+                            <p className="font-medium text-gray-800">
+                              {order.user.fullname}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {order.user.email}
+                            </p>
+                          </>
                         ) : (
-                            <span className="text-gray-400">Guest / Deleted</span>
+                          <span className="text-gray-400">Guest / Deleted</span>
                         )}
                       </div>
                     </td>
@@ -80,8 +80,8 @@ const AdminOrders = () => {
                           order.status === "delivered"
                             ? "bg-green-100 text-green-800"
                             : order.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-blue-100 text-blue-800"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-blue-100 text-blue-800"
                         }`}
                       >
                         {order.status}
@@ -100,26 +100,26 @@ const AdminOrders = () => {
         )}
       </div>
 
-       {/* Pagination */}
-       {totalPages > 1 && (
+      {/* Pagination */}
+      {totalPages > 1 && (
         <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
-            <button 
-                disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-                Prev
-            </button>
-            <span className="px-3 py-1 text-sm text-gray-600">
-                Page {page} of {totalPages}
-            </span>
-            <button 
-                disabled={page === totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-                Next
-            </button>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="px-3 py-1 text-sm text-gray-600">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

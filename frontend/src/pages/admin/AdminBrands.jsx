@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../../components/common/DataTable";
 import Modal from "../../components/common/Modal";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  getAllBrands,
-  createBrand,
-  updateBrand,
-  deleteBrand,
-  toggleBrandStatus,
-} from "../../api/brands";
+  fetchAdminBrands,
+  toggleBrandStatusAction,
+  deleteBrandAction,
+} from "../../store/admin/adminSlice";
+import { createBrand, updateBrand } from "../../api/brands";
 import {
   Plus,
   Edit,
@@ -20,8 +20,13 @@ import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
 
 const AdminBrands = () => {
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const {
+    brands,
+    loading,
+    error: reduxError,
+  } = useSelector((state) => state.admin);
+
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,47 +44,30 @@ const AdminBrands = () => {
     fetchBrands();
   }, []);
 
-  const fetchBrands = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAllBrands();
-      setBrands(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to fetch brands");
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (reduxError) {
+      toast.error(reduxError);
+      setError(reduxError);
     }
+  }, [reduxError]);
+
+  const fetchBrands = () => {
+    dispatch(fetchAdminBrands());
   };
 
   const handleToggleStatus = async (id) => {
-    try {
-      const response = await toggleBrandStatus(id);
-      setBrands((prev) =>
-        prev.map((brand) =>
-          brand.id === id ? { ...brand, isActive: response.brand.isActive } : brand
-        )
-      );
-      toast.success(
-        `Brand ${response.brand.isActive ? "enabled" : "disabled"} successfully`
-      );
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to toggle status");
-      toast.error(msg);
+    const resultAction = await dispatch(toggleBrandStatusAction(id));
+    if (toggleBrandStatusAction.fulfilled.match(resultAction)) {
+      const { isActive } = resultAction.payload;
+      toast.success(`Brand ${isActive ? "enabled" : "disabled"} successfully`);
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this brand?")) return;
-    try {
-      await deleteBrand(id);
-      setBrands((prev) => prev.filter((brand) => brand.id !== id));
+    const resultAction = await dispatch(deleteBrandAction(id));
+    if (deleteBrandAction.fulfilled.match(resultAction)) {
       toast.success("Brand deleted successfully");
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to delete brand");
-      toast.error(msg);
     }
   };
 
@@ -141,13 +129,13 @@ const AdminBrands = () => {
   };
 
   const filteredBrands = brands.filter((brand) =>
-    brand.name.toLowerCase().includes(search.toLowerCase())
+    brand.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
     {
       header: "Logo",
-      render: (brand) => (
+      render: (brand) =>
         brand.media?.url ? (
           <img
             src={brand.media.url}
@@ -158,21 +146,20 @@ const AdminBrands = () => {
           <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400">
             <Upload size={16} />
           </div>
-        )
-      )
+        ),
     },
     {
       header: "Name",
       accessor: "name",
-      className: "font-medium text-gray-900"
+      className: "font-medium text-gray-900",
     },
     {
       header: "Description",
       render: (brand) => (
-         <div className="max-w-xs truncate text-gray-500 text-sm">
-            {brand.description || "-"}
-         </div>
-      )
+        <div className="max-w-xs truncate text-gray-500 text-sm">
+          {brand.description || "-"}
+        </div>
+      ),
     },
     {
       header: "Status",
@@ -192,7 +179,7 @@ const AdminBrands = () => {
           )}
           {brand.isActive ? "Active" : "Disabled"}
         </button>
-      )
+      ),
     },
     {
       header: "Actions",
@@ -214,8 +201,8 @@ const AdminBrands = () => {
             <Trash2 size={18} />
           </button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (

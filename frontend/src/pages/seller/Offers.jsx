@@ -64,11 +64,15 @@ const Offers = () => {
     try {
       const updatedData = {
         dealPrice: dealForm.dealPrice || null,
-        dealStartDate: dealForm.dealStartDate || null,
-        dealEndDate: dealForm.dealEndDate || null,
+        dealStartDate: dealForm.dealStartDate
+          ? new Date(dealForm.dealStartDate).toISOString()
+          : null,
+        dealEndDate: dealForm.dealEndDate
+          ? new Date(dealForm.dealEndDate).toISOString()
+          : null,
       };
 
-      await updateOffer(selectedOffer.id, updatedData);
+      await createSellerDeal(selectedOffer.id, updatedData);
 
       // Update local state
       setOffers(
@@ -177,9 +181,15 @@ const Offers = () => {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                       On Deal: {formatCurrency(offer.dealPrice)}
                     </span>
-                  ) : offer.dealPrice ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      Scheduled/Ended
+                  ) : offer.dealPrice &&
+                    new Date(offer.dealStartDate) > new Date() ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Scheduled
+                    </span>
+                  ) : offer.dealPrice &&
+                    new Date(offer.dealEndDate) < new Date() ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Ended
                     </span>
                   ) : (
                     <span className="text-gray-400 text-sm">-</span>

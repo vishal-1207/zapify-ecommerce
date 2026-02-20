@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import Modal from "../../components/common/Modal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import DataTable from "../../components/common/DataTable";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  getAllCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  toggleCategoryStatus,
-} from "../../api/categories";
+  fetchAdminCategories,
+  toggleCategoryStatusAction,
+  deleteCategoryAction,
+} from "../../store/admin/adminSlice";
+import { createCategory, updateCategory } from "../../api/categories";
 import {
   Plus,
   Edit,
@@ -22,16 +22,21 @@ import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
 
 const AdminCategories = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const {
+    categories,
+    loading,
+    error: reduxError,
+  } = useSelector((state) => state.admin);
+
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteCategoryId, setDeleteCategoryId] = useState(null);
-  
+
   const [editingCategory, setEditingCategory] = useState(null);
   const [submissionLoading, setSubmissionLoading] = useState(false);
   const [deletionLoading, setDeletionLoading] = useState(false);
@@ -47,35 +52,24 @@ const AdminCategories = () => {
     fetchCategories();
   }, []);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAllCategories();
-      setCategories(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to fetch categories");
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (reduxError) {
+      toast.error(reduxError);
+      setError(reduxError);
     }
+  }, [reduxError]);
+
+  const fetchCategories = () => {
+    dispatch(fetchAdminCategories());
   };
 
   const handleToggleStatus = async (id) => {
-    try {
-      const response = await toggleCategoryStatus(id);
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === id ? { ...cat, isActive: response.category.isActive } : cat
-        )
-      );
+    const resultAction = await dispatch(toggleCategoryStatusAction(id));
+    if (toggleCategoryStatusAction.fulfilled.match(resultAction)) {
+      const { isActive } = resultAction.payload;
       toast.success(
-        `Category ${response.category.isActive ? "enabled" : "disabled"} successfully`
+        `Category ${isActive ? "enabled" : "disabled"} successfully`,
       );
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to toggle status");
-      toast.error(msg);
     }
   };
 
@@ -86,20 +80,15 @@ const AdminCategories = () => {
 
   const handleConfirmDelete = async () => {
     if (!deleteCategoryId) return;
-    
-    try {
-      setDeletionLoading(true);
-      await deleteCategory(deleteCategoryId);
-      setCategories((prev) => prev.filter((cat) => cat.id !== deleteCategoryId));
+
+    setDeletionLoading(true);
+    const resultAction = await dispatch(deleteCategoryAction(deleteCategoryId));
+    if (deleteCategoryAction.fulfilled.match(resultAction)) {
       toast.success("Category deleted successfully");
       setIsDeleteModalOpen(false);
-    } catch (error) {
-      const msg = handleApiError(error, "Failed to delete category");
-      toast.error(msg);
-    } finally {
-      setDeletionLoading(false);
-      setDeleteCategoryId(null);
     }
+    setDeletionLoading(false);
+    setDeleteCategoryId(null);
   };
 
   const handleOpenModal = (category = null) => {
@@ -138,7 +127,7 @@ const AdminCategories = () => {
     if (formData.image) {
       data.append("image", formData.image);
     }
-    
+
     try {
       setSubmissionLoading(true);
       if (editingCategory) {
@@ -159,13 +148,13 @@ const AdminCategories = () => {
   };
 
   const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
+    cat.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
     {
       header: "Image",
-      render: (cat) => (
+      render: (cat) =>
         cat.media?.url ? (
           <img
             src={cat.media.url}
@@ -176,13 +165,12 @@ const AdminCategories = () => {
           <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400">
             <Upload size={16} />
           </div>
-        )
-      )
+        ),
     },
     {
       header: "Name",
       accessor: "name",
-      className: "font-medium text-gray-900"
+      className: "font-medium text-gray-900",
     },
     {
       header: "Status",
@@ -195,14 +183,10 @@ const AdminCategories = () => {
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
-          {cat.isActive ? (
-            <ToggleRight size={16} />
-          ) : (
-            <ToggleLeft size={16} />
-          )}
+          {cat.isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
           {cat.isActive ? "Active" : "Disabled"}
         </button>
-      )
+      ),
     },
     {
       header: "Actions",
@@ -224,8 +208,8 @@ const AdminCategories = () => {
             <Trash2 size={18} />
           </button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -256,81 +240,83 @@ const AdminCategories = () => {
         title={editingCategory ? "Edit Category" : "Add New Category"}
         maxWidth="max-w-md"
       >
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-                  placeholder="e.g. Smartphones"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category Name
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              placeholder="e.g. Smartphones"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cover Image
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-indigo-500 transition-colors cursor-pointer relative group">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="h-32 object-contain rounded-lg"
                 />
-              </div>
+              ) : (
+                <>
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-100 transition">
+                    <Upload size={24} />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    SVG, PNG, JPG (max. 800x400px)
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cover Image
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-indigo-500 transition-colors cursor-pointer relative group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="h-32 object-contain rounded-lg"
-                    />
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-100 transition">
-                        <Upload size={24} />
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        SVG, PNG, JPG (max. 800x400px)
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  disabled={submissionLoading}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submissionLoading}
-                  className="flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {submissionLoading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      {editingCategory ? "Saving..." : "Creating..."}
-                    </>
-                  ) : (
-                    editingCategory ? "Update Category" : "Create Category"
-                  )}
-                </button>
-              </div>
-            </form>
+          <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              disabled={submissionLoading}
+              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submissionLoading}
+              className="flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submissionLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  {editingCategory ? "Saving..." : "Creating..."}
+                </>
+              ) : editingCategory ? (
+                "Update Category"
+              ) : (
+                "Create Category"
+              )}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}

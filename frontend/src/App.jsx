@@ -1,4 +1,6 @@
 import React, { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { loadUser } from "./store/auth/authSlice";
 import {
   useSearchParams,
   BrowserRouter as Router,
@@ -8,8 +10,8 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
+import { useAuth } from "./context/AuthContext";
+import { useCart } from "./context/CartContext";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import VerificationBanner from "./components/layout/VerificationBanner";
@@ -50,6 +52,7 @@ import SellerLayout from "./pages/seller/SellerLayout";
 import SellerDashboard from "./pages/seller/SellerDashboard";
 import SellerProducts from "./pages/seller/SellerProducts";
 import SellerOrders from "./pages/seller/SellerOrders";
+import SellerPayments from "./pages/seller/SellerPayments";
 import Offers from "./pages/seller/Offers";
 import AddProduct from "./pages/seller/AddProduct";
 import BrandStore from "./pages/user/BrandStore";
@@ -154,145 +157,138 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(loadUser());
+  }, [dispatch]);
+
   return (
     <ErrorBoundary>
       <Toaster position="top-right" />
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <SocialLoginHandler />
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <VerificationBanner />
+      <Router>
+        <SocialLoginHandler />
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <VerificationBanner />
 
-              <main className="flex-grow">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/product/:slug" element={<ProductDetail />} />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:slug" element={<ProductDetail />} />
 
-                  {/* Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/store/:slug" element={<BrandStore />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route
-                    path="/seller/register"
-                    element={
-                      <ProtectedRoute>
-                        <SellerRegister />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/verify-email"
-                    element={
-                      <ProtectedRoute>
-                        <VerifyEmail />
-                      </ProtectedRoute>
-                    }
-                  />
+              {/* Auth Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/store/:slug" element={<BrandStore />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/seller/register"
+                element={
+                  <ProtectedRoute>
+                    <SellerRegister />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/verify-email"
+                element={
+                  <ProtectedRoute>
+                    <VerifyEmail />
+                  </ProtectedRoute>
+                }
+              />
 
-                  {/* User Protected Routes */}
-                  <Route path="/cart" element={<Cart />} />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute>
-                        <Checkout />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/payment"
-                    element={
-                      <ProtectedRoute>
-                        <Payment />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/order-success/:orderId"
-                    element={
-                      <ProtectedRoute>
-                        <OrderSuccess />
-                      </ProtectedRoute>
-                    }
-                  />
+              {/* User Protected Routes */}
+              <Route path="/cart" element={<Cart />} />
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/payment"
+                element={
+                  <ProtectedRoute>
+                    <Payment />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/order-success/:orderId"
+                element={
+                  <ProtectedRoute>
+                    <OrderSuccess />
+                  </ProtectedRoute>
+                }
+              />
 
-                  {/* Account Routes */}
-                  <Route
-                    path="/account"
-                    element={
-                      <ProtectedRoute>
-                        <AccountLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Profile />} />
-                    <Route path="orders" element={<Orders />} />
-                    <Route path="orders/:orderId" element={<OrderDetail />} />
-                    <Route path="addresses" element={<Address />} />
-                    <Route path="settings" element={<Settings />} />
-                  </Route>
+              {/* Account Routes */}
+              <Route
+                path="/account"
+                element={
+                  <ProtectedRoute>
+                    <AccountLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Profile />} />
+                <Route path="orders" element={<Orders />} />
+                <Route path="orders/:orderId" element={<OrderDetail />} />
+                <Route path="addresses" element={<Address />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
 
-                  {/* Seller Routes */}
-                  <Route
-                    path="/seller"
-                    element={
-                      <SellerRoute>
-                        <SellerLayout />
-                      </SellerRoute>
-                    }
-                  >
-                    <Route
-                      index
-                      element={<Navigate to="dashboard" replace />}
-                    />
-                    <Route path="dashboard" element={<SellerDashboard />} />
-                    <Route path="products" element={<SellerProducts />} />
-                    <Route path="products/add" element={<AddProduct />} />
-                    <Route path="orders" element={<SellerOrders />} />
-                    <Route path="offers" element={<Offers />} />
-                    <Route
-                      path="payments"
-                      element={<Placeholder title="Seller Payments" />}
-                    />
-                  </Route>
+              {/* Seller Routes */}
+              <Route
+                path="/seller"
+                element={
+                  <SellerRoute>
+                    <SellerLayout />
+                  </SellerRoute>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<SellerDashboard />} />
+                <Route path="products" element={<SellerProducts />} />
+                <Route path="products/add" element={<AddProduct />} />
+                <Route path="orders" element={<SellerOrders />} />
+                <Route path="offers" element={<Offers />} />
+                <Route path="payments" element={<SellerPayments />} />
+              </Route>
 
-                  {/* Admin Routes */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminLayout />
-                      </AdminRoute>
-                    }
-                  >
-                    <Route
-                      index
-                      element={<Navigate to="dashboard" replace />}
-                    />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="products" element={<AdminProducts />} />
-                    <Route path="categories" element={<AdminCategories />} />
-                    <Route path="brands" element={<AdminBrands />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="reviews" element={<AdminReviews />} />
-                  </Route>
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="brands" element={<AdminBrands />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="reviews" element={<AdminReviews />} />
+              </Route>
 
-                  {/* Fallback */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </main>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
 
-              <Footer />
-            </div>
-          </Router>
-        </CartProvider>
-      </AuthProvider>
+          <Footer />
+        </div>
+      </Router>
     </ErrorBoundary>
   );
 }

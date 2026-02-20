@@ -10,36 +10,36 @@ import {
   Package,
   XCircle,
 } from "lucide-react";
-import { getSellerOrders, updateSellerOrderItemStatus } from "../../api/seller";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchSellerOrders,
+  updateOrderStatusAction,
+} from "../../store/seller/sellerSlice";
 import { toast } from "react-hot-toast";
 import debounce from "lodash/debounce";
 
 const SellerOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const {
+    orders,
+    loading,
+    ordersTotalPages,
+    error: reduxError,
+  } = useSelector((state) => state.seller);
+
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getSellerOrders({
-        page,
-        limit: 10,
-        search,
-        status: statusFilter,
-      });
-      setOrders(data.orders);
-      setTotalPages(data.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch orders", error);
-      toast.error("Failed to load orders");
-    } finally {
-      setLoading(false);
+  const fetchOrders = useCallback(() => {
+    dispatch(fetchSellerOrders({ page, search, status: statusFilter }));
+  }, [dispatch, page, search, statusFilter]);
+
+  useEffect(() => {
+    if (reduxError) {
+      toast.error(reduxError);
     }
-  }, [page, search, statusFilter]);
+  }, [reduxError]);
 
   useEffect(() => {
     fetchOrders();
@@ -51,12 +51,12 @@ const SellerOrders = () => {
   }, 500);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
-    try {
-      await updateSellerOrderItemStatus(orderId, newStatus);
+    const resultAction = await dispatch(
+      updateOrderStatusAction({ orderId, newStatus }),
+    );
+    if (updateOrderStatusAction.fulfilled.match(resultAction)) {
       toast.success(`Order status updated to ${newStatus}`);
-      fetchOrders(); // Refresh to show latest state
-    } catch (error) {
-      console.error(error);
+    } else {
       toast.error("Failed to update status");
     }
   };
@@ -203,7 +203,7 @@ const SellerOrders = () => {
         emptyMessage="No orders found."
         pagination={{
           currentPage: page,
-          totalPages: totalPages,
+          totalPages: ordersTotalPages,
           onPageChange: setPage,
         }}
         filters={
