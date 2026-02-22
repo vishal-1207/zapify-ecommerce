@@ -5,6 +5,12 @@ import {
   toggleProductStatus,
   deleteProduct,
 } from "../../api/products";
+import {
+  getAllCategories,
+  toggleCategoryStatus,
+  deleteCategory,
+} from "../../api/categories";
+import { getAllBrands, toggleBrandStatus, deleteBrand } from "../../api/brands";
 import api from "../../api/axios";
 
 export const fetchAdminProducts = createAsyncThunk(
@@ -162,9 +168,57 @@ export const fetchAdminOrders = createAsyncThunk(
       const res = await api.get(
         `/admin/orders?page=${page}&limit=${limit || 10}`,
       );
-      return res.data; // { result: [], totalPages }
+      return res.data;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch orders");
+    }
+  },
+);
+
+export const fetchOrderDetails = createAsyncThunk(
+  "admin/fetchOrderDetails",
+  async (orderId, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/admin/orders/${orderId}`);
+      return res.data.order;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to fetch order details");
+    }
+  },
+);
+
+export const updateOrderStatusAction = createAsyncThunk(
+  "admin/updateOrderStatus",
+  async ({ orderId, status }, { rejectWithValue }) => {
+    try {
+      const res = await api.patch(`/admin/orders/${orderId}/status`, {
+        status,
+      });
+      return res.data.order;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to update order status");
+    }
+  },
+);
+
+export const refundOrderAction = createAsyncThunk(
+  "admin/refundOrder",
+  async (
+    { orderId, amount = null, reason = "requested_by_customer" },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await api.post(`/payment/${orderId}/refund`, {
+        amount,
+        reason,
+      });
+      return res.data.data.payment;
+    } catch (error) {
+      return rejectWithValue(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to initiate refund",
+      );
     }
   },
 );
@@ -209,6 +263,33 @@ export const deleteUserAction = createAsyncThunk(
   },
 );
 
+export const requestUserEditOtpAction = createAsyncThunk(
+  "admin/requestUserEditOtp",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/admin/users/${userId}/request-edit-otp`);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to request OTP");
+    }
+  },
+);
+
+export const updateUserWithOtpAction = createAsyncThunk(
+  "admin/updateUserWithOtp",
+  async ({ userId, otp, updateData }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/admin/users/${userId}/edit-with-otp`, {
+        otp,
+        updateData,
+      });
+      return res.data.user;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to update user profile");
+    }
+  },
+);
+
 // --- Reviews ---
 export const fetchPendingReviews = createAsyncThunk(
   "admin/fetchPendingReviews",
@@ -240,6 +321,7 @@ const initialState = {
   categories: [],
   brands: [],
   orders: [],
+  selectedOrder: null,
   ordersTotalPages: 1,
   users: [],
   usersTotalPages: 1,
@@ -342,12 +424,33 @@ const adminSlice = createSlice({
       })
       .addCase(fetchAdminOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload.result || [];
+        state.orders = action.payload.data || [];
         state.ordersTotalPages = action.payload.totalPages || 1;
       })
       .addCase(fetchAdminOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Fetch Order Details
+      .addCase(fetchOrderDetails.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchOrderDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedOrder = action.payload;
+      })
+      .addCase(fetchOrderDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update Order Status
+      .addCase(updateOrderStatusAction.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.orders.findIndex((o) => o.id === updated.id);
+        if (idx !== -1) state.orders[idx].status = updated.status;
+        if (state.selectedOrder?.id === updated.id) {
+          state.selectedOrder = updated;
+        }
       })
       // Fetch Users
       .addCase(fetchAdminUsers.pending, (state) => {
@@ -356,7 +459,7 @@ const adminSlice = createSlice({
       })
       .addCase(fetchAdminUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload.result || [];
+        state.users = action.payload.data || [];
         state.usersTotalPages = action.payload.totalPages || 1;
       })
       .addCase(fetchAdminUsers.rejected, (state, action) => {
@@ -374,6 +477,14 @@ const adminSlice = createSlice({
       // Delete User
       .addCase(deleteUserAction.fulfilled, (state, action) => {
         state.users = state.users.filter((u) => u.id !== action.payload);
+      })
+      // Update User With OTP
+      .addCase(updateUserWithOtpAction.fulfilled, (state, action) => {
+        const updatedUser = action.payload;
+        const index = state.users.findIndex((u) => u.id === updatedUser.id);
+        if (index !== -1) {
+          state.users[index] = updatedUser;
+        }
       })
       // Fetch Pending Reviews
       .addCase(fetchPendingReviews.pending, (state) => {

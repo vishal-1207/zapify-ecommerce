@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatCurrency } from "../../utils/currency";
 import DataTable from "../../components/common/DataTable";
 import {
@@ -27,8 +28,9 @@ const SellerOrders = () => {
     error: reduxError,
   } = useSelector((state) => state.seller);
 
+  const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState("");
 
   const fetchOrders = useCallback(() => {
@@ -62,41 +64,55 @@ const SellerOrders = () => {
   };
 
   const getStatusBadge = (status) => {
+    const base =
+      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap";
     switch (status) {
       case "pending":
         return (
-          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-            <Clock size={12} /> Pending
+          <span className={`${base} bg-yellow-100 text-yellow-800`}>
+            <Clock size={11} /> Pending
           </span>
         );
       case "processing":
         return (
-          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-            <Package size={12} /> Processing
+          <span className={`${base} bg-blue-100 text-blue-800`}>
+            <Package size={11} /> Processing
           </span>
         );
       case "shipped":
         return (
-          <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-            <Truck size={12} /> Shipped
+          <span className={`${base} bg-indigo-100 text-indigo-800`}>
+            <Truck size={11} /> Shipped
           </span>
         );
       case "delivered":
         return (
-          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-            <CheckCircle size={12} /> Delivered
+          <span className={`${base} bg-green-100 text-green-800`}>
+            <CheckCircle size={11} /> Delivered
           </span>
         );
       case "cancelled":
         return (
-          <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-            <XCircle size={12} /> Cancelled
+          <span className={`${base} bg-red-100 text-red-800`}>
+            <XCircle size={11} /> Cancelled
+          </span>
+        );
+      case "return_requested":
+        return (
+          <span className={`${base} bg-orange-100 text-orange-700`}>
+            <XCircle size={11} /> Return Requested
+          </span>
+        );
+      case "refunded":
+        return (
+          <span className={`${base} bg-purple-100 text-purple-700`}>
+            <CheckCircle size={11} /> Refunded
           </span>
         );
       default:
         return (
-          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">
-            {status}
+          <span className={`${base} bg-gray-100 text-gray-700 capitalize`}>
+            {status?.replace(/_/g, " ") ?? "—"}
           </span>
         );
     }

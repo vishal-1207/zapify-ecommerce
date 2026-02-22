@@ -42,27 +42,34 @@ const CategoryCarousel = ({ categories = [] }) => {
           return (
             <Link
               key={cat.id}
-              to={`/shop?category=${cat.id}`}
+              to={`/shop?category=${cat.slug}`}
               className="min-w-[260px] md:min-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition duration-300 group/card snap-start flex flex-col justify-between"
             >
               <div className="flex justify-between items-start mb-6">
-                <h3 className="text-xl font-bold text-gray-800 line-clamp-1" title={cat.name}>
+                <h3
+                  className="text-xl font-bold text-gray-800 line-clamp-1"
+                  title={cat.name}
+                >
                   {cat.name}
                 </h3>
                 <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover/card:bg-indigo-600 group-hover/card:text-white transition-colors duration-300 shadow-sm w-16 h-16 flex items-center justify-center overflow-hidden">
                   {cat.media && cat.media.url ? (
-                     <img src={cat.media.url} alt="IMG" className="w-full h-full object-contain" />
+                    <img
+                      src={cat.media.url}
+                      alt="IMG"
+                      className="w-full h-full object-contain"
+                    />
                   ) : (
-                     <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-xs text-indigo-400 font-bold">
-                        IMG
-                     </div>
+                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-xs text-indigo-400 font-bold">
+                      IMG
+                    </div>
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                   Discover the best in {cat.name}.
+                  Discover the best in {cat.name}.
                 </p>
                 <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm group-hover/card:gap-3 transition-all">
                   Shop Now <ArrowIcon />

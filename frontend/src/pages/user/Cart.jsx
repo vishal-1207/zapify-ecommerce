@@ -7,7 +7,14 @@ import { useAuth } from "../../context/AuthContext";
 import { formatCurrency } from "../../utils/currency";
 
 const Cart = () => {
-  const { cart, cartTotal, cartCount } = useCart();
+  const {
+    cart,
+    cartTotal,
+    cartMrpTotal,
+    cartSellerPriceTotal,
+    cartDiscount,
+    cartCount,
+  } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -75,7 +82,21 @@ const Cart = () => {
               Order Summary
             </h2>
 
-            <div className="space-y-4 mb-6">
+            <div className="space-y-2 mb-6">
+              <div className="flex justify-between text-gray-600">
+                <span>MRP.</span>
+                <span>{formatCurrency(cartMrpTotal)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Selling Price</span>
+                <span>{formatCurrency(cartSellerPriceTotal)}</span>
+              </div>
+              {cartDiscount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Total Discount</span>
+                  <span>-{formatCurrency(cartDiscount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
                 <span>{formatCurrency(cartTotal)}</span>
@@ -84,14 +105,10 @@ const Cart = () => {
                 <span>Shipping</span>
                 <span className="text-green-600 font-bold">Free</span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tax Estimate</span>
-                <span>{formatCurrency(cartTotal * 0.08)}</span>
-              </div>
               <div className="h-px bg-gray-100 my-4"></div>
               <div className="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>
-                <span>{formatCurrency(cartTotal * 1.08)}</span>
+                <span>{formatCurrency(cartTotal)}</span>
               </div>
             </div>
 

@@ -35,6 +35,8 @@ const SellerPayments = () => {
     );
   }
 
+  console.log(transactions);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -94,11 +96,10 @@ const SellerPayments = () => {
                     </td>
                     <td className="px-6 py-4">
                       <Link
-                        to={`/seller/orders`}
-                        className="text-indigo-600 hover:text-indigo-800 font-medium"
+                        to={`/seller/orders?search=${txn.Order?.orderId || txn.Order?.id}`}
+                        className="text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2"
                       >
-                        #
-                        {txn.orderId?.slice(0, 8) || txn.order?.id?.slice(0, 8)}
+                        #{txn.Order?.orderId || txn.Order?.id?.slice(0, 8)}
                       </Link>
                     </td>
                     <td className="px-6 py-4 text-gray-700">{txn.quantity}x</td>

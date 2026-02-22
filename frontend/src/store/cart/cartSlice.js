@@ -42,6 +42,7 @@ export const fetchCartFromBackend = createAsyncThunk(
         offerId: item.offerId,
         name: item.details.product.name,
         slug: item.details.product.slug,
+        mrp: item.details.product.price,
         price: item.details.activePrice || item.details.price,
         originalPrice: item.details.price,
         isDealActive: item.details.isDealActive,

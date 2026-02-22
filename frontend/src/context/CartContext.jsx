@@ -66,6 +66,38 @@ export const useCart = () => {
     [cart],
   );
 
+  const cartMrpTotal = useMemo(
+    () =>
+      cart.reduce(
+        (sum, item) =>
+          sum +
+          Math.max(
+            Number(item.mrp) || 0,
+            Number(item.originalPrice) || 0,
+            Number(item.price) || 0,
+          ) *
+            item.qty,
+        0,
+      ),
+    [cart],
+  );
+
+  const cartSellerPriceTotal = useMemo(
+    () =>
+      cart.reduce(
+        (sum, item) =>
+          sum +
+          (Number(item.originalPrice) || Number(item.price) || 0) * item.qty,
+        0,
+      ),
+    [cart],
+  );
+
+  const cartDiscount = useMemo(
+    () => cartMrpTotal - cartTotal,
+    [cartMrpTotal, cartTotal],
+  );
+
   const cartCount = useMemo(
     () => cart.reduce((sum, item) => sum + item.qty, 0),
     [cart],
@@ -83,6 +115,9 @@ export const useCart = () => {
     removeFromCart,
     updateQty,
     cartTotal,
+    cartMrpTotal,
+    cartSellerPriceTotal,
+    cartDiscount,
     cartCount,
     loading,
     refreshCart,

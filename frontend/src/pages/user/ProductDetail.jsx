@@ -25,6 +25,7 @@ const CountdownTimer = ({ targetDate }) => {
       const difference = +new Date(targetDate) - +new Date();
       if (difference > 0) {
         return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
@@ -36,11 +37,12 @@ const CountdownTimer = ({ targetDate }) => {
     const updateTimer = () => {
       const timeLeftObj = calculateTimeLeft();
       if (timeLeftObj) {
-        setTimeLeft(
-          `${String(timeLeftObj.hours).padStart(2, "0")}:${String(
-            timeLeftObj.minutes,
-          ).padStart(2, "0")}:${String(timeLeftObj.seconds).padStart(2, "0")}`,
-        );
+        const parts = [];
+        if (timeLeftObj.days > 0) parts.push(`${timeLeftObj.days}d`);
+        parts.push(`${String(timeLeftObj.hours).padStart(2, "0")}h`);
+        parts.push(`${String(timeLeftObj.minutes).padStart(2, "0")}m`);
+        parts.push(`${String(timeLeftObj.seconds).padStart(2, "0")}s`);
+        setTimeLeft(parts.join(" "));
       } else {
         setTimeLeft("EXPIRED");
         return false;

@@ -29,7 +29,6 @@ export const getSellerProfile = async () => {
   return response.data.data?.profile || response.data.data;
 };
 
-// Start Product Suggestion APIs (using the new route I added and existing one)
 export const getMyProductSuggestions = async (params = {}) => {
   const response = await api.get("/product/suggestions", { params });
   return response.data.data?.suggestions || response.data.data;
@@ -46,7 +45,6 @@ export const suggestNewProduct = async (sellerId, formData) => {
   return response.data.data;
 };
 
-// Offer Management APIs
 export const getSellerOffers = async (params) => {
   const response = await api.get("/seller/offers", { params });
   return response.data.data;
@@ -76,5 +74,6 @@ export const updateSellerOrderItemStatus = async (orderItemId, status) => {
 
 export const getSellerTransactions = async (params) => {
   const response = await api.get("/seller/transactions", { params });
+  console.log(response.data.data);
   return response.data.data;
 };

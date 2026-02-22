@@ -27,6 +27,7 @@ const CheckoutForm = ({ order, clientSecret }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const { refreshCart } = useCart();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -48,7 +49,7 @@ const CheckoutForm = ({ order, clientSecret }) => {
             city: order.shippingAddress?.city,
             state: order.shippingAddress?.state,
             postal_code: order.shippingAddress?.pincode,
-            country: "IN", // Assuming India based on context, make dynamic if needed
+            country: "IN",
           },
         },
       },
@@ -59,6 +60,7 @@ const CheckoutForm = ({ order, clientSecret }) => {
       setProcessing(false);
     } else {
       if (result.paymentIntent.status === "succeeded") {
+        refreshCart(); // The backend already cleared the cart, we just need to sync the frontend badge
         navigate(`/order-success/${order.id}`);
       }
     }
@@ -93,10 +95,10 @@ const CheckoutForm = ({ order, clientSecret }) => {
           <CardElement options={cardStyle} />
         </div>
       </div>
-      
+
       {error && (
         <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md border border-red-200 flex items-center gap-2">
-            <span className="font-bold">Error:</span> {error}
+          <span className="font-bold">Error:</span> {error}
         </div>
       )}
 
@@ -106,14 +108,14 @@ const CheckoutForm = ({ order, clientSecret }) => {
         className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
       >
         {processing ? (
-             <>Processing...</>
+          <>Processing...</>
         ) : (
-            <>
-                <Lock size={18} /> Pay {formatCurrency(order.totalAmount)}
-            </>
+          <>
+            <Lock size={18} /> Pay {formatCurrency(order.totalAmount)}
+          </>
         )}
       </button>
-      
+
       <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-4">
         <ShieldCheck size={14} className="text-green-600" />
         <span>Payments are secure and encrypted.</span>
@@ -144,7 +146,7 @@ const Payment = () => {
     try {
       // 1. Create Order
       const newOrder = await createOrder(addressId);
-      
+
       // 2. Fetch Full Order Details (to display summary)
       const orderDetails = await getOrderDetails(newOrder.id);
       setOrder(orderDetails);
@@ -165,7 +167,9 @@ const Payment = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-        <p className="text-gray-500 font-medium">Preparing your secure checkout...</p>
+        <p className="text-gray-500 font-medium">
+          Preparing your secure checkout...
+        </p>
       </div>
     );
 
@@ -178,76 +182,102 @@ const Payment = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8 text-center sm:text-left">
-            Complete Your Payment
+          Complete Your Payment
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left Column: Order Summary */}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Truck className="text-indigo-600" size={24} /> Order Summary
-                </h2>
-                <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                    {order.orderItems?.map((item) => (
-                        <div key={item.id} className="flex gap-4 py-4 border-b border-gray-100 last:border-0">
-                            <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                                <img
-                                    src={item.Offer?.product?.media?.[0]?.url || "https://placehold.co/100"}
-                                    alt={item.Offer?.product?.name}
-                                    className="h-full w-full object-cover object-center"
-                                />
-                            </div>
-                            <div className="flex flex-1 flex-col">
-                                <div>
-                                    <div className="flex justify-between text-base font-medium text-gray-900">
-                                        <h3>{item.Offer?.product?.name}</h3>
-                                        <p className="ml-4">{formatCurrency(item.priceAtTimeOfPurchase * item.quantity)}</p>
-                                    </div>
-                                    <p className="mt-1 text-sm text-gray-500">
-                                        Qty: {item.quantity} | Seller: {item.Offer?.sellerProfile?.storeName}
-                                    </p>
-                                </div>
-                            </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Truck className="text-indigo-600" size={24} /> Order Summary
+              </h2>
+              <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                {order.orderItems?.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 py-4 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                      <img
+                        src={
+                          item.Offer?.product?.media?.[0]?.url ||
+                          "https://placehold.co/100"
+                        }
+                        alt={item.Offer?.product?.name}
+                        className="h-full w-full object-cover object-center"
+                      />
+                    </div>
+                    <div className="flex flex-1 flex-col">
+                      <div>
+                        <div className="flex justify-between text-base font-medium text-gray-900">
+                          <h3>{item.Offer?.product?.name}</h3>
+                          <p className="ml-4">
+                            {formatCurrency(
+                              item.priceAtTimeOfPurchase * item.quantity,
+                            )}
+                          </p>
                         </div>
-                    ))}
-                </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Qty: {item.quantity} | Seller:{" "}
+                          {item.Offer?.sellerProfile?.storeName}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <MapPin className="text-indigo-600" size={24} /> Shipping to
-                </h2>
-                <div className="text-gray-600 text-sm leading-relaxed">
-                    <p className="font-bold text-gray-900 text-base mb-1">{order.user?.fullname}</p>
-                    <p>{order.shippingAddress?.addressLine1}</p>
-                    {order.shippingAddress?.addressLine2 && <p>{order.shippingAddress?.addressLine2}</p>}
-                    <p>
-                        {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}
-                    </p>
-                    <p className="mt-2 font-medium">PhoneNumber: {order.shippingAddress?.phoneNumber}</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <MapPin className="text-indigo-600" size={24} /> Shipping to
+              </h2>
+              <div className="text-gray-600 text-sm leading-relaxed">
+                <p className="font-bold text-gray-900 text-base mb-1">
+                  {order.user?.fullname}
+                </p>
+                <p>{order.shippingAddress?.addressLine1}</p>
+                {order.shippingAddress?.addressLine2 && (
+                  <p>{order.shippingAddress?.addressLine2}</p>
+                )}
+                <p>
+                  {order.shippingAddress?.city}, {order.shippingAddress?.state}{" "}
+                  - {order.shippingAddress?.pincode}
+                </p>
+                <p className="mt-2 font-medium">
+                  PhoneNumber: {order.shippingAddress?.phoneNumber}
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Right Column: Payment Form */}
           <div>
             <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6 sm:p-8 sticky top-8">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Details</h2>
-                    <p className="text-gray-500 text-sm">Complete your purchase by providing your payment details.</p>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Payment Details
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  Complete your purchase by providing your payment details.
+                </p>
+              </div>
 
-                <div className="bg-indigo-50 rounded-xl p-4 mb-8 flex justify-between items-center">
-                    <span className="text-indigo-900 font-medium">Total Payable</span>
-                    <span className="text-2xl font-bold text-indigo-700">{formatCurrency(order.totalAmount)}</span>
-                </div>
+              <div className="bg-indigo-50 rounded-xl p-4 mb-8 flex justify-between items-center">
+                <span className="text-indigo-900 font-medium">
+                  Total Payable
+                </span>
+                <span className="text-2xl font-bold text-indigo-700">
+                  {formatCurrency(order.totalAmount)}
+                </span>
+              </div>
 
-                {clientSecret && stripePromise && (
-                    <Elements stripe={stripePromise} options={options}>
-                        <CheckoutForm order={order} clientSecret={clientSecret} />
-                    </Elements>
-                )}
+              {clientSecret && stripePromise && (
+                <Elements stripe={stripePromise} options={options}>
+                  <CheckoutForm order={order} clientSecret={clientSecret} />
+                </Elements>
+              )}
             </div>
           </div>
         </div>

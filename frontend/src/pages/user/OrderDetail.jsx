@@ -8,15 +8,61 @@ import {
   Calendar,
   CreditCard,
   AlertCircle,
+  XCircle,
+  RotateCcw,
+  Loader2,
+  X,
+  ShieldCheck,
 } from "lucide-react";
-import { getOrderDetails } from "../../api/orders";
+import { getOrderDetails, cancelOrder, requestReturn } from "../../api/orders";
 import { formatCurrency } from "../../utils/currency";
+import { toast } from "react-hot-toast";
+
+// Status badge colours including the new states
+const statusColors = {
+  delivered: "bg-green-100 text-green-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  processing: "bg-blue-100 text-blue-800",
+  shipped: "bg-purple-100 text-purple-800",
+  cancelled: "bg-red-100 text-red-800",
+  return_requested: "bg-orange-100 text-orange-800",
+};
+
+// CANCEL reasons — pre-populated for UX
+const CANCEL_REASONS = [
+  "Changed my mind",
+  "Ordered by mistake",
+  "Found a better price elsewhere",
+  "Delivery time is too long",
+  "Other",
+];
+
+// RETURN reasons
+const RETURN_REASONS = [
+  "Item is damaged or defective",
+  "Item does not match description",
+  "Wrong item delivered",
+  "Item is not as expected",
+  "Other",
+];
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Cancel modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelReasonOther, setCancelReasonOther] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Return modal state
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnReasonOther, setReturnReasonOther] = useState("");
+  const [isReturning, setIsReturning] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -32,6 +78,57 @@ const OrderDetail = () => {
     };
     fetchOrderDetails();
   }, [orderId]);
+
+  const handleCancel = async () => {
+    const reason =
+      cancelReason === "Other" ? cancelReasonOther.trim() : cancelReason;
+    if (!reason || reason.length < 5) {
+      toast.error("Please provide a reason for cancellation.");
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      await cancelOrder(orderId, reason);
+      toast.success(
+        "Order cancelled. Refund will be processed in 5–7 business days.",
+      );
+      setShowCancelModal(false);
+      // Refresh order data
+      const updated = await getOrderDetails(orderId);
+      setOrder(updated);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to cancel the order.",
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleReturn = async () => {
+    const reason =
+      returnReason === "Other" ? returnReasonOther.trim() : returnReason;
+    if (!reason || reason.length < 5) {
+      toast.error("Please provide a reason for the return.");
+      return;
+    }
+    setIsReturning(true);
+    try {
+      await requestReturn(orderId, reason);
+      toast.success(
+        "Return request submitted! Refund will be processed in 5–7 business days.",
+      );
+      setShowReturnModal(false);
+      const updated = await getOrderDetails(orderId);
+      setOrder(updated);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to submit return request.",
+      );
+    } finally {
+      setIsReturning(false);
+    }
+  };
 
   if (loading)
     return (
@@ -57,6 +154,18 @@ const OrderDetail = () => {
 
   if (!order) return null;
 
+  const sellerPriceTotal =
+    order.orderItems?.reduce((sum, item) => {
+      return (
+        sum +
+        (Number(item.Offer?.price) || Number(item.priceAtTimeOfPurchase) || 0) *
+          item.quantity
+      );
+    }, 0) || 0;
+
+  const isCancellable = ["pending", "processing"].includes(order.status);
+  const isReturnable = order.status === "delivered";
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       {/* Header */}
@@ -70,14 +179,10 @@ const OrderDetail = () => {
           </Link>
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-              order.status === "delivered"
-                ? "bg-green-100 text-green-800"
-                : order.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-blue-100 text-blue-800"
+              statusColors[order.status] || "bg-gray-100 text-gray-700"
             }`}
           >
-            {order.status}
+            {order.status.replace("_", " ")}
           </span>
         </div>
 
@@ -94,12 +199,39 @@ const OrderDetail = () => {
               <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
               <span>{new Date(order.createdAt).toLocaleTimeString()}</span>
             </div>
+
+            {/* Cancellation reason shown if present */}
+            {order.cancellationReason && (
+              <p className="mt-2 text-sm text-gray-500 italic">
+                Reason: {order.cancellationReason}
+              </p>
+            )}
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-            <p className="text-2xl font-bold text-indigo-600">
-              {formatCurrency(order.totalAmount)}
-            </p>
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-right">
+              <p className="text-sm text-gray-500 mb-1">Total Amount</p>
+              <p className="text-2xl font-bold text-indigo-600">
+                {formatCurrency(order.totalAmount)}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            {isCancellable && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                <XCircle size={15} /> Cancel Order
+              </button>
+            )}
+            {isReturnable && (
+              <button
+                onClick={() => setShowReturnModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+              >
+                <RotateCcw size={15} /> Return & Refund
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -207,14 +339,46 @@ const OrderDetail = () => {
             <div className="bg-gray-50 rounded-lg border border-gray-200 p-5">
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
+                  <span>MRP Total</span>
                   <span className="font-medium">
-                    {formatCurrency(order.totalAmount)}
+                    {formatCurrency(
+                      Number(order.mrp) > 0 ? order.mrp : order.totalAmount,
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
+                  <span>Selling Price</span>
+                  <span className="font-medium">
+                    {formatCurrency(sellerPriceTotal)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span className="font-medium">
+                    {formatCurrency(
+                      Number(order.subtotalAmount) > 0
+                        ? order.subtotalAmount
+                        : order.totalAmount,
+                    )}
+                  </span>
+                </div>
+                {Number(order.discountAmount) > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Total Discount</span>
+                    <span className="font-medium">
+                      -{formatCurrency(order.discountAmount)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-600">
+                  <span>Delivery Fee</span>
+                  <span className="font-medium">
+                    {Number(order.deliveryFee) > 0 ? (
+                      formatCurrency(order.deliveryFee)
+                    ) : (
+                      <span className="text-green-600">Free</span>
+                    )}
+                  </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                   <span className="text-gray-900 font-bold text-base">
@@ -229,6 +393,195 @@ const OrderDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Cancel Order Modal ── */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <XCircle size={20} className="text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Cancel Order</h3>
+                  <p className="text-xs text-gray-500">
+                    Refund will be issued to your original payment method.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Why do you want to cancel?
+              </p>
+              {CANCEL_REASONS.map((r) => (
+                <label
+                  key={r}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    cancelReason === r
+                      ? "border-red-400 bg-red-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="cancelReason"
+                    value={r}
+                    checked={cancelReason === r}
+                    onChange={() => setCancelReason(r)}
+                    className="accent-red-500"
+                  />
+                  <span className="text-sm text-gray-700">{r}</span>
+                </label>
+              ))}
+              {cancelReason === "Other" && (
+                <textarea
+                  placeholder="Please describe your reason..."
+                  value={cancelReasonOther}
+                  onChange={(e) => setCancelReasonOther(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none mt-2 resize-none"
+                />
+              )}
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 flex gap-2">
+              <ShieldCheck
+                size={16}
+                className="text-yellow-600 shrink-0 mt-0.5"
+              />
+              <p className="text-xs text-yellow-700">
+                If payment was made, a full refund will be initiated
+                automatically. Allow 5–7 business days for the amount to
+                reflect.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
+              >
+                Keep Order
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={isCancelling || !cancelReason}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {isCancelling ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  "Confirm Cancel"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Return & Refund Modal ── */}
+      {showReturnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                  <RotateCcw size={20} className="text-orange-500" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Return & Refund</h3>
+                  <p className="text-xs text-gray-500">
+                    Returns accepted within 7 days of delivery.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowReturnModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Reason for return
+              </p>
+              {RETURN_REASONS.map((r) => (
+                <label
+                  key={r}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    returnReason === r
+                      ? "border-orange-400 bg-orange-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="returnReason"
+                    value={r}
+                    checked={returnReason === r}
+                    onChange={() => setReturnReason(r)}
+                    className="accent-orange-500"
+                  />
+                  <span className="text-sm text-gray-700">{r}</span>
+                </label>
+              ))}
+              {returnReason === "Other" && (
+                <textarea
+                  placeholder="Please describe your reason..."
+                  value={returnReasonOther}
+                  onChange={(e) => setReturnReasonOther(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none mt-2 resize-none"
+                />
+              )}
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex gap-2">
+              <ShieldCheck
+                size={16}
+                className="text-blue-600 shrink-0 mt-0.5"
+              />
+              <p className="text-xs text-blue-700">
+                Once your return is approved, a full refund will be credited to
+                your original payment method within 5–7 business days.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReturnModal(false)}
+                disabled={isReturning}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReturn}
+                disabled={isReturning || !returnReason}
+                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {isReturning ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  "Submit Request"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Zap, AlertCircle, Github, Eye, EyeOff } from "lucide-react";
 import { getCsrfToken } from "../../api/auth"; // CSRF
@@ -68,7 +73,11 @@ const Login = () => {
         setError(result.message);
       }
     } catch (err) {
-      setError("An unexpected error occurred.", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "An unexpected error occurred. Please try again.";
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }

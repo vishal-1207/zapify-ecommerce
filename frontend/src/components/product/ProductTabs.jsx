@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { formatCurrency } from "../../utils/currency";
 
 const ProductTabs = ({ product }) => {
   const [activeTab, setActiveTab] = useState("description");
@@ -36,7 +37,8 @@ const ProductTabs = ({ product }) => {
               Product Description
             </h3>
             <p className="mb-4">
-              {product.description || "No description available for this product."}
+              {product.description ||
+                "No description available for this product."}
             </p>
           </div>
         )}
@@ -99,7 +101,9 @@ const ProductTabs = ({ product }) => {
               Shipping Information
             </h3>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Free standard shipping on all orders over ₹50.</li>
+              <li>
+                Free standard shipping on all orders over {formatCurrency(500)}.
+              </li>
               <li>
                 Orders are processed and shipped within 1-2 business days.
               </li>

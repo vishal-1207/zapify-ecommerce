@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatCurrency } from "../../utils/currency";
+import { formatCurrency, CURRENCY_SYMBOL } from "../../utils/currency";
 import { Loader2, CheckCircle, Tag, Package, AlertCircle } from "lucide-react";
 
 const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
@@ -53,11 +53,14 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
         {/* Price */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your Price (₹) <span className="text-red-500">*</span>
+            Your Price ({CURRENCY_SYMBOL}){" "}
+            <span className="text-red-500">*</span>
           </label>
           <div className="relative rounded-md shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 sm:text-sm">₹</span>
+              <span className="text-gray-500 sm:text-sm">
+                {CURRENCY_SYMBOL}
+              </span>
             </div>
             <input
               type="number"

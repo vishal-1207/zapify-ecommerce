@@ -10,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { CURRENCY_SYMBOL } from "../../utils/currency";
 
 const ProductForm = ({
   initialData,
@@ -181,7 +182,7 @@ const ProductForm = ({
     if (formData.brandId) data.append("brandId", formData.brandId);
 
     const validSpecs = formData.specs.filter(
-      (s) => s.key.trim() !== "" && s.value.trim() !== ""
+      (s) => s.key.trim() !== "" && s.value.trim() !== "",
     );
     data.append("specs", JSON.stringify(validSpecs));
 
@@ -218,7 +219,10 @@ const ProductForm = ({
         ></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 flex-1 overflow-y-auto px-1">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 flex-1 overflow-y-auto px-1"
+      >
         {currentStep === 1 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
             {/* Name */}
@@ -258,7 +262,8 @@ const ProductForm = ({
             {/* Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (₹) <span className="text-red-500">*</span>
+                Price ({CURRENCY_SYMBOL}){" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -275,24 +280,24 @@ const ProductForm = ({
 
             {/* Stock */}
             {showStock && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock Quantity <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                required
-                value={formData.totalOfferStock}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    totalOfferStock: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-                placeholder="0"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock Quantity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={formData.totalOfferStock}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      totalOfferStock: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                  placeholder="0"
+                />
+              </div>
             )}
 
             {/* Category */}
@@ -447,48 +452,48 @@ const ProductForm = ({
             </div>
 
             {/* Added py-1 and px-1 to container to prevent focus ring/border from being cut off by overflow */}
-            <div className="py-1 px-1"> 
-            {formData.specs.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-500">
-                No specifications added yet. click "Add Spec" to start.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {formData.specs.map((spec, index) => (
-                  <div key={index} className="flex items-center gap-3 group">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        placeholder="Key (e.g. Color)"
-                        value={spec.key}
-                        onChange={(e) =>
-                          handleSpecChange(index, "key", e.target.value)
-                        }
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                      />
+            <div className="py-1 px-1">
+              {formData.specs.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-500">
+                  No specifications added yet. click "Add Spec" to start.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {formData.specs.map((spec, index) => (
+                    <div key={index} className="flex items-center gap-3 group">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="Key (e.g. Color)"
+                          value={spec.key}
+                          onChange={(e) =>
+                            handleSpecChange(index, "key", e.target.value)
+                          }
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="Value (e.g. Black)"
+                          value={spec.value}
+                          onChange={(e) =>
+                            handleSpecChange(index, "value", e.target.value)
+                          }
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSpec(index)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        placeholder="Value (e.g. Black)"
-                        value={spec.value}
-                        onChange={(e) =>
-                          handleSpecChange(index, "value", e.target.value)
-                        }
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSpec(index)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -496,22 +501,22 @@ const ProductForm = ({
 
       <div className="pt-6 border-t border-gray-100 flex justify-end gap-3 mt-6 bg-white shrink-0 z-10">
         {onCancel && currentStep === 1 && (
-           <button
-             type="button"
-             onClick={onCancel}
-             className="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
-           >
-             Cancel
-           </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
+          >
+            Cancel
+          </button>
         )}
-        
+
         {currentStep === 2 && (
           <button
             type="button"
             onClick={prevStep}
             className="flex items-center gap-2 px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
           >
-           <ArrowLeft size={18} /> Back
+            <ArrowLeft size={18} /> Back
           </button>
         )}
 
@@ -531,12 +536,14 @@ const ProductForm = ({
           >
             {isLoading ? (
               <>
-                 <span>Saving...</span>
-                 <Loader2 size={18} className="animate-spin" />
+                <span>Saving...</span>
+                <Loader2 size={18} className="animate-spin" />
               </>
             ) : (
               <>
-                <span>{title || (isEditing ? "Update Product" : "Create Product")}</span>
+                <span>
+                  {title || (isEditing ? "Update Product" : "Create Product")}
+                </span>
                 <CheckCircle size={18} />
               </>
             )}
