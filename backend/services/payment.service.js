@@ -41,16 +41,16 @@ const sendOrderConfirmationEmail = async (order) => {
  * @param {object} order - The full order object with associations.
  * @private
  */
-// const sendOrderConfirmationSms = async (order) => {
-//   if (!order?.User?.phoneNumber) {
-//     console.log(`Skipping SMS for order ${order.id}: No phone number found.`);
-//     return;
-//   }
-//   const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${
-//     order.totalAmount
-//   } has been placed successfully.`;
-//   await sendSms(order.User.phoneNumber, messageBody);
-// };
+const sendOrderConfirmationSms = async (order) => {
+  if (!order?.User?.phoneNumber) {
+    console.log(`Skipping SMS for order ${order.id}: No phone number found.`);
+    return;
+  }
+  const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${
+    order.totalAmount
+  } has been placed successfully.`;
+  await sendSms(order.User.phoneNumber, messageBody);
+};
 
 /**
  * Notifies each seller involved in an order about the new items they need to fulfill.
@@ -170,13 +170,40 @@ export const handleStripeWebhook = async (event) => {
     const paymentIntent = event.data.object;
     const orderId = paymentIntent.metadata.orderId;
 
-    const payment = db.Payment.findOne({
+    // BUG FIX: was missing `await` — payment was a Promise object, not the record
+    const payment = await db.Payment.findOne({
       where: { gatewayTransactionId: paymentIntent.id },
     });
 
     if (payment && payment.status === "pending") {
+      // Retrieve expanded PaymentIntent from Stripe for full method details
+      let paymentMethodType = paymentIntent.payment_method_types?.[0] || "card";
+      let paymentMethodDetails = null;
+      try {
+        const fullIntent = await stripe.paymentIntents.retrieve(
+          paymentIntent.id,
+          {
+            expand: ["payment_method"],
+          },
+        );
+        paymentMethodType =
+          fullIntent.payment_method?.type || paymentMethodType;
+        paymentMethodDetails =
+          fullIntent.payment_method?.[paymentMethodType] || null;
+      } catch (err) {
+        console.warn("Could not retrieve expanded PaymentIntent:", err.message);
+      }
+
       payment.status = "succeeded";
-      payment.paymentMethod = paymentIntent.payment_method_types[0];
+      payment.paymentMethod = paymentMethodType;
+      payment.paymentMethodDetails = paymentMethodDetails;
+      payment.gatewayResponse = {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+        created: paymentIntent.created,
+      };
       await payment.save();
 
       const order = await db.Order.findByPk(orderId, {
@@ -221,7 +248,8 @@ export const handleStripeWebhook = async (event) => {
 
   if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object;
-    const payment = await db.findOne({
+    // BUG FIX: was `db.findOne` — wrong model reference
+    const payment = await db.Payment.findOne({
       where: { gatewayTransactionId: paymentIntent.id },
     });
 
@@ -229,6 +257,11 @@ export const handleStripeWebhook = async (event) => {
       payment.status = "failed";
       payment.failureCode = paymentIntent.last_payment_error?.code;
       payment.failureMessage = paymentIntent.last_payment_error?.message;
+      payment.gatewayResponse = {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        last_payment_error: paymentIntent.last_payment_error,
+      };
       await payment.save();
     }
   }
@@ -251,7 +284,7 @@ export const getSellerTransactions = async (userId, page = 1, limit = 10) => {
           attributes: [],
           include: [{ model: db.Product, as: "product", attributes: ["name"] }],
         },
-        { model: db.Order, attributes: ["id"] },
+        { model: db.Order, attributes: ["id", "orderId"] },
       ],
       order: [["updatedAt", "DESC"]],
       raw: true,
@@ -260,4 +293,76 @@ export const getSellerTransactions = async (userId, page = 1, limit = 10) => {
     page,
     limit,
   );
+};
+
+/**
+ * Initiates a full or partial Stripe refund for an order's payment.
+ * @param {string} orderId - The order to refund.
+ * @param {number|null} amount - Refund amount in INR (null = full refund).
+ * @param {string} reason - Stripe refund reason: 'duplicate', 'fraudulent', or 'requested_by_customer'.
+ */
+export const initiateRefund = async (
+  orderId,
+  amount = null,
+  reason = "requested_by_customer",
+) => {
+  const payment = await db.Payment.findOne({ where: { orderId } });
+
+  if (!payment)
+    throw new ApiError(404, "Payment record not found for this order.");
+  if (payment.status !== "succeeded") {
+    throw new ApiError(
+      400,
+      `Cannot refund a payment with status "${payment.status}".`,
+    );
+  }
+
+  const validReasons = ["duplicate", "fraudulent", "requested_by_customer"];
+  if (!validReasons.includes(reason)) {
+    throw new ApiError(
+      400,
+      `Invalid refund reason. Must be one of: ${validReasons.join(", ")}.`,
+    );
+  }
+
+  const refundParams = {
+    payment_intent: payment.gatewayTransactionId,
+    reason,
+  };
+
+  // Partial refund: Stripe expects amount in paise (smallest currency unit)
+  if (amount !== null) {
+    if (amount <= 0 || amount > parseFloat(payment.amount)) {
+      throw new ApiError(
+        400,
+        "Refund amount must be greater than 0 and not exceed the original payment amount.",
+      );
+    }
+    refundParams.amount = Math.round(amount * 100);
+  }
+
+  const stripeRefund = await stripe.refunds.create(refundParams);
+
+  const isFullRefund = !amount || amount >= parseFloat(payment.amount);
+  payment.status = isFullRefund ? "refunded" : "succeeded"; // partial: keep as succeeded
+  payment.refundAmount = amount ?? parseFloat(payment.amount);
+  payment.gatewayResponse = {
+    ...payment.gatewayResponse,
+    refund: {
+      id: stripeRefund.id,
+      amount: stripeRefund.amount,
+      status: stripeRefund.status,
+      reason: stripeRefund.reason,
+      created: stripeRefund.created,
+    },
+  };
+  await payment.save();
+
+  // Cascade order status to cancelled on full refund
+  if (isFullRefund) {
+    await db.Order.update({ status: "cancelled" }, { where: { id: orderId } });
+    await db.OrderItem.update({ status: "cancelled" }, { where: { orderId } });
+  }
+
+  return payment;
 };

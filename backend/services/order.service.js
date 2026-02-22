@@ -40,13 +40,20 @@ export const createOrderFromCart = async (userId, addressId) => {
       );
     }
 
+    let mrpTotal = 0;
     for (const item of cartItems) {
+      const prod = item.details.product || item.details.Product;
       if (item.details.stockQuantity < item.quantity) {
         throw new ApiError(
           400,
-          `Not enough stock for ${item.details.Product.name}.`,
+          `Not enough stock for ${prod?.name || "Product"}.`,
         );
       }
+      const mrp = parseFloat(prod?.price || 0);
+      const offerPrice = parseFloat(item.details.price || 0);
+      mrpTotal +=
+        Math.max(mrp, offerPrice, parseFloat(item.details.activePrice || 0)) *
+        item.quantity;
     }
 
     // Generate a unique order ID
@@ -61,6 +68,10 @@ export const createOrderFromCart = async (userId, addressId) => {
       {
         orderId,
         userId,
+        mrp: mrpTotal,
+        subtotalAmount: subtotal,
+        discountAmount: mrpTotal - subtotal + discount,
+        deliveryFee: 0,
         totalAmount,
         shippingAddress: address.toJSON(),
         status: "pending",
@@ -79,12 +90,11 @@ export const createOrderFromCart = async (userId, addressId) => {
       );
     }
 
-    // Create OrderItem records from cart items
     const orderItemsData = cartItems.map((item) => ({
       orderId: newOrder.id,
       offerId: item.offerId,
       quantity: item.quantity,
-      priceAtTimeOfPurchase: item.details.price,
+      priceAtTimeOfPurchase: item.details.activePrice || item.details.price,
       status: "pending",
     }));
     await db.OrderItem.bulkCreate(orderItemsData, { transaction });
@@ -440,4 +450,109 @@ const syncOrderStatus = async (orderId, transaction) => {
     { status: newStatus },
     { where: { id: orderId }, transaction },
   );
+};
+
+/**
+ * Cancel an order (user-initiated). Allowed while status is pending or processing.
+ * Automatically triggers a refund if payment was completed.
+ */
+export const cancelOrderService = async (orderId, userId, reason) => {
+  const order = await db.Order.findOne({
+    where: { id: orderId, userId },
+    include: [{ model: db.Payment, as: "payments" }],
+  });
+
+  if (!order) throw new ApiError(404, "Order not found.");
+
+  const cancellable = ["pending", "processing"];
+  if (!cancellable.includes(order.status)) {
+    throw new ApiError(
+      400,
+      `This order cannot be cancelled — it is already "${order.status}". Please contact support for assistance.`,
+    );
+  }
+
+  // Cancel the order + items
+  await db.Order.update(
+    { status: "cancelled", cancellationReason: reason },
+    { where: { id: orderId } },
+  );
+  await db.OrderItem.update({ status: "cancelled" }, { where: { orderId } });
+
+  // Auto-refund if a succeeded payment exists
+  // order.payments is a single object (hasOne), not an array
+  const payment = order.payments;
+  if (payment?.status === "succeeded") {
+    try {
+      const { initiateRefund } = await import("./payment.service.js");
+      await initiateRefund(orderId, null, "requested_by_customer");
+    } catch (refundErr) {
+      // Refund failure should not block the cancellation — log and continue
+      console.error(
+        "Auto-refund failed for cancelled order:",
+        refundErr.message,
+      );
+    }
+  }
+
+  return await db.Order.findByPk(orderId);
+};
+
+/**
+ * Request a return & refund for a delivered order.
+ * Allowed only when status is 'delivered', within 7 days.
+ */
+export const requestReturnService = async (orderId, userId, reason) => {
+  const order = await db.Order.findOne({
+    where: { id: orderId, userId },
+    include: [{ model: db.Payment, as: "payments" }],
+  });
+
+  if (!order) throw new ApiError(404, "Order not found.");
+
+  if (order.status !== "delivered") {
+    throw new ApiError(
+      400,
+      `Returns are only accepted for delivered orders. Current status: "${order.status}".`,
+    );
+  }
+
+  // 7-day return window check
+  const deliveredAt = new Date(order.updatedAt);
+  const daysSinceDelivery =
+    (Date.now() - deliveredAt.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceDelivery > 7) {
+    throw new ApiError(
+      400,
+      "The 7-day return window for this order has expired.",
+    );
+  }
+
+  // Mark order as return-requested
+  await db.Order.update(
+    { status: "return_requested", cancellationReason: reason },
+    { where: { id: orderId } },
+  );
+  await db.OrderItem.update(
+    { status: "return_requested" },
+    { where: { orderId } },
+  );
+
+  // Trigger refund via Stripe
+  // order.payments is a single object (hasOne), not an array
+  const payment = order.payments;
+  if (payment?.status === "succeeded") {
+    try {
+      const { initiateRefund } = await import("./payment.service.js");
+      await initiateRefund(orderId, null, "requested_by_customer");
+    } catch (refundErr) {
+      // Refund failure should not block the return — log and continue
+      console.error(
+        "Auto-refund failed for return request:",
+        refundErr.message,
+      );
+    }
+  }
+
+  return await db.Order.findByPk(orderId);
 };

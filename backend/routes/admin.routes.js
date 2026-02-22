@@ -21,12 +21,21 @@ router
 
 router.route("/list/:role").get(adminController.getUsers);
 
+router.route("/users/:userId/status").patch(adminController.updateUserStatus);
+
 router
-  .route("/users/:userId/status")
-  .patch(adminController.updateUserStatus);
+  .route("/users/:userId/request-edit-otp")
+  .post(adminController.requestUserEditOtp);
+router
+  .route("/users/:userId/edit-with-otp")
+  .put(adminController.editUserWithOtp);
 
 router.route("/users/:userId").delete(adminController.deleteUser);
 
 router.route("/orders").get(adminController.getAllOrders);
+router.route("/orders/:orderId").get(adminController.getOrderDetails);
+router
+  .route("/orders/:orderId/status")
+  .patch(adminController.updateOrderStatus);
 
 export default router;

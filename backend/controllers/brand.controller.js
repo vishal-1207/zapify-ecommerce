@@ -2,22 +2,24 @@ import * as brandServices from "../services/brand.service.js";
 import ApiError from "../utils/ApiError.js";
 import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const getBrands = asyncHandler(async (req, res) => {
   const isAdmin = req.user?.roles?.includes("admin");
   const brands = await brandServices.getAllBrands({
-    includeInactive: isAdmin
+    includeInactive: isAdmin,
   });
 
   return res
     .status(200)
-    .json({ message: "Brands fetched successfully.", brands });
+    .json(new ApiResponse(200, brands, "Brands fetched successfully."));
 });
 
 export const getBrandDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  
+  const isUUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
   const whereCondition = isUUID ? { id } : { slug: id };
 
   const brand = await db.Brand.findOne({
@@ -39,7 +41,7 @@ export const getBrandDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json({ message: "Brand details fetched successfully.", brand });
+    .json(new ApiResponse(200, brand, "Brand details fetched successfully."));
 });
 
 export const createBrand = asyncHandler(async (req, res) => {
@@ -48,7 +50,7 @@ export const createBrand = asyncHandler(async (req, res) => {
   const brand = await brandServices.addBrandService(req.body, file);
   return res
     .status(201)
-    .json({ message: "Brand created successfully.", brand });
+    .json(new ApiResponse(201, brand, "Brand created successfully."));
 });
 
 export const updateBrand = asyncHandler(async (req, res) => {
@@ -58,25 +60,32 @@ export const updateBrand = asyncHandler(async (req, res) => {
   const updatedBrand = await brandServices.updateBrandService(
     id,
     req.body,
-    file
+    file,
   );
   res
     .status(200)
-    .json({ message: "Brand updated successfully.", brand: updatedBrand });
+    .json(new ApiResponse(200, updatedBrand, "Brand updated successfully."));
 });
 
 export const deleteBrand = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   await brandServices.deleteBrandService(id);
-  return res.status(200).json({ message: "Brand deleted successfully." });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Brand deleted successfully."));
 });
 
 export const toggleStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const brand = await brandServices.toggleBrandStatus(id);
-  return res.status(200).json({
-    message: `Brand ${brand.isActive ? "enabled" : "disabled"}.`,
-    brand,
-  });
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        brand,
+        `Brand ${brand.isActive ? "enabled" : "disabled"}.`,
+      ),
+    );
 });

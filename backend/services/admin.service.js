@@ -1,6 +1,8 @@
 import db from "../models/index.js";
 import paginate from "../utils/paginate.js";
 import { Op } from "sequelize";
+import { sendVerificationCode, verifyCode } from "./otp.service.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Admin dashboard service to counts of pending reviews and products, total sellers and revenues for stats card
@@ -53,7 +55,7 @@ export const getPlatformSalesOverTime = async (days = 30) => {
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })
+    }),
   );
   const data = results.map((row) => row.totalSales);
 
@@ -155,8 +157,8 @@ export const getSignupAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN JSON_CONTAINS(roles, '\"user\"') THEN 1 ELSE 0 END"
-          )
+            "CASE WHEN JSON_CONTAINS(roles, '\"user\"') THEN 1 ELSE 0 END",
+          ),
         ),
         "newUsers",
       ],
@@ -164,8 +166,8 @@ export const getSignupAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN JSON_CONTAINS(roles, '\"seller\"') THEN 1 ELSE 0 END"
-          )
+            "CASE WHEN JSON_CONTAINS(roles, '\"seller\"') THEN 1 ELSE 0 END",
+          ),
         ),
         "newSellers",
       ],
@@ -180,7 +182,7 @@ export const getSignupAnalytics = async (days) => {
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })
+    }),
   );
   const customerData = results.map((row) => row.newUsers);
   const sellerData = results.map((row) => row.newSellers);
@@ -222,8 +224,8 @@ export const getOrderActivityAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN status = 'delivered' THEN 1 ELSE 0 END"
-          )
+            "CASE WHEN status = 'delivered' THEN 1 ELSE 0 END",
+          ),
         ),
         "delivered",
       ],
@@ -231,8 +233,8 @@ export const getOrderActivityAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN status = 'processing' THEN 1 ELSE 0 END"
-          )
+            "CASE WHEN status = 'processing' THEN 1 ELSE 0 END",
+          ),
         ),
         "processing",
       ],
@@ -240,8 +242,8 @@ export const getOrderActivityAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END"
-          )
+            "CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END",
+          ),
         ),
         "cancelled",
       ],
@@ -256,7 +258,7 @@ export const getOrderActivityAnalytics = async (days) => {
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })
+    }),
   );
   const deliveredData = results.map((row) => row.delivered);
   const processingData = results.map((row) => row.processing);
@@ -302,20 +304,21 @@ export const getUsersList = async (role = "user", page, limit) => {
         "passwordResetExpires",
       ],
     },
-    order: [["createdAt", "DESC"]], // Corrected: Order moved to root level
+    order: [["createdAt", "DESC"]],
   };
 
   if (role) {
-    // Use Op.like for broader compatibility (works for both JSON string and simple string)
-    // Matches "user" in ["user"] or ["admin", "user"]
-    queryOptions.where.roles = { [Op.like]: `%${role}%` };
+    // JSON_CONTAINS correctly queries JSON array columns like `roles`
+    // Must be wrapped in Op.and so Sequelize treats it as a WHERE condition
+    queryOptions.where[Op.and] = [
+      db.sequelize.literal(`JSON_CONTAINS(\`roles\`, '"${role}"')`),
+    ];
   }
 
   if (role === "seller") {
     queryOptions.include = [{ model: db.SellerProfile, as: "sellerProfile" }];
   }
 
-  // Uses the paginate utility for paginated user list results
   return await paginate(db.User, queryOptions, page, limit);
 };
 
@@ -326,24 +329,24 @@ export const updateUserStatusService = async (userId, status) => {
   const user = await db.User.findByPk(userId);
   if (!user) throw new Error("User not found");
 
-  // Assuming we use 'isActive' boolean or a status field. 
-  // The User model currently doesn't have a 'status' field, but it has 'roles'. 
-  // Blocking might mean removing access. 
+  // Assuming we use 'isActive' boolean or a status field.
+  // The User model currently doesn't have a 'status' field, but it has 'roles'.
+  // Blocking might mean removing access.
   // Let's assume we want to add a 'isBlocked' field or similar, OR use 'paranoid' soft delete for blocking?
   // User model has 'scheduledForDeletionAt'.
   // For now, let's assume valid status is 'blocked' or 'active' and we might toggling a boolean if it existed.
   // Wait, I saw User model. It doesn't have `status` or `isBlocked`.
-  // It has `paranoid: true`. 
+  // It has `paranoid: true`.
   // Let's implement Block as SOFT DELETE for now? OR we should add `isBlocked` to model?
   // The user prompt asked for Block/Unblock. Soft delete is separate (DELETE /user/:id).
-  // I should probably add `isBlocked` to User model to support this cleanly. 
-  // For now, I will use a placeholder implementation that throws if we can't persist it, 
+  // I should probably add `isBlocked` to User model to support this cleanly.
+  // For now, I will use a placeholder implementation that throws if we can't persist it,
   // BUT I will add `isBlocked` to the model in the next step to be correct.
-  
+
   // For this step, I'll update the 'roles' to include 'blocked' maybe? No that's hacky.
   // Let's UPDATE the User model to include `isBlocked`.
-  
-  if (status === 'blocked') {
+
+  if (status === "blocked") {
     user.isBlocked = true;
   } else {
     user.isBlocked = false;
@@ -374,6 +377,22 @@ export const getAllOrdersService = async (page = 1, limit = 10, status) => {
         as: "user",
         attributes: ["id", "fullname", "email"],
       },
+      {
+        model: db.OrderItem,
+        as: "orderItems",
+        include: [
+          {
+            model: db.Offer,
+            include: [
+              {
+                model: db.SellerProfile,
+                as: "sellerProfile",
+                attributes: ["storeName"],
+              },
+            ],
+          },
+        ],
+      },
     ],
     order: [["createdAt", "DESC"]],
   };
@@ -383,4 +402,144 @@ export const getAllOrdersService = async (page = 1, limit = 10, status) => {
   }
 
   return await paginate(db.Order, queryOptions, page, limit);
+};
+
+/**
+ * Get a single order's full details with items, offers, seller, product info
+ */
+export const getOrderDetailsService = async (orderId) => {
+  const order = await db.Order.findByPk(orderId, {
+    include: [
+      {
+        model: db.User,
+        as: "user",
+        attributes: ["id", "fullname", "email", "phoneNumber"],
+      },
+      {
+        model: db.OrderItem,
+        as: "orderItems",
+        include: [
+          {
+            model: db.Offer,
+            include: [
+              {
+                model: db.Product,
+                as: "product",
+                attributes: ["id", "name", "slug"],
+              },
+              {
+                model: db.SellerProfile,
+                as: "sellerProfile",
+                attributes: ["storeName"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!order) throw new ApiError(404, "Order not found.");
+  return order;
+};
+
+/**
+ * Update an order's status - also cascades to its OrderItems
+ */
+export const updateOrderStatusService = async (orderId, status) => {
+  const validStatuses = [
+    "pending",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
+  if (!validStatuses.includes(status)) {
+    throw new ApiError(
+      400,
+      `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+    );
+  }
+
+  const order = await db.Order.findByPk(orderId);
+  if (!order) throw new ApiError(404, "Order not found.");
+
+  order.status = status;
+  await order.save();
+
+  // Cascade status update to all OrderItems
+  await db.OrderItem.update({ status }, { where: { orderId } });
+
+  return await getOrderDetailsService(orderId);
+};
+
+/**
+ * Request OTP to edit a user
+ */
+export const requestUserEditOtpService = async (userId, adminId) => {
+  const user = await db.User.findByPk(userId);
+  if (!user) throw new ApiError(404, "User not found.");
+
+  // Send OTP to the user's email so they can hand it to the admin
+  // otp.service.js uses `user.email`
+  await sendVerificationCode(userId, "email");
+
+  return { success: true };
+};
+
+/**
+ * Edit User with an OTP
+ */
+export const editUserWithOtpService = async (
+  userId,
+  otp,
+  updateData,
+  adminId,
+) => {
+  // Verify the OTP via the otp service
+  await verifyCode(userId, otp, "email");
+
+  const user = await db.User.findByPk(userId, {
+    include: [{ model: db.SellerProfile, as: "sellerProfile" }],
+  });
+  if (!user) throw new ApiError(404, "User not found.");
+
+  // Apply user updates
+  if (updateData.fullname) user.fullname = updateData.fullname;
+  if (updateData.email) user.email = updateData.email;
+  if (updateData.phoneNumber !== undefined)
+    user.phoneNumber = updateData.phoneNumber;
+
+  await user.save();
+
+  // If this user is a seller and seller data was provided, update it
+  if (user.roles.includes("seller") && user.sellerProfile) {
+    const sp = user.sellerProfile;
+    let sellerUpdated = false;
+
+    if (updateData.storeName) {
+      sp.storeName = updateData.storeName;
+      sellerUpdated = true;
+    }
+    if (updateData.storeDescription !== undefined) {
+      sp.storeDescription = updateData.storeDescription;
+      sellerUpdated = true;
+    }
+    if (updateData.businessAddress !== undefined) {
+      sp.businessAddress = updateData.businessAddress;
+      sellerUpdated = true;
+    }
+
+    if (sellerUpdated) {
+      await sp.save();
+    }
+  }
+
+  // Refresh user data to return
+  return await db.User.findByPk(userId, {
+    include: [{ model: db.SellerProfile, as: "sellerProfile" }],
+    attributes: {
+      exclude: ["password", "verificationCode", "verificationCodeExpiry"],
+    },
+  });
 };

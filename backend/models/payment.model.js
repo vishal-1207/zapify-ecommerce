@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("pending", "succeeded", "failed"),
+      type: DataTypes.ENUM("pending", "succeeded", "failed", "refunded"),
       allowNull: false,
       defaultValue: "pending",
     },

@@ -51,7 +51,7 @@ export const getCart = async (userId) => {
       {
         model: db.Product,
         as: "product",
-        attributes: ["id", "name", "slug"],
+        attributes: ["id", "name", "slug", "price"],
         include: [
           {
             model: db.Media,

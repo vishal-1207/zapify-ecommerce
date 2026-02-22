@@ -60,14 +60,8 @@ export const getUsers = asyncHandler(async (req, res) => {
 
   const result = await adminService.getUsersList(role, page, limit);
 
-  if (result.total === 0) {
-    return res.status(200).json({
-      message: "No users found.",
-    });
-  }
-
   return res.status(200).json({
-    message: `Found ${result.total} product(s) pending for review.`,
+    message: `Found ${result.total} user(s).`,
     ...result,
   });
 });
@@ -107,4 +101,59 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     message: "All orders fetched.",
     ...result,
   });
+});
+
+/**
+ * Request OTP for editing user
+ */
+export const requestUserEditOtp = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const result = await adminService.requestUserEditOtpService(
+    userId,
+    req.user.id,
+  );
+  return res.status(200).json({
+    message: "OTP sent to user successfully.",
+    ...result,
+  });
+});
+
+/**
+ * Edit User with OTP
+ */
+export const editUserWithOtp = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { otp, updateData } = req.body;
+  const user = await adminService.editUserWithOtpService(
+    userId,
+    otp,
+    updateData,
+    req.user.id,
+  );
+
+  return res.status(200).json({
+    message: "User profile updated successfully.",
+    user,
+  });
+});
+
+/**
+ * Get a single order's full details
+ */
+export const getOrderDetails = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const order = await adminService.getOrderDetailsService(orderId);
+  return res.status(200).json({ message: "Order details fetched.", order });
+});
+
+/**
+ * Update an order's status
+ */
+export const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  const order = await adminService.updateOrderStatusService(orderId, status);
+  return res
+    .status(200)
+    .json({ message: `Order status updated to ${status}.`, order });
 });

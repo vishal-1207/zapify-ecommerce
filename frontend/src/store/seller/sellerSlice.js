@@ -79,7 +79,7 @@ export const fetchSellerTransactions = createAsyncThunk(
   async ({ page, limit = 10 } = {}, { rejectWithValue }) => {
     try {
       const data = await getSellerTransactions({ page, limit });
-      return data; // Expected { data: [...], totalPages: N } ... wait, api returns just the paginated object
+      return data;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to load transactions");
     }

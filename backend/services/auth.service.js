@@ -118,6 +118,13 @@ export const loginService = async (userData) => {
     throw new ApiError(401, "Invalid credentials.");
   }
 
+  if (user.isBlocked) {
+    throw new ApiError(
+      403,
+      "Your account has been suspended. Please contact our support team at support@zapify.com for further assistance.",
+    );
+  }
+
   const transaction = await db.sequelize.transaction();
   try {
     const tokens = await generateTokens(user, transaction);

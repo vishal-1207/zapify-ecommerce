@@ -10,12 +10,22 @@ export default (sequelize, DataTypes) => {
       allowNull: true, // Allow null for existing records, but new ones should have it
       unique: true,
     },
-    subtotal: {
+    mrp: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    subtotalAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0.0,
     },
     discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    deliveryFee: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0.0,
@@ -28,8 +38,13 @@ export default (sequelize, DataTypes) => {
         "shipped",
         "delivered",
         "cancelled",
+        "return_requested",
       ),
       defaultValue: "pending",
+    },
+    cancellationReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     shippingAddress: {
       type: DataTypes.JSON,

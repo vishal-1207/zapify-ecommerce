@@ -12,19 +12,24 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
 
   const order = await orderService.getOrderDetailsForCustomer(orderId, userId);
   if (!order) {
-    throw new ApiError(404, "Order not found or you do not have permission to pay for it.");
+    throw new ApiError(
+      404,
+      "Order not found or you do not have permission to pay for it.",
+    );
   }
 
   const paymentIntent =
     await paymentServices.createStripePaymentIntent(orderId);
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      { clientSecret: paymentIntent.client_secret },
-      "Payment Intent created.",
-    ),
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { clientSecret: paymentIntent.client_secret },
+        "Payment Intent created.",
+      ),
+    );
 });
 
 export const stripeWebhookHandler = asyncHandler(async (req, res) => {
@@ -62,4 +67,15 @@ export const getSellerTransactions = asyncHandler(async (req, res) => {
         "Seller transactions fetched successfully.",
       ),
     );
+});
+
+export const refundPayment = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { amount = null, reason = "requested_by_customer" } = req.body;
+
+  const payment = await paymentServices.initiateRefund(orderId, amount, reason);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { payment }, "Refund initiated successfully."));
 });

@@ -13,7 +13,8 @@ export default (sequelize, DataTypes) => {
         "shipped",
         "delivered",
         "cancelled",
-        "refunded"
+        "refunded",
+        "return_requested",
       ),
       defaultValue: "pending",
     },
