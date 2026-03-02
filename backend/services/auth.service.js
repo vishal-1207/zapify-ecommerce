@@ -1,6 +1,9 @@
 import db from "../models/index.js";
 import bcrypt from "bcrypt";
-import generateTokens from "../utils/token.utils.js";
+import {
+  generateAccessToken,
+  generateFullSession,
+} from "../utils/token.utils.js";
 import ApiError from "../utils/ApiError.js";
 import sendMail from "../utils/mailUtility.js";
 import jwt from "jsonwebtoken";
@@ -59,7 +62,7 @@ export const registerService = async (userData) => {
       await db.Cart.create({ userId: user.id }, { transaction });
     }
 
-    const tokens = await generateTokens(user, transaction);
+    const tokens = await generateFullSession(user, transaction);
 
     await transaction.commit();
 
@@ -127,19 +130,41 @@ export const loginService = async (userData) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    const tokens = await generateTokens(user, transaction);
+    // Check if the user already has a valid (non-expired) refresh token.
+    // If yes — reuse it and only issue a new access token.
+    // If no — create a fresh session (new refresh + access token).
+    const existingToken = await db.RefreshToken.findOne({
+      where: { userId: user.id },
+      order: [["createdAt", "DESC"]],
+      transaction,
+    });
+
+    let tokens;
+    if (existingToken && new Date() < new Date(existingToken.expiresAt)) {
+      // Valid session exists — reuse the stored refresh token
+      const accessToken = generateAccessToken(user);
+      tokens = { accessToken, refreshToken: existingToken.token };
+    } else {
+      // No valid session — destroy any stale record and create a fresh one
+      if (existingToken) {
+        await existingToken.destroy({ transaction });
+      }
+      tokens = await generateFullSession(user, transaction);
+    }
 
     await transaction.commit();
     return { user, tokens };
   } catch (error) {
-    if (transaction) await transaction.rollback();
+    if (transaction && !transaction.finished) await transaction.rollback();
     console.error("Login session creation failed:", error);
     throw new ApiError(500, "Login failed during session creation.");
   }
 };
 
 /**
- * Validates a refresh token and generates a new pair (Token Rotation).
+ * Validates a refresh token and issues a new access token only.
+ * The refresh token in DB is NOT rotated — it stays until it naturally expires.
+ * Returns the stored token record so the controller can set the correct remaining TTL on the cookie.
  */
 export const refreshAccessToken = async (incomingToken) => {
   let decodedToken;
@@ -154,54 +179,37 @@ export const refreshAccessToken = async (incomingToken) => {
     throw new ApiError(401, message);
   }
 
-  const transaction = await db.sequelize.transaction();
-  try {
-    const storedToken = await db.RefreshToken.findOne({
-      where: {
-        tokenId: decodedToken.tokenId,
-        userId: decodedToken.id,
-      },
-      transaction,
-    });
+  // Look up the DB record using the tokenId embedded in the refresh JWT.
+  const storedToken = await db.RefreshToken.findOne({
+    where: { tokenId: decodedToken.tokenId, userId: decodedToken.id },
+  });
 
-    if (!storedToken) {
-      await transaction.rollback();
-      throw new ApiError(
-        401,
-        "Session not found or already revoked. Please login again.",
-      );
-    }
-
-    if (new Date() > new Date(storedToken.expiresAt)) {
-      await storedToken.destroy({ transaction });
-      await transaction.commit();
-      throw new ApiError(401, "Refresh token expired. Please login again.");
-    }
-
-    const user = await db.User.findByPk(decodedToken.id, {
-      attributes: { exclude: ["password"] },
-      transaction,
-    });
-
-    if (!user) {
-      await transaction.rollback();
-      throw new ApiError(401, "User account no longer exists.");
-    }
-
-    await storedToken.destroy({ transaction });
-    const tokens = await generateTokens(user, transaction);
-
-    await transaction.commit();
-    return { user, ...tokens };
-  } catch (error) {
-    if (transaction && !transaction.finished) {
-      await transaction.rollback();
-    }
-    if (error instanceof ApiError) throw error;
-
-    console.error("Token Rotation Error:", error);
-    throw new ApiError(500, "Internal server error during session refresh.");
+  if (!storedToken) {
+    throw new ApiError(
+      401,
+      "Session not found or already revoked. Please login again.",
+    );
   }
+
+  // DB-level expiry double-check (JWT verify above is the primary guard).
+  if (new Date() > new Date(storedToken.expiresAt)) {
+    await storedToken.destroy();
+    throw new ApiError(401, "Refresh token expired. Please login again.");
+  }
+
+  const user = await db.User.findByPk(decodedToken.id, {
+    attributes: { exclude: ["password"] },
+  });
+
+  if (!user) {
+    throw new ApiError(401, "User account no longer exists.");
+  }
+
+  // Issue a new access token ONLY — refresh token in DB is left completely unchanged.
+  const accessToken = generateAccessToken(user);
+
+  // Return the storedToken so the controller can compute the remaining TTL for the cookie.
+  return { user, accessToken, storedToken };
 };
 
 /**

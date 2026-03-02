@@ -8,16 +8,16 @@ import csrfProtection from "../middleware/csrf.middleware.js";
 import * as reviewControllers from "../controllers/reviews.controller.js";
 
 const router = express.Router();
-router.use(authenticate);
 
 router.route("/product/:productId").get(reviewControllers.getReviewController);
 
 router
   .route("/order-item/:orderItemId")
   .post(
+    authenticate,
     authorizeRoles("user"),
     csrfProtection,
-    upload.array({ name: "gallery", maxCount: 5 }),
+    upload.array("gallery", 5),
     validate(reviewSchema),
     reviewControllers.createReviewController,
   );
@@ -25,25 +25,41 @@ router
 router
   .route("/:reviewId")
   .patch(
+    authenticate,
     authorizeRoles("user"),
     csrfProtection,
-    upload.array({ name: "gallery", maxCount: 5 }),
+    upload.array("gallery", 5),
     validate(reviewSchema),
     reviewControllers.updateReviewController,
   )
   .delete(
+    authenticate,
     authorizeRoles("user"),
     csrfProtection,
     reviewControllers.deleteReviewController,
   );
 
 router
+  .route("/:reviewId/vote")
+  .post(
+    authenticate,
+    authorizeRoles("user"),
+    csrfProtection,
+    reviewControllers.toggleReviewVoteController,
+  );
+
+router
   .route("/admin/pending-reviews")
-  .get(authorizeRoles("admin"), reviewControllers.getPendingReviewsController);
+  .get(
+    authenticate,
+    authorizeRoles("admin"),
+    reviewControllers.getPendingReviewsController,
+  );
 
 router
   .route("/admin/review/:reviewId/moderate")
   .post(
+    authenticate,
     authorizeRoles("admin"),
     csrfProtection,
     reviewControllers.moderateReviewController,

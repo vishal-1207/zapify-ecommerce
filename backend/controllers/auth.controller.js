@@ -117,7 +117,7 @@ export const exchangeTicket = asyncHandler(async (req, res) => {
 
   // Fetch user to return with tokens
   // We need to decode the access token to get the user ID, or we could have stored the user ID in redis too.
-  // But generateTokens returns { accessToken, refreshToken }. 
+  // But generateTokens returns { accessToken, refreshToken }.
   // Let's decode the accessToken to find the user.
   const decoded = jwt.verify(tokens.accessToken, process.env.JWT_SECRET);
   const user = await db.User.findByPk(decoded.id);
@@ -134,22 +134,35 @@ export const exchangeTicket = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Token Handler Controller
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingToken = req.cookies?.refreshToken || req.body.refreshToken;
   if (!incomingToken) throw new ApiError(401, "Refresh token missing.");
 
-  const { user, accessToken, refreshToken } =
+  const { user, accessToken, storedToken } =
     await authServices.refreshAccessToken(incomingToken);
 
-  const tokens = { accessToken, refreshToken };
   const options = getCookieOptions();
-  setTokensInCookies(res, tokens, options);
 
+  // Compute remaining TTL of the stored refresh token so the cookie
+  // doesn't silently reset to the full duration on every access-token refresh.
+  const remainingRefreshMs =
+    new Date(storedToken.expiresAt).getTime() - Date.now();
+
+  // Re-set both cookies: new access token + same refresh token with exact remaining time.
+  setTokensInCookies(
+    res,
+    { accessToken, refreshToken: incomingToken },
+    options,
+    remainingRefreshMs,
+  );
+
+  // Only return the new access token — refresh token is unchanged.
   return res
     .status(200)
-    .json(new ApiResponse(200, { user, tokens }, "Token refreshed."));
+    .json(
+      new ApiResponse(200, { user, accessToken }, "Access token refreshed."),
+    );
 });
 
 // Forgot Password Controller

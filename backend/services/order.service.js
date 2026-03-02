@@ -153,6 +153,10 @@ export const getOrderDetailsForCustomer = async (orderId, userId) => {
         as: "orderItems",
         include: [
           {
+            model: db.Review,
+            as: "review",
+          },
+          {
             model: db.Offer,
             include: [
               {

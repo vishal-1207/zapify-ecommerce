@@ -24,6 +24,10 @@ export default (sequelize, DataTypes) => {
   OrderItem.associate = (models) => {
     OrderItem.belongsTo(models.Order, { foreignKey: "orderId" });
     OrderItem.belongsTo(models.Offer, { foreignKey: "offerId" });
+    OrderItem.hasOne(models.Review, {
+      as: "review",
+      foreignKey: "orderItemId",
+    });
   };
 
   return OrderItem;

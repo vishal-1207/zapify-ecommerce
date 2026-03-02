@@ -13,6 +13,7 @@ export const createReviewController = asyncHandler(async (req, res) => {
     userId,
     orderItemId,
     reviewData,
+    req.files,
   );
   return res.status(201).json({ message: "Review submitted successfully." });
 });
@@ -38,6 +39,7 @@ export const updateReviewController = asyncHandler(async (req, res) => {
     reviewId,
     userId,
     req.body,
+    req.files,
   );
   return res.status(201).json({ message: "Review updated successfully." });
 });
@@ -84,4 +86,30 @@ export const moderateReviewController = asyncHandler(async (req, res) => {
     decision,
   );
   return res.status(200).json({ message: `Review ${decision}.`, review });
+});
+
+/**
+ * Controller to toggle like/dislike on a review.
+ */
+export const toggleReviewVoteController = asyncHandler(async (req, res) => {
+  const { reviewId } = req.params;
+  const { voteType } = req.body; // expected: "like" or "dislike"
+  const userId = req.user.id;
+
+  if (!voteType || !["like", "dislike"].includes(voteType)) {
+    throw new ApiError(400, "Invalid voteType. Expected 'like' or 'dislike'.");
+  }
+
+  const updatedReview = await reviewServices.toggleReviewVote(
+    reviewId,
+    userId,
+    voteType,
+  );
+  return res.status(200).json({
+    message: `Review ${voteType} updated successfully.`,
+    likes: updatedReview.likes,
+    dislikes: updatedReview.dislikes,
+    likedBy: updatedReview.likedBy,
+    dislikedBy: updatedReview.dislikedBy,
+  });
 });

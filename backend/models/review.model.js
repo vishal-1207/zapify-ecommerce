@@ -12,6 +12,10 @@ export default (sequelize, DataTypes) => {
     },
     comment: { type: DataTypes.TEXT, allowNull: true },
     orderItemId: { type: DataTypes.UUID, allowNull: false, unique: true },
+    likes: { type: DataTypes.INTEGER, defaultValue: 0 },
+    dislikes: { type: DataTypes.INTEGER, defaultValue: 0 },
+    likedBy: { type: DataTypes.JSON, defaultValue: [] },
+    dislikedBy: { type: DataTypes.JSON, defaultValue: [] },
   });
 
   Review.associate = (models) => {

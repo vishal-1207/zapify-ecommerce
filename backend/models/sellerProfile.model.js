@@ -26,6 +26,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM("pending", "verified", "rejected"),
       defaultValue: "pending",
     },
+    averageRating: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0.0,
+    },
+    reviewCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     slug: { type: DataTypes.STRING, allowNull: true, unique: true },
   });
 
