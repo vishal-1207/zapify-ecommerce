@@ -12,6 +12,7 @@ import { getAllProducts } from "../../api/products";
 import { getAllCategories } from "../../api/categories";
 import { getAllBrands } from "../../api/brands";
 import ProductCard from "../../components/product/ProductCard";
+import Pagination from "../../components/common/Pagination";
 import { formatCurrency } from "../../utils/currency";
 
 const Shop = () => {
@@ -21,11 +22,19 @@ const Shop = () => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   // Initialize filters from URL or defaults
   // URL contains SLUGS now
-  const selectedCategorySlugs = useMemo(() => searchParams.getAll("category").filter(Boolean) || [], [searchParams]);
-  const selectedBrandSlugs = useMemo(() => searchParams.getAll("brand").filter(Boolean) || [], [searchParams]);
+  const selectedCategorySlugs = useMemo(
+    () => searchParams.getAll("category").filter(Boolean) || [],
+    [searchParams],
+  );
+  const selectedBrandSlugs = useMemo(
+    () => searchParams.getAll("brand").filter(Boolean) || [],
+    [searchParams],
+  );
 
   const [priceRange, setPriceRange] = useState(() => ({
     min: Number(searchParams.get("minPrice")) || 0,
@@ -65,67 +74,77 @@ const Shop = () => {
   // and allows "unidentified filter" lookup to work even if no products match.
 
   // Sync Filters to URL
-  const updateFilters = (newCategorySlugs, newBrandSlugs, newPrice, newRating, newSort) => {
-     const newParams = new URLSearchParams();
-     
-     const currentSearch = searchParams.get("search");
-     if (currentSearch) newParams.set("search", currentSearch);
+  const updateFilters = (
+    newCategorySlugs,
+    newBrandSlugs,
+    newPrice,
+    newRating,
+    newSort,
+  ) => {
+    const newParams = new URLSearchParams();
 
-     (newCategorySlugs || selectedCategorySlugs).forEach(c => newParams.append("category", c));
-     (newBrandSlugs || selectedBrandSlugs).forEach(b => newParams.append("brand", b));
-     
-     const pRange = newPrice || priceRange;
-     if (pRange.min > 0) newParams.set("minPrice", pRange.min);
-     if (pRange.max < 3000) newParams.set("maxPrice", pRange.max);
-     
-     const rating = newRating !== undefined ? newRating : minRating;
-     if (rating > 0) newParams.set("minRating", rating);
-     
-     const sort = newSort || sortBy;
-     if (sort !== "featured") newParams.set("sort", sort);
+    const currentSearch = searchParams.get("search");
+    if (currentSearch) newParams.set("search", currentSearch);
 
-     setSearchParams(newParams, { replace: true });
+    (newCategorySlugs || selectedCategorySlugs).forEach((c) =>
+      newParams.append("category", c),
+    );
+    (newBrandSlugs || selectedBrandSlugs).forEach((b) =>
+      newParams.append("brand", b),
+    );
+
+    const pRange = newPrice || priceRange;
+    if (pRange.min > 0) newParams.set("minPrice", pRange.min);
+    if (pRange.max < 3000) newParams.set("maxPrice", pRange.max);
+
+    const rating = newRating !== undefined ? newRating : minRating;
+    if (rating > 0) newParams.set("minRating", rating);
+
+    const sort = newSort || sortBy;
+    if (sort !== "featured") newParams.set("sort", sort);
+
+    setSearchParams(newParams, { replace: true });
   };
-  
+
   // Handlers wrapper to update URL directly
   // We no longer use local state for selections, we drive from URL.
-  // Wait, local state for slider/rating? 
+  // Wait, local state for slider/rating?
   // We can drive everything from URL or keep local sync.
   // Previous implement used local state 'selectedCategories' then sync effect.
   // Direct URL update is cleaner for "update as I type/click".
-  
+
   const toggleCategory = (slug) => {
-      const current = selectedCategorySlugs;
-      const newSlugs = current.includes(slug) 
-        ? current.filter(s => s !== slug) 
-        : [...current, slug];
-      updateFilters(newSlugs, null, null, undefined, null);
+    const current = selectedCategorySlugs;
+    const newSlugs = current.includes(slug)
+      ? current.filter((s) => s !== slug)
+      : [...current, slug];
+    updateFilters(newSlugs, null, null, undefined, null);
   };
 
   const toggleBrand = (slug) => {
-      const current = selectedBrandSlugs;
-      const newSlugs = current.includes(slug)
-        ? current.filter(s => s !== slug)
-        : [...current, slug];
-      updateFilters(null, newSlugs, null, undefined, null);
+    const current = selectedBrandSlugs;
+    const newSlugs = current.includes(slug)
+      ? current.filter((s) => s !== slug)
+      : [...current, slug];
+    updateFilters(null, newSlugs, null, undefined, null);
   };
 
   const handlePriceChange = (newRange) => {
-      setPriceRange(newRange); // Optimistic UI
-      // Debounce this? Or just update. Slider usually needs debounce.
-      // For now, let's update URL on mouseUp or just let it update.
-      // If we update URL on every slide it might be laggy. 
-      // We will update URL only when interaction ends ideally, 
-      // but standard input onChange is continuous.
+    setPriceRange(newRange); // Optimistic UI
+    // Debounce this? Or just update. Slider usually needs debounce.
+    // For now, let's update URL on mouseUp or just let it update.
+    // If we update URL on every slide it might be laggy.
+    // We will update URL only when interaction ends ideally,
+    // but standard input onChange is continuous.
   };
-  
+
   // Effect to update URL for price/rating/sort when state changes
   useEffect(() => {
-     // Prevent infinite loop by checking if values actually changed? 
-     // The 'updateFilters' recreates params.
-     // We should only trigger this if we want to sync these specific states.
-     // Simplified: We can just use updateFilters in the setters.
-  }, []); 
+    // Prevent infinite loop by checking if values actually changed?
+    // The 'updateFilters' recreates params.
+    // We should only trigger this if we want to sync these specific states.
+    // Simplified: We can just use updateFilters in the setters.
+  }, []);
 
   // Filtering Logic
   const filteredProducts = useMemo(() => {
@@ -135,43 +154,63 @@ const Shop = () => {
       .filter((product) => {
         // Search Filter
         if (searchQuery) {
-            const matchesName = product.name?.toLowerCase().includes(searchQuery);
-            const matchesModel = product.model?.toLowerCase().includes(searchQuery);
-            const matchesBrand = typeof product.brand === 'object' 
-                ? product.brand?.name?.toLowerCase().includes(searchQuery)
-                : String(product.brand).toLowerCase().includes(searchQuery);
-            const matchesCategory = typeof product.category === 'object'
-                ? product.category?.name?.toLowerCase().includes(searchQuery)
-                : String(product.category).toLowerCase().includes(searchQuery);
+          const matchesName = product.name?.toLowerCase().includes(searchQuery);
+          const matchesModel = product.model
+            ?.toLowerCase()
+            .includes(searchQuery);
+          const matchesBrand =
+            typeof product.brand === "object"
+              ? product.brand?.name?.toLowerCase().includes(searchQuery)
+              : String(product.brand).toLowerCase().includes(searchQuery);
+          const matchesCategory =
+            typeof product.category === "object"
+              ? product.category?.name?.toLowerCase().includes(searchQuery)
+              : String(product.category).toLowerCase().includes(searchQuery);
 
-            if (!matchesName && !matchesModel && !matchesBrand && !matchesCategory) {
-                return false;
-            }
+          if (
+            !matchesName &&
+            !matchesModel &&
+            !matchesBrand &&
+            !matchesCategory
+          ) {
+            return false;
+          }
         }
 
         // Category Filter (Using Slugs)
         if (selectedCategorySlugs.length > 0) {
-           const productCatSlug = typeof product.category === 'object' ? product.category?.slug : null;
-           // Also verify ID fallback if slug missing?
-           // If backend works, slug should be there.
-           if (!productCatSlug || !selectedCategorySlugs.includes(productCatSlug)) {
-               // Fallback: Check if we have ID in url (legacy support?) No, user asked for slug.
-               return false;
-           }
+          const productCatSlug =
+            typeof product.category === "object"
+              ? product.category?.slug
+              : null;
+          // Also verify ID fallback if slug missing?
+          // If backend works, slug should be there.
+          if (
+            !productCatSlug ||
+            !selectedCategorySlugs.includes(productCatSlug)
+          ) {
+            // Fallback: Check if we have ID in url (legacy support?) No, user asked for slug.
+            return false;
+          }
         }
 
         // Brand Filter (Using Slugs)
         if (selectedBrandSlugs.length > 0) {
-             const productBrandSlug = typeof product.brand === 'object' ? product.brand?.slug : null;
-             if (!productBrandSlug || !selectedBrandSlugs.includes(productBrandSlug)) {
-                 return false;
-             }
+          const productBrandSlug =
+            typeof product.brand === "object" ? product.brand?.slug : null;
+          if (
+            !productBrandSlug ||
+            !selectedBrandSlugs.includes(productBrandSlug)
+          ) {
+            return false;
+          }
         }
 
         // Price Filter
         const min = priceRange.min;
         const max = priceRange.max;
-        const price = Number(product.minOfferPrice) || Number(product.price) || 0; 
+        const price =
+          Number(product.minOfferPrice) || Number(product.price) || 0;
         if (price < min || price > max) return false;
 
         // Rating Filter
@@ -195,8 +234,8 @@ const Shop = () => {
             // "Ascending order as per number of orders and rating"
             // Interpreted as: Higher ReviewCount/Rating comes first (Descending popularity)
             // Combined Score = (Rating * 20) + ReviewCount
-            const scoreA = ((a.averageRating || 0) * 20) + (a.reviewCount || 0);
-            const scoreB = ((b.averageRating || 0) * 20) + (b.reviewCount || 0);
+            const scoreA = (a.averageRating || 0) * 20 + (a.reviewCount || 0);
+            const scoreB = (b.averageRating || 0) * 20 + (b.reviewCount || 0);
             return scoreB - scoreA;
         }
       });
@@ -207,8 +246,26 @@ const Shop = () => {
     priceRange,
     minRating,
     sortBy,
-    searchParams 
+    searchParams,
   ]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    selectedCategorySlugs,
+    selectedBrandSlugs,
+    priceRange,
+    minRating,
+    sortBy,
+    searchParams.get("search"),
+  ]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (page - 1) * limit;
+    return filteredProducts.slice(startIndex, startIndex + limit);
+  }, [filteredProducts, page, limit]);
+
+  const totalPages = Math.ceil(filteredProducts.length / limit);
 
   const clearAllFilters = () => {
     setSearchParams({}); // Clear all
@@ -227,9 +284,9 @@ const Shop = () => {
     const newRange = { ...priceRange, min: value };
     setPriceRange(newRange);
   };
-  
+
   const handleMinPriceCommit = () => {
-      updateFilters(null, null, priceRange, undefined, null);
+    updateFilters(null, null, priceRange, undefined, null);
   };
 
   const handleMaxPriceChange = (e) => {
@@ -239,9 +296,8 @@ const Shop = () => {
   };
 
   const handleMaxPriceCommit = () => {
-       updateFilters(null, null, priceRange, undefined, null);
+    updateFilters(null, null, priceRange, undefined, null);
   };
-
 
   const getPercent = (value) =>
     Math.round(
@@ -318,9 +374,9 @@ const Shop = () => {
               <select
                 value={sortBy}
                 onChange={(e) => {
-                    const val = e.target.value;
-                    setSortBy(val);
-                    updateFilters(null, null, null, undefined, val);
+                  const val = e.target.value;
+                  setSortBy(val);
+                  updateFilters(null, null, null, undefined, val);
                 }}
                 className="appearance-none w-full md:w-48 bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium outline-none focus:border-indigo-500 cursor-pointer hover:bg-white transition-colors"
               >
@@ -381,13 +437,13 @@ const Shop = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedCategorySlugs.map((slug) => {
-                      const cat = categories.find(c => c.slug === slug);
+                      const cat = categories.find((c) => c.slug === slug);
                       return (
                         <span
                           key={slug}
                           className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium"
                         >
-                          {cat ? cat.name : slug} 
+                          {cat ? cat.name : slug}
                           <X
                             size={10}
                             className="cursor-pointer"
@@ -397,7 +453,7 @@ const Shop = () => {
                       );
                     })}
                     {selectedBrandSlugs.map((slug) => {
-                      const brand = brands.find(b => b.slug === slug);
+                      const brand = brands.find((b) => b.slug === slug);
                       return (
                         <span
                           key={slug}
@@ -414,14 +470,15 @@ const Shop = () => {
                     })}
                     {(priceRange.min > 0 || priceRange.max < 3000) && (
                       <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium">
-                        {formatCurrency(priceRange.min)} - {formatCurrency(priceRange.max)}{" "}
+                        {formatCurrency(priceRange.min)} -{" "}
+                        {formatCurrency(priceRange.max)}{" "}
                         <X
                           size={10}
                           className="cursor-pointer"
                           onClick={() => {
-                              const reset = { min: 0, max: 3000 };
-                              setPriceRange(reset);
-                              updateFilters(null, null, reset, undefined, null);
+                            const reset = { min: 0, max: 3000 };
+                            setPriceRange(reset);
+                            updateFilters(null, null, reset, undefined, null);
                           }}
                         />
                       </span>
@@ -433,8 +490,8 @@ const Shop = () => {
                           size={10}
                           className="cursor-pointer"
                           onClick={() => {
-                              setMinRating(0);
-                              updateFilters(null, null, null, 0, null);
+                            setMinRating(0);
+                            updateFilters(null, null, null, 0, null);
                           }}
                         />
                       </span>
@@ -651,13 +708,44 @@ const Shop = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="h-full">
-                    <ProductCard product={product} />
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {paginatedProducts.map((product) => (
+                    <div key={product.id} className="h-full">
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-6">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <p>Show</p>
+                      <select
+                        className="bg-white border border-gray-200 rounded px-2 py-1 outline-none hover:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-gray-700"
+                        value={limit}
+                        onChange={(e) => {
+                          setLimit(Number(e.target.value));
+                          setPage(1);
+                        }}
+                      >
+                        {[10, 20, 30, 50].map((pageSize) => (
+                          <option key={pageSize} value={pageSize}>
+                            {pageSize}
+                          </option>
+                        ))}
+                      </select>
+                      <p>per page</p>
+                    </div>
+                    <Pagination
+                      currentPage={page}
+                      totalItems={filteredProducts.length}
+                      itemsPerPage={limit}
+                      onPageChange={setPage}
+                    />
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>

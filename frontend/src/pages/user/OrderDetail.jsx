@@ -13,8 +13,11 @@ import {
   Loader2,
   X,
   ShieldCheck,
+  Star,
 } from "lucide-react";
 import { getOrderDetails, cancelOrder, requestReturn } from "../../api/orders";
+import { createReview } from "../../api/reviews";
+import ReviewModal from "../../components/reviews/ReviewModal";
 import { formatCurrency } from "../../utils/currency";
 import { toast } from "react-hot-toast";
 
@@ -63,6 +66,22 @@ const OrderDetail = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnReasonOther, setReturnReasonOther] = useState("");
   const [isReturning, setIsReturning] = useState(false);
+
+  // Review modal state
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [startingReviewIndex, setStartingReviewIndex] = useState(0);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const unreviewedItems =
+    order?.orderItems?.filter((item) => !item.review) || [];
+
+  const handleReviewClick = (itemId) => {
+    const index = unreviewedItems.findIndex((item) => item.id === itemId);
+    if (index !== -1) {
+      setStartingReviewIndex(index);
+      setReviewModalOpen(true);
+    }
+  };
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -127,6 +146,23 @@ const OrderDetail = () => {
       );
     } finally {
       setIsReturning(false);
+    }
+  };
+
+  const handleReviewSubmit = async (item, formData) => {
+    setIsSubmittingReview(true);
+    try {
+      await createReview(item.id, formData);
+      toast.success("Review submitted successfully!");
+      // Don't close modal here, let ReviewModal handle advancement
+      // Refresh order data in background so items show as reviewed
+      const updated = await getOrderDetails(orderId);
+      setOrder(updated);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to submit review.");
+      throw err; // Re-throw so ReviewModal knows it failed
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -216,22 +252,32 @@ const OrderDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            {isCancellable && (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-              >
-                <XCircle size={15} /> Cancel Order
-              </button>
-            )}
-            {isReturnable && (
-              <button
-                onClick={() => setShowReturnModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-              >
-                <RotateCcw size={15} /> Return & Refund
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {isCancellable && (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <XCircle size={15} /> Cancel Order
+                </button>
+              )}
+              {isReturnable && (
+                <button
+                  onClick={() => setShowReturnModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                >
+                  <RotateCcw size={15} /> Return & Refund
+                </button>
+              )}
+              {order.status === "delivered" && unreviewedItems.length > 0 && (
+                <button
+                  onClick={() => handleReviewClick(unreviewedItems[0].id)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                >
+                  <Star size={15} className="fill-indigo-600" /> Review Items
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -281,6 +327,21 @@ const OrderDetail = () => {
                         </span>{" "}
                         × {formatCurrency(item.priceAtTimeOfPurchase)}
                       </div>
+
+                      {order.status === "delivered" && !item.review && (
+                        <button
+                          onClick={() => handleReviewClick(item.id)}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
+                        >
+                          Leave a rating
+                        </button>
+                      )}
+
+                      {order.status === "delivered" && item.review && (
+                        <span className="text-sm font-medium text-green-600 flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                          <ShieldCheck size={16} /> Reviewed
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -582,6 +643,16 @@ const OrderDetail = () => {
           </div>
         </div>
       )}
+
+      {/* ── Review Modal ── */}
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        onSubmit={handleReviewSubmit}
+        isSubmitting={isSubmittingReview}
+        itemsToReview={unreviewedItems}
+        startingIndex={startingReviewIndex}
+      />
     </div>
   );
 };

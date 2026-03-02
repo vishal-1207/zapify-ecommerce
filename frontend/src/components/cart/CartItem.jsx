@@ -63,6 +63,18 @@ const CartItem = ({ item }) => {
               </span>
             </div>
           )}
+
+          {item.qty >= item.stockQuantity && (
+            <div className="mt-2 text-xs text-orange-600 flex flex-col gap-0.5">
+              <span>Maximum available quantity reached.</span>
+              <Link
+                to={`/product/${item.slug}`}
+                className="text-indigo-600 hover:underline"
+              >
+                Explore other sellers
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -82,7 +94,8 @@ const CartItem = ({ item }) => {
           </span>
           <button
             onClick={() => updateQty(item.offerId || item.id, 1)}
-            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors"
+            disabled={item.qty >= item.stockQuantity}
+            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
             aria-label="Increase quantity"
           >
             <Plus size={14} />

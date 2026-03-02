@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Heart,
   Share2,
+  X,
 } from "lucide-react";
 import { getProductById, getRecommendations } from "../../api/products";
 import { useCart } from "../../context/CartContext";
@@ -70,6 +71,7 @@ const ProductDetail = () => {
   const [qty, setQty] = useState(1);
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isSellersModalOpen, setIsSellersModalOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -438,12 +440,34 @@ const ProductDetail = () => {
                 </button>
                 <span className="font-bold text-gray-900">{qty}</span>
                 <button
-                  onClick={() => setQty(qty + 1)}
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600"
+                  onClick={() =>
+                    setQty(
+                      Math.min(
+                        selectedOffer?.stockQuantity ||
+                          product.totalOfferStock ||
+                          1,
+                        qty + 1,
+                      ),
+                    )
+                  }
+                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    qty >=
+                    (selectedOffer?.stockQuantity ||
+                      product.totalOfferStock ||
+                      1)
+                  }
                 >
                   <Plus size={14} />
                 </button>
               </div>
+
+              {selectedOffer && qty >= selectedOffer.stockQuantity && (
+                <div className="text-xs text-orange-600 font-medium mb-3 text-center">
+                  Maximum available quantity reached.
+                </div>
+              )}
+
               <div className="space-y-3">
                 <div className="space-y-3">
                   {selectedOffer && selectedOffer.stockQuantity > 0 ? (
@@ -503,7 +527,23 @@ const ProductDetail = () => {
                   )}
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-gray-100 flex justify-center">
+              {/* Link to open sellers modal if multiple sellers exist */}
+              {product.offers &&
+                product.offers.filter((o) => o.stockQuantity > 0).length >
+                  1 && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
+                    <button
+                      onClick={() => setIsSellersModalOpen(true)}
+                      className="text-indigo-600 text-sm font-bold hover:underline transition"
+                    >
+                      Compare New & Used from{" "}
+                      {product.offers.filter((o) => o.stockQuantity > 0).length}{" "}
+                      Sellers
+                    </button>
+                  </div>
+                )}
+
+              <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
                 <button className="text-gray-500 text-sm font-medium flex items-center gap-2 hover:text-indigo-600 transition">
                   <Share2 size={16} /> Share Product
                 </button>
@@ -512,85 +552,106 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Other Sellers Section */}
-        {product.offers &&
-          product.offers.filter((o) => o.stockQuantity > 0).length > 1 && (
-            <div className="mb-16">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
-                Other Sellers
-              </h3>
-              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 font-medium text-sm text-gray-500 border-b border-gray-200">
-                  <div>Seller</div>
-                  <div>Price</div>
-                  <div>Condition</div>
-                  <div>Action</div>
-                </div>
-                {product.offers
-                  .filter((o) => o.stockQuantity > 0)
-                  .map((offer) => {
-                    const isDeal =
-                      offer.dealPrice &&
-                      parseFloat(offer.dealPrice) > 0 &&
-                      new Date() >= new Date(offer.dealStartDate) &&
-                      new Date() <= new Date(offer.dealEndDate);
-                    const effectivePrice = isDeal
-                      ? Number(offer.dealPrice)
-                      : Number(offer.price);
+        {/* Sellers Modal */}
+        {isSellersModalOpen && product.offers && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Other Sellers on Zapify
+                </h3>
+                <button
+                  onClick={() => setIsSellersModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
 
-                    return (
-                      <div
-                        key={offer.id}
-                        className={`grid grid-cols-4 gap-4 p-4 items-center border-b border-gray-100 last:border-0 ${selectedOffer?.id === offer.id ? "bg-indigo-50/50" : ""}`}
-                      >
-                        <div className="font-medium text-gray-900">
-                          {offer.sellerProfile?.storeName}
-                          {selectedOffer?.id === offer.id && (
-                            <span className="ml-2 text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">
-                              Selected
+              <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                <div className="space-y-4">
+                  {product.offers
+                    .filter((o) => o.stockQuantity > 0)
+                    .map((offer) => {
+                      const isDeal =
+                        offer.dealPrice &&
+                        parseFloat(offer.dealPrice) > 0 &&
+                        new Date() >= new Date(offer.dealStartDate) &&
+                        new Date() <= new Date(offer.dealEndDate);
+                      const effectivePrice = isDeal
+                        ? Number(offer.dealPrice)
+                        : Number(offer.price);
+
+                      return (
+                        <div
+                          key={offer.id}
+                          className={`flex items-center justify-between p-4 rounded-xl border ${selectedOffer?.id === offer.id ? "border-indigo-600 bg-indigo-50/30 shadow-sm" : "border-gray-200"}`}
+                        >
+                          <div className="w-1/3">
+                            <div className="font-bold text-lg text-gray-900">
+                              {formatCurrency(effectivePrice)}
+                            </div>
+                            {isDeal && (
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                  Deal
+                                </span>
+                                <span className="text-xs text-gray-500 line-through">
+                                  {formatCurrency(offer.price)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-xs font-semibold text-gray-500">
+                                Condition:
+                              </span>
+                              <span className="text-sm text-gray-700">
+                                {offer.condition}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="w-1/3 flex flex-col justify-center px-4 border-l border-r border-gray-100">
+                            <span className="text-xs text-gray-500 mb-0.5">
+                              Seller
                             </span>
-                          )}
-                          {isDeal && (
-                            <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">
-                              Deal
+                            <span className="font-medium text-gray-900">
+                              {offer.sellerProfile?.storeName}
                             </span>
-                          )}
+                          </div>
+
+                          <div className="w-1/4 flex justify-end">
+                            {selectedOffer?.id === offer.id ? (
+                              <button
+                                disabled
+                                className="px-5 py-2.5 bg-gray-100 text-gray-500 text-sm font-bold rounded-lg cursor-not-allowed"
+                              >
+                                Selected
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedOffer(offer);
+                                  setIsSellersModalOpen(false);
+                                  window.scrollTo({
+                                    top: 0,
+                                    behavior: "smooth",
+                                  });
+                                }}
+                                className="px-5 py-2.5 bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 text-sm font-bold rounded-lg transition"
+                              >
+                                Select seller
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex flex-col items-start">
-                          <span
-                            className={`font-bold ${isDeal ? "text-red-600" : "text-gray-900"}`}
-                          >
-                            {formatCurrency(effectivePrice)}
-                          </span>
-                          {isDeal && (
-                            <span className="relative inline-block text-gray-500">
-                              {formatCurrency(offer.price)}
-                              <span className="absolute left-0 top-1/2 w-full h-[1px] bg-gray-500 -translate-y-1/2"></span>
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {offer.condition}
-                        </div>
-                        <div>
-                          {selectedOffer?.id !== offer.id && (
-                            <button
-                              onClick={() => {
-                                setSelectedOffer(offer);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }}
-                              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                            >
-                              Select this seller
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         {/* Tabbed Info Section (Added Here) */}
         <ProductTabs product={product} />

@@ -4,10 +4,12 @@ import { createSellerDeal } from "../../api/discounts";
 import { formatCurrency } from "../../utils/currency";
 import { Edit, Trash2, Tag, X, Check, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import DataTable from "../../components/common/DataTable";
 
 const Offers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [dealForm, setDealForm] = useState({
@@ -106,8 +108,107 @@ const Offers = () => {
     );
   }
 
+  const filteredOffers = offers.filter((offer) =>
+    offer.product?.name?.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const columns = [
+    {
+      header: "Product",
+      render: (offer) => (
+        <div className="flex items-center">
+          <div className="h-10 w-10 flex-shrink-0">
+            <img
+              className="h-10 w-10 rounded-md object-cover"
+              src={offer.product?.media?.[0]?.url || "https://placehold.co/100"}
+              alt=""
+            />
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">
+              {offer.product?.name}
+            </div>
+            <div className="text-sm text-gray-500">{offer.condition}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Price",
+      render: (offer) => (
+        <div className="text-sm text-gray-900 font-medium">
+          {formatCurrency(offer.price)}
+        </div>
+      ),
+    },
+    {
+      header: "Stock",
+      render: (offer) => (
+        <div
+          className={`text-sm ${offer.stockQuantity > 0 ? "text-green-600" : "text-red-500"}`}
+        >
+          {offer.stockQuantity} units
+        </div>
+      ),
+    },
+    {
+      header: "Active Deal",
+      render: (offer) =>
+        isDealActive(offer) ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            On Deal: {formatCurrency(offer.dealPrice)}
+          </span>
+        ) : offer.dealPrice && new Date(offer.dealStartDate) > new Date() ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Scheduled
+          </span>
+        ) : offer.dealPrice && new Date(offer.dealEndDate) < new Date() ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            Ended
+          </span>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        ),
+    },
+    {
+      header: "Status",
+      render: (offer) => (
+        <span
+          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            offer.status === "active"
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {offer.status}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      className: "text-right font-medium",
+      render: (offer) => (
+        <>
+          <button
+            onClick={() => handleOpenDealModal(offer)}
+            className="text-indigo-600 hover:text-indigo-900 mr-4 flex items-center gap-1 inline-flex"
+            title="Manage Deal"
+          >
+            <Tag size={16} /> Deal
+          </button>
+          <button
+            className="text-gray-400 hover:text-gray-600"
+            title="Edit Offer"
+          >
+            <Edit size={16} />
+          </button>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Manage Offers</h1>
         <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
@@ -115,117 +216,15 @@ const Offers = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Product
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Active Deal
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {offers.map((offer) => (
-              <tr key={offer.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0">
-                      <img
-                        className="h-10 w-10 rounded-md object-cover"
-                        src={
-                          offer.product?.media?.[0]?.url ||
-                          "https://placehold.co/100"
-                        }
-                        alt=""
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {offer.product?.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {offer.condition}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 font-medium">
-                    {formatCurrency(offer.price)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div
-                    className={`text-sm ${offer.stockQuantity > 0 ? "text-green-600" : "text-red-500"}`}
-                  >
-                    {offer.stockQuantity} units
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {isDealActive(offer) ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      On Deal: {formatCurrency(offer.dealPrice)}
-                    </span>
-                  ) : offer.dealPrice &&
-                    new Date(offer.dealStartDate) > new Date() ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Scheduled
-                    </span>
-                  ) : offer.dealPrice &&
-                    new Date(offer.dealEndDate) < new Date() ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Ended
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">-</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      offer.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {offer.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleOpenDealModal(offer)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4 flex items-center gap-1 inline-flex"
-                    title="Manage Deal"
-                  >
-                    <Tag size={16} /> Deal
-                  </button>
-                  <button
-                    className="text-gray-400 hover:text-gray-600"
-                    title="Edit Offer"
-                  >
-                    <Edit size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={filteredOffers}
+        loading={loading}
+        onSearch={setSearch}
+        clientPagination={true}
+        searchPlaceholder="Search offers..."
+        emptyMessage="No offers found."
+      />
 
       {/* Deal Management Modal */}
       {isDealModalOpen && (

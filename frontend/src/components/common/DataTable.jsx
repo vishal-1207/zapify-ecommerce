@@ -1,5 +1,12 @@
-import React from "react";
-import { Search, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, Inbox } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  RefreshCw,
+  Inbox,
+} from "lucide-react";
 
 const DataTable = ({
   columns = [],
@@ -12,20 +19,85 @@ const DataTable = ({
   error = null, // Error message or object
   onRetry, // Function to retry fetching data
   emptyMessage = "No records found.",
-  pagination, // Optional: { currentPage, totalPages, onPageChange }
+  pagination, // Optional map for server-pagination: { currentPage, totalPages, onPageChange, itemsPerPage, onItemsPerPageChange }
   searchValue, // Optional: Controlled value for search input
+  clientPagination = false, // If true, table paginates locally over the data array
 }) => {
+  // Client-side pagination state
+  const [clientPage, setClientPage] = useState(1);
+  const [clientItemsPerPage, setClientItemsPerPage] = useState(10);
+
+  // Compute final data for rendering
+  const processedData = useMemo(() => {
+    if (!clientPagination) return data;
+
+    // For client pagination, we just slice the data
+    const startIndex = (clientPage - 1) * clientItemsPerPage;
+    return data.slice(startIndex, startIndex + clientItemsPerPage);
+  }, [data, clientPagination, clientPage, clientItemsPerPage]);
+
+  const totalPages = clientPagination
+    ? Math.max(1, Math.ceil(data.length / clientItemsPerPage))
+    : pagination?.totalPages || 1;
+
+  const currentPage = clientPagination
+    ? clientPage
+    : pagination?.currentPage || 1;
+  const itemsPerPage = clientPagination
+    ? clientItemsPerPage
+    : pagination?.itemsPerPage || 10;
+
+  const handlePageChange = (newPage) => {
+    if (clientPagination) {
+      setClientPage(newPage);
+    } else if (pagination?.onPageChange) {
+      pagination.onPageChange(newPage);
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    const newVal = Number(e.target.value);
+    if (clientPagination) {
+      setClientItemsPerPage(newVal);
+      setClientPage(1); // Reset to first page
+    } else if (pagination?.onItemsPerPageChange) {
+      pagination.onItemsPerPageChange(newVal);
+    }
+  };
+
+  // Ensure clientPage is valid when data length changes
+  if (clientPagination && clientPage > totalPages && totalPages > 0) {
+    setClientPage(totalPages);
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header Section */}
-      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
+      <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
         {/* Left Side: Filters/Tabs */}
         <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
           {filters}
         </div>
 
         {/* Right Side: Search & Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full md:w-auto">
+          {/* Items Per Page Selector */}
+          <div className="flex items-center gap-2 mr-2">
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              Show:
+            </span>
+            <select
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="bg-white border border-gray-200 text-gray-700 text-sm rounded focus:ring-indigo-500 focus:border-indigo-500 px-2 py-1.5 outline-none cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
           {onSearch && (
             <div className="relative">
               <Search
@@ -37,7 +109,10 @@ const DataTable = ({
                 placeholder={searchPlaceholder}
                 value={searchValue !== undefined ? searchValue : undefined}
                 defaultValue={searchValue === undefined ? undefined : undefined}
-                onChange={(e) => onSearch(e.target.value)}
+                onChange={(e) => {
+                  if (clientPagination) setClientPage(1); // reset page on search
+                  onSearch(e.target.value);
+                }}
                 className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
               />
             </div>
@@ -52,10 +127,7 @@ const DataTable = ({
           <thead className="bg-gray-50 text-gray-700 font-medium uppercase text-xs">
             <tr>
               {columns.map((col, index) => (
-                <th
-                  key={index}
-                  className={`px-6 py-4 ${col.className || ""}`}
-                >
+                <th key={index} className={`px-6 py-4 ${col.className || ""}`}>
                   {col.header}
                 </th>
               ))}
@@ -76,15 +148,14 @@ const DataTable = ({
               </tr>
             ) : error ? (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-6 py-20 text-center"
-                >
+                <td colSpan={columns.length} className="px-6 py-20 text-center">
                   <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
                     <div className="bg-red-50 p-4 rounded-full mb-4">
                       <AlertCircle className="text-red-500" size={32} />
                     </div>
-                    <h3 className="text-gray-900 font-semibold mb-2">Failed to load data</h3>
+                    <h3 className="text-gray-900 font-semibold mb-2">
+                      Failed to load data
+                    </h3>
                     <p className="text-gray-500 mb-6 text-center">{error}</p>
                     {onRetry && (
                       <button
@@ -98,7 +169,7 @@ const DataTable = ({
                   </div>
                 </td>
               </tr>
-            ) : data.length === 0 ? (
+            ) : processedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
@@ -113,7 +184,7 @@ const DataTable = ({
                 </td>
               </tr>
             ) : (
-              data.map((row, rowIndex) => (
+              processedData.map((row, rowIndex) => (
                 <tr
                   key={row.id || rowIndex}
                   className="hover:bg-gray-50 transition-colors"
@@ -126,8 +197,8 @@ const DataTable = ({
                       {col.render
                         ? col.render(row)
                         : col.accessor
-                        ? row[col.accessor]
-                        : null}
+                          ? row[col.accessor]
+                          : null}
                     </td>
                   ))}
                 </tr>
@@ -137,36 +208,43 @@ const DataTable = ({
         </table>
       </div>
 
-      {/* Pagination (Optional) */}
-      {pagination && pagination.totalPages > 1 && !loading && !error && data.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() =>
-                pagination.onPageChange(Math.max(1, pagination.currentPage - 1))
-              }
-              disabled={pagination.currentPage === 1}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() =>
-                pagination.onPageChange(
-                  Math.min(pagination.totalPages, pagination.currentPage + 1)
-                )
-              }
-              disabled={pagination.currentPage === pagination.totalPages}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <ChevronRight size={16} />
-            </button>
+      {/* Pagination Controls */}
+      {((clientPagination && data.length > 0) ||
+        (pagination && totalPages > 0)) &&
+        !loading &&
+        !error && (
+          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(
+                currentPage * itemsPerPage,
+                clientPagination ? data.length : Number.MAX_SAFE_INTEGER,
+              )}{" "}
+              {clientPagination && `of ${data.length}`}
+              <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded text-xs">
+                Page {currentPage} of {totalPages}
+              </span>
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() =>
+                  handlePageChange(Math.min(totalPages, currentPage + 1))
+                }
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

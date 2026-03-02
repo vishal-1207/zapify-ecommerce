@@ -70,8 +70,8 @@ export const addToCartBackend = createAsyncThunk(
       return true;
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.error("Failed to add to cart");
-      return rejectWithValue(error.message);
+      toast.error(error.response?.data?.message || "Failed to add to cart");
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
 );
@@ -86,8 +86,10 @@ export const removeFromCartBackend = createAsyncThunk(
       return uniqueId;
     } catch (error) {
       console.error("Failed to remove from cart:", error);
-      toast.error("Failed to remove from cart");
-      return rejectWithValue(error.message);
+      toast.error(
+        error.response?.data?.message || "Failed to remove from cart",
+      );
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
 );
@@ -110,8 +112,8 @@ export const updateQtyBackend = createAsyncThunk(
       return { uniqueId, newQty };
     } catch (error) {
       console.error("Failed to update quantity:", error);
-      toast.error("Failed to update quantity");
-      return rejectWithValue(error.message);
+      toast.error(error.response?.data?.message || "Failed to update quantity");
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
 );
@@ -144,8 +146,21 @@ const cartSlice = createSlice({
       );
 
       if (existing) {
+        if (
+          existing.qty + 1 >
+          (product.stockQuantity || product.totalOfferStock || Infinity)
+        ) {
+          toast.error("Cannot add more. Exceeds available stock.");
+          return;
+        }
         existing.qty += 1;
       } else {
+        if (
+          1 > (product.stockQuantity || product.totalOfferStock || Infinity)
+        ) {
+          toast.error("Cannot add. Out of stock.");
+          return;
+        }
         state.cart.push({ ...product, qty: 1 });
       }
       localStorage.setItem("cart", JSON.stringify(state.cart));
@@ -169,6 +184,13 @@ const cartSlice = createSlice({
         .map((item) => {
           if ((item.offerId || item.id) === uniqueId) {
             const newQty = item.qty + delta;
+
+            // Allow decreasing, but check limits when increasing for guests
+            if (delta > 0 && newQty > (item.stockQuantity || Infinity)) {
+              toast.error("Cannot add more. Exceeds available stock.");
+              return item;
+            }
+
             return newQty > 0 ? { ...item, qty: newQty } : item;
           }
           return item;

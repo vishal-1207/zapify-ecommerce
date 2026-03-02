@@ -295,6 +295,7 @@ const AdminProducts = () => {
         error={error}
         onRetry={fetchProducts}
         onSearch={setSearch}
+        clientPagination={true}
         searchPlaceholder="Search products..."
         emptyMessage="No products found."
         filters={

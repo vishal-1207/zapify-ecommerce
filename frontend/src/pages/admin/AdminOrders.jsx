@@ -9,6 +9,7 @@ import {
 } from "../../store/admin/adminSlice";
 import { X, Loader2, Package, RefreshCcw } from "lucide-react";
 import { toast } from "react-hot-toast";
+import DataTable from "../../components/common/DataTable";
 
 const STATUS_OPTIONS = [
   "pending",
@@ -42,6 +43,8 @@ const AdminOrders = () => {
   } = useSelector((state) => state.admin);
 
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
@@ -50,8 +53,8 @@ const AdminOrders = () => {
   const [isRefunding, setIsRefunding] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAdminOrders({ page, limit: 10 }));
-  }, [page, dispatch]);
+    dispatch(fetchAdminOrders({ page, limit }));
+  }, [page, limit, dispatch]);
 
   const openOrder = (orderId) => {
     setIsModalOpen(true);
@@ -95,7 +98,7 @@ const AdminOrders = () => {
       setShowRefundModal(false);
       setRefundAmount("");
       dispatch(fetchOrderDetails(selectedOrder.id));
-      dispatch(fetchAdminOrders({ page, limit: 10 }));
+      dispatch(fetchAdminOrders({ page, limit }));
     } catch (err) {
       toast.error(err || "Failed to initiate refund.");
     } finally {
@@ -103,137 +106,115 @@ const AdminOrders = () => {
     }
   };
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 className="text-lg font-bold text-gray-800">All Orders</h2>
-      </div>
+  const filteredOrders = orders.filter((order) => {
+    const orderId = order.id.slice(0, 8).toLowerCase();
+    const userName = order.user?.fullname?.toLowerCase() || "";
+    const userEmail = order.user?.email?.toLowerCase() || "";
+    const s = search.toLowerCase();
+    return orderId.includes(s) || userName.includes(s) || userEmail.includes(s);
+  });
 
-      <div className="p-0">
-        {loading && orders.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">Loading orders...</div>
-        ) : orders.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No orders found.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-gray-700 font-medium uppercase text-xs">
-                <tr>
-                  <th className="px-6 py-4">Order ID</th>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Total</th>
-                  <th className="px-6 py-4">Fulfilling Seller(s)</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 font-mono text-xs text-indigo-600">
-                      #{order.id.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        {order.user ? (
-                          <>
-                            <p className="font-medium text-gray-800">
-                              {order.user.fullname}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {order.user.email}
-                            </p>
-                          </>
-                        ) : (
-                          <span className="text-gray-400">Guest / Deleted</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-gray-800">
-                      {formatCurrency(order.totalAmount)}
-                    </td>
-                    <td className="px-6 py-4">
-                      {order.orderItems && order.orderItems.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {Array.from(
-                            new Set(
-                              order.orderItems
-                                .map(
-                                  (item) =>
-                                    item.Offer?.sellerProfile?.storeName,
-                                )
-                                .filter(Boolean),
-                            ),
-                          ).map((storeName, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded-md shadow-sm border border-indigo-100 font-medium"
-                            >
-                              {storeName}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-xs italic">
-                          No Seller Data
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          statusColors[order.status] ||
-                          "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {formatStatus(order.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openOrder(order.id)}
-                        className="text-indigo-600 hover:text-indigo-900 font-medium text-xs hover:underline"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="px-3 py-1 text-sm text-gray-600">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+  const columns = [
+    {
+      header: "Order ID",
+      className: "font-mono text-xs text-indigo-600",
+      render: (order) => `#${order.id.slice(0, 8)}`,
+    },
+    {
+      header: "Customer",
+      render: (order) => (
+        <div>
+          {order.user ? (
+            <>
+              <p className="font-medium text-gray-800">{order.user.fullname}</p>
+              <p className="text-xs text-gray-500">{order.user.email}</p>
+            </>
+          ) : (
+            <span className="text-gray-400">Guest / Deleted</span>
+          )}
         </div>
-      )}
+      ),
+    },
+    {
+      header: "Date",
+      render: (order) => new Date(order.createdAt).toLocaleDateString(),
+    },
+    {
+      header: "Total",
+      className: "font-bold text-gray-800",
+      render: (order) => formatCurrency(order.totalAmount),
+    },
+    {
+      header: "Fulfilling Seller(s)",
+      render: (order) =>
+        order.orderItems && order.orderItems.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {Array.from(
+              new Set(
+                order.orderItems
+                  .map((item) => item.Offer?.sellerProfile?.storeName)
+                  .filter(Boolean),
+              ),
+            ).map((storeName, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded-md shadow-sm border border-indigo-100 font-medium"
+              >
+                {storeName}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="text-gray-400 text-xs italic">No Seller Data</span>
+        ),
+    },
+    {
+      header: "Status",
+      render: (order) => (
+        <span
+          className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            statusColors[order.status] || "bg-gray-100 text-gray-700"
+          }`}
+        >
+          {formatStatus(order.status)}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      className: "text-right",
+      render: (order) => (
+        <button
+          onClick={() => openOrder(order.id)}
+          className="text-indigo-600 hover:text-indigo-900 font-medium text-xs hover:underline"
+        >
+          View Details
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">All Orders</h2>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={filteredOrders}
+        loading={loading}
+        onSearch={setSearch}
+        searchPlaceholder="Search orders..."
+        emptyMessage="No orders found."
+        pagination={{
+          currentPage: page,
+          totalPages: totalPages,
+          onPageChange: setPage,
+          itemsPerPage: limit,
+          onItemsPerPageChange: setLimit,
+        }}
+      />
 
       {/* Order Details Modal */}
       {isModalOpen && (

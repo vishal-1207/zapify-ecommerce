@@ -17,7 +17,6 @@ import {
   updateOrderStatusAction,
 } from "../../store/seller/sellerSlice";
 import { toast } from "react-hot-toast";
-import debounce from "lodash/debounce";
 
 const SellerOrders = () => {
   const dispatch = useDispatch();
@@ -30,12 +29,13 @@ const SellerOrders = () => {
 
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState("");
 
   const fetchOrders = useCallback(() => {
-    dispatch(fetchSellerOrders({ page, search, status: statusFilter }));
-  }, [dispatch, page, search, statusFilter]);
+    dispatch(fetchSellerOrders({ page, limit, status: statusFilter }));
+  }, [dispatch, page, limit, statusFilter]);
 
   useEffect(() => {
     if (reduxError) {
@@ -46,11 +46,6 @@ const SellerOrders = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-
-  const handleSearch = debounce((value) => {
-    setSearch(value);
-    setPage(1);
-  }, 500);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     const resultAction = await dispatch(
@@ -199,6 +194,12 @@ const SellerOrders = () => {
     },
   ];
 
+  const filteredOrders = orders.filter(
+    (item) =>
+      item.Offer?.product?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      item.Order?.orderId?.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -212,15 +213,17 @@ const SellerOrders = () => {
 
       <DataTable
         columns={columns}
-        data={orders}
+        data={filteredOrders}
         loading={loading}
-        onSearch={handleSearch}
+        onSearch={setSearch}
         searchPlaceholder="Search by product name or Order ID..."
         emptyMessage="No orders found."
         pagination={{
           currentPage: page,
           totalPages: ordersTotalPages,
           onPageChange: setPage,
+          itemsPerPage: limit,
+          onItemsPerPageChange: setLimit,
         }}
         filters={
           <select

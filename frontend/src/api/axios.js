@@ -12,6 +12,28 @@ const getCookie = (name) => {
   return null;
 };
 
+// ─── Silent Refresh State ────────────────────────────────────────────────────
+// Tracks whether a refresh is already in-flight so concurrent expired requests
+// don't each trigger their own /auth/refresh-token call.
+let isRefreshing = false;
+let refreshQueue = []; // callbacks waiting for the new access token
+
+const processQueue = (error, accessToken = null) => {
+  refreshQueue.forEach((cb) =>
+    error ? cb.reject(error) : cb.resolve(accessToken),
+  );
+  refreshQueue = [];
+};
+
+const redirectToLogin = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  if (!window.location.pathname.includes("/login")) {
+    window.location.href = "/login";
+  }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -35,56 +57,81 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Handle 401 Unauthorized or Session Expired
-    if (error.response?.status === 401) {
-      const data = error.response.data;
-      if (
-        data?.message === "jwt expired" ||
-        data?.error === "jwt expired" ||
-        data?.message === "Unauthorized access. Please log in." ||
-        data?.message === "No token provided." ||
-        data?.message === "Token expired. Please refresh session." ||
-        data?.message === "Access token missing."
-      ) {
-        // Clear session
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+    const originalRequest = error.config;
 
-        // Redirect to login if not already there
-        if (!window.location.pathname.includes("/login")) {
-          window.location.href = "/login";
-        }
+    // ── Silent Access Token Refresh ─────────────────────────────────────────
+    // Trigger when the server tells us the access token has expired,
+    // but only once per request (guard with _retry flag).
+    const isAccessTokenExpired =
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      (error.response.data?.message ===
+        "Token expired. Please refresh session." ||
+        error.response.data?.message === "Access token missing." ||
+        error.response.data?.message === "jwt expired");
+
+    if (isAccessTokenExpired) {
+      originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // Another refresh is already in flight — queue this request.
+        return new Promise((resolve, reject) => {
+          refreshQueue.push({
+            resolve: (accessToken) => {
+              originalRequest.headers["Authorization"] =
+                `Bearer ${accessToken}`;
+              resolve(api(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        const { data } = await api.post("/auth/refresh-token");
+        const newAccessToken = data?.data?.accessToken;
+
+        if (!newAccessToken)
+          throw new Error("No access token in refresh response.");
+
+        localStorage.setItem("token", newAccessToken);
+        api.defaults.headers.common["Authorization"] =
+          `Bearer ${newAccessToken}`;
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+
+        processQueue(null, newAccessToken);
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh token is expired or invalid — require fresh login.
+        processQueue(refreshError, null);
+        redirectToLogin();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+    // ────────────────────────────────────────────────────────────────────────
 
-    // Handle CSRF Token Errors with Auto-Retry
+    // ── CSRF Token Auto-Retry ────────────────────────────────────────────────
     if (
       error.response?.status === 403 &&
       (error.response.data?.message === "Invalid CSRF token" ||
         error.response.data?.code === "EBADCSRFTOKEN")
     ) {
-      const originalRequest = error.config;
-
-      if (!originalRequest._retry) {
-        originalRequest._retry = true;
-
+      if (!originalRequest._csrfRetry) {
+        originalRequest._csrfRetry = true;
         try {
-          console.log("Refreshing CSRF Token...");
-          // Fetch new token (this sets the cookie)
-          // We use axios directly to avoid circular dependency or interceptor loops for this specific call if needed,
-          // but api instance is fine as long as this specific call doesn't trigger 403 loop.
-          // But since 403 checks for header, and GET request might not need CSRF?
-          // Actually, GET requests don't need CSRF. So it should be fine.
           await api.get("/token/csrf-token");
-
-          // The request interceptor will pick up the new cookie
           return api(originalRequest);
-        } catch (refreshError) {
-          console.error("Failed to refresh CSRF token", refreshError);
-          // If refresh fails, we might want to redirect to login or just let the error propagate
+        } catch (csrfError) {
+          console.error("Failed to refresh CSRF token", csrfError);
         }
       }
     }
+    // ────────────────────────────────────────────────────────────────────────
+
     return Promise.reject(error);
   },
 );

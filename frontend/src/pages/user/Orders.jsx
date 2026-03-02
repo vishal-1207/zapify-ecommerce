@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { Package, AlertCircle } from "lucide-react";
 import { getMyOrders } from "../../api/orders";
 import { formatCurrency } from "../../utils/currency";
+import Pagination from "../../components/common/Pagination";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -23,6 +26,13 @@ const Orders = () => {
     };
     fetchOrders();
   }, []);
+
+  const paginatedOrders = React.useMemo(() => {
+    const startIndex = (page - 1) * limit;
+    return orders.slice(startIndex, startIndex + limit);
+  }, [orders, page, limit]);
+
+  const totalPages = Math.ceil(orders.length / limit);
 
   if (loading)
     return (
@@ -62,7 +72,7 @@ const Orders = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {paginatedOrders.map((order) => (
             <div
               key={order.id}
               className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all hover:shadow-md"
@@ -97,16 +107,54 @@ const Orders = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-100 flex justify-end">
+              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3 items-center">
+                {order.status === "delivered" &&
+                  order.orderItems?.some((item) => !item.review) && (
+                    <Link
+                      to={`${order.id}`}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
+                    >
+                      Review Items
+                    </Link>
+                  )}
                 <Link
                   to={`${order.id}`}
-                  className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-1"
+                  className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-1 ml-2"
                 >
                   View Details &rarr;
                 </Link>
               </div>
             </div>
           ))}
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-6">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <p>Show</p>
+                <select
+                  className="bg-white border border-gray-200 rounded px-2 py-1 outline-none hover:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-gray-700"
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {[5, 10, 20, 50].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize}
+                    </option>
+                  ))}
+                </select>
+                <p>per page</p>
+              </div>
+              <Pagination
+                currentPage={page}
+                totalItems={orders.length}
+                itemsPerPage={limit}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

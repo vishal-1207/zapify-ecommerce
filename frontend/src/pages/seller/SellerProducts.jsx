@@ -20,7 +20,6 @@ import {
 } from "../../store/seller/sellerSlice";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import debounce from "lodash/debounce";
 
 import EditOfferModal from "../../components/seller/EditOfferModal";
 
@@ -34,6 +33,7 @@ const SellerProducts = () => {
   } = useSelector((state) => state.seller);
 
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -45,8 +45,8 @@ const SellerProducts = () => {
   const navigate = useNavigate();
 
   const fetchOffers = useCallback(() => {
-    dispatch(fetchSellerOffers({ page, search, status: statusFilter }));
-  }, [dispatch, page, search, statusFilter, refreshTrigger]);
+    dispatch(fetchSellerOffers({ page, limit, status: statusFilter }));
+  }, [dispatch, page, limit, statusFilter, refreshTrigger]);
 
   useEffect(() => {
     if (reduxError) {
@@ -57,11 +57,6 @@ const SellerProducts = () => {
   useEffect(() => {
     fetchOffers();
   }, [fetchOffers]);
-
-  const handleSearch = debounce((value) => {
-    setSearch(value);
-    setPage(1);
-  }, 500);
 
   const handleDelete = async (offerId) => {
     if (!window.confirm("Are you sure you want to delete this offer?")) return;
@@ -193,6 +188,12 @@ const SellerProducts = () => {
     },
   ];
 
+  const filteredOffers = offers.filter(
+    (offer) =>
+      offer.product?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      offer.product?.model?.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -206,15 +207,17 @@ const SellerProducts = () => {
 
       <DataTable
         columns={columns}
-        data={offers}
+        data={filteredOffers}
         loading={loading}
-        onSearch={handleSearch}
+        onSearch={setSearch}
         searchPlaceholder="Search products..."
         emptyMessage="No products found."
         pagination={{
           currentPage: page,
           totalPages: totalPages,
           onPageChange: setPage,
+          itemsPerPage: limit,
+          onItemsPerPageChange: setLimit,
         }}
         filters={
           <select

@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { toast } from "react-hot-toast";
 import {
   Star,
   ThumbsUp,
+  ThumbsDown,
   MessageSquare,
   PlayCircle,
   X,
@@ -9,57 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const MOCK_REVIEWS = [
-  {
-    id: 1,
-    user: "Sarah Jenkins",
-    rating: 5,
-    date: "2 weeks ago",
-    title: "Absolutely stunning quality!",
-    content:
-      "I was hesitant at first due to the price, but the build quality is incredible. It feels premium and works perfectly right out of the box.",
-    helpful: 12,
-    media: [
-      {
-        type: "image",
-        url: "https://placehold.co/600x400/e2e8f0/64748b?text=Customer+Photo+1",
-      },
-      {
-        type: "image",
-        url: "https://placehold.co/400x600/e2e8f0/64748b?text=Customer+Photo+2",
-      },
-    ],
-  },
-  {
-    id: 2,
-    user: "Michael Chen",
-    rating: 4,
-    date: "1 month ago",
-    title: "Great, but shipping was slow",
-    content:
-      "The product itself is 5 stars, but it took a week longer to arrive than estimated. Otherwise, very happy with the purchase.",
-    helpful: 8,
-    media: [], // No media
-  },
-  {
-    id: 3,
-    user: "Jessica D.",
-    rating: 5,
-    date: "2 months ago",
-    title: "Best purchase of the year",
-    content:
-      "Exactly what I needed. The color matches the photos perfectly and the functionality is seamless.",
-    helpful: 24,
-    media: [
-      {
-        type: "video",
-        url: "https://www.w3schools.com/html/mov_bbb.mp4", // Sample video URL
-        thumbnail:
-          "https://placehold.co/600x400/000000/white?text=Video+Thumbnail",
-      },
-    ],
-  },
-];
+import { getProductReviews, toggleReviewVote } from "../../api/reviews";
 
 const RatingBar = ({ star, percentage }) => (
   <div className="flex items-center gap-3 text-sm mb-2">
@@ -75,29 +28,117 @@ const RatingBar = ({ star, percentage }) => (
 );
 
 const ProductReviews = ({ product }) => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (product && product.id) {
+      setLoading(true);
+      getProductReviews(product.id)
+        .then((res) => {
+          setReviews(res.reviews || []);
+        })
+        .catch((err) => {
+          console.error("Failed to load reviews:", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [product?.id]);
+
+  const handleVote = async (reviewId, voteType) => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to vote on reviews.");
+      return;
+    }
+
+    // Optimistic Update
+    const originalReviews = [...reviews];
+    setReviews((prevReviews) =>
+      prevReviews.map((review) => {
+        if (review.id !== reviewId) return review;
+
+        const likedBy = review.likedBy || [];
+        const dislikedBy = review.dislikedBy || [];
+        const hasLiked = likedBy.includes(user.id);
+        const hasDisliked = dislikedBy.includes(user.id);
+
+        let newLikes = review.likes || 0;
+        let newDislikes = review.dislikes || 0;
+        let newLikedBy = [...likedBy];
+        let newDislikedBy = [...dislikedBy];
+
+        if (voteType === "like") {
+          if (hasLiked) {
+            newLikedBy = newLikedBy.filter((id) => id !== user.id);
+            newLikes--;
+          } else {
+            newLikedBy.push(user.id);
+            newLikes++;
+            if (hasDisliked) {
+              newDislikedBy = newDislikedBy.filter((id) => id !== user.id);
+              newDislikes--;
+            }
+          }
+        } else {
+          if (hasDisliked) {
+            newDislikedBy = newDislikedBy.filter((id) => id !== user.id);
+            newDislikes--;
+          } else {
+            newDislikedBy.push(user.id);
+            newDislikes++;
+            if (hasLiked) {
+              newLikedBy = newLikedBy.filter((id) => id !== user.id);
+              newLikes--;
+            }
+          }
+        }
+
+        return {
+          ...review,
+          likes: newLikes,
+          dislikes: newDislikes,
+          likedBy: newLikedBy,
+          dislikedBy: newDislikedBy,
+        };
+      }),
+    );
+
+    try {
+      await toggleReviewVote(reviewId, voteType);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to submit vote.");
+      // Revert on failure
+      setReviews(originalReviews);
+    }
+  };
+
   // Flatten all media into a single array for the gallery
   const allMedia = useMemo(() => {
-    return MOCK_REVIEWS.reduce((acc, review) => {
-      if (review.media) {
+    return reviews.reduce((acc, review) => {
+      if (review.media && review.media.length > 0) {
         const mediaWithContext = review.media.map((m) => ({
           ...m,
-          user: review.user,
-          title: review.title,
+          user:
+            review.user?.fullname || review.User?.fullname || "Verified Buyer",
+          title: review.title || review.comment || "Review Media",
         }));
         return [...acc, ...mediaWithContext];
       }
       return acc;
     }, []);
-  }, []);
+  }, [reviews]);
 
   const openLightbox = (reviewIndex, mediaIndex) => {
     // Calculate global index based on previous reviews' media counts
     let globalIndex = 0;
     for (let i = 0; i < reviewIndex; i++) {
-      globalIndex += MOCK_REVIEWS[i].media?.length || 0;
+      globalIndex += reviews[i].media?.length || 0;
     }
     globalIndex += mediaIndex;
 
@@ -168,29 +209,25 @@ const ProductReviews = ({ product }) => {
                   ))}
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {product.reviews} verified reviews
+                  {product.reviewCount || 0} verified reviews
                 </p>
               </div>
             </div>
 
             <div className="mt-6">
-              <RatingBar star={5} percentage={70} />
-              <RatingBar star={4} percentage={20} />
-              <RatingBar star={3} percentage={5} />
-              <RatingBar star={2} percentage={2} />
-              <RatingBar star={1} percentage={3} />
+              {[5, 4, 3, 2, 1].map((star) => {
+                const count = reviews.filter((r) => r.rating === star).length;
+                const percentage =
+                  reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                return (
+                  <RatingBar
+                    key={star}
+                    star={star}
+                    percentage={Math.round(percentage)}
+                  />
+                );
+              })}
             </div>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="font-bold text-gray-800">Share your thoughts</h3>
-            <p className="text-gray-500 text-sm">
-              If you've used this product, share your thoughts with other
-              customers.
-            </p>
-            <button className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition">
-              Write a Review
-            </button>
           </div>
         </div>
 
@@ -234,92 +271,154 @@ const ProductReviews = ({ product }) => {
             </div>
           )}
 
-          {MOCK_REVIEWS.map((review, rIdx) => (
-            <div
-              key={review.id}
-              className="border-b border-gray-100 pb-8 last:border-0 last:pb-0"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm">
-                    {review.user.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">{review.user}</h4>
-                    <span className="text-xs text-gray-500">{review.date}</span>
-                  </div>
-                </div>
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      fill={i < review.rating ? "currentColor" : "none"}
-                      className={i >= review.rating ? "text-gray-200" : ""}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <h5 className="font-bold text-gray-800 mt-3 mb-2">
-                {review.title}
-              </h5>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                {review.content}
-              </p>
-
-              {/* Media Gallery within Review */}
-              {review.media && review.media.length > 0 && (
-                <div className="flex gap-3 mb-4">
-                  {review.media.map((item, mIdx) => (
-                    <div
-                      key={mIdx}
-                      onClick={() => openLightbox(rIdx, mIdx)}
-                      className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
-                    >
-                      {item.type === "video" ? (
-                        <>
-                          <img
-                            src={item.thumbnail}
-                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-                            alt="video thumbnail"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition">
-                            <PlayCircle
-                              className="text-white drop-shadow-md"
-                              size={32}
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={item.url}
-                          className="w-full h-full object-cover hover:scale-110 transition duration-500"
-                          alt="review image"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-6 text-sm text-gray-500">
-                <button className="flex items-center gap-1.5 hover:text-indigo-600 transition">
-                  <ThumbsUp size={16} /> Helpful ({review.helpful})
-                </button>
-                <button className="flex items-center gap-1.5 hover:text-indigo-600 transition">
-                  <MessageSquare size={16} /> Comment
-                </button>
-                <span className="text-xs text-gray-400 ml-auto">
-                  Verified Purchase
-                </span>
-              </div>
+          {loading ? (
+            <div className="text-center py-8 text-gray-500 font-medium">
+              Loading reviews...
             </div>
-          ))}
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 font-medium">
+              No reviews yet.
+            </div>
+          ) : (
+            reviews.map((review, rIdx) => {
+              const hasLiked =
+                isAuthenticated && review.likedBy?.includes(user?.id);
+              const hasDisliked =
+                isAuthenticated && review.dislikedBy?.includes(user?.id);
 
-          <button className="text-indigo-600 font-bold hover:underline">
-            View all {product.reviews} reviews
-          </button>
+              return (
+                <div
+                  key={review.id}
+                  className="border-b border-gray-100 pb-8 last:border-0 last:pb-0"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm">
+                        {(review.user?.fullname || review.User?.fullname || "V")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">
+                          {review.user?.fullname ||
+                            review.User?.fullname ||
+                            "Verified Buyer"}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
+                          </span>
+                          {review.OrderItem?.Offer?.sellerProfile
+                            ?.storeName && (
+                            <>
+                              <span className="text-gray-300 text-xs">•</span>
+                              <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                                Bought from{" "}
+                                {review.OrderItem.Offer.sellerProfile.storeName}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          fill={i < review.rating ? "currentColor" : "none"}
+                          className={i >= review.rating ? "text-gray-200" : ""}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {review.title && (
+                    <h5 className="font-bold text-gray-800 mt-3 mb-2">
+                      {review.title}
+                    </h5>
+                  )}
+                  <p className="text-gray-600 leading-relaxed mt-3 mb-4">
+                    {review.comment}
+                  </p>
+
+                  {/* Media Gallery within Review */}
+                  {review.media && review.media.length > 0 && (
+                    <div className="flex gap-3 mb-4">
+                      {review.media.map((item, mIdx) => (
+                        <div
+                          key={mIdx}
+                          onClick={() => openLightbox(rIdx, mIdx)}
+                          className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
+                        >
+                          {item.type === "video" ? (
+                            <>
+                              <img
+                                src={item.thumbnail}
+                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                                alt="video thumbnail"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition">
+                                <PlayCircle
+                                  className="text-white drop-shadow-md"
+                                  size={32}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <img
+                              src={item.url}
+                              className="w-full h-full object-cover hover:scale-110 transition duration-500"
+                              alt="review image"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-6 text-sm text-gray-500">
+                    <button
+                      onClick={() => handleVote(review.id, "like")}
+                      className={`flex items-center gap-1.5 transition ${hasLiked ? "text-indigo-600 font-medium" : "hover:text-indigo-600"}`}
+                    >
+                      <ThumbsUp
+                        size={16}
+                        className={hasLiked ? "fill-indigo-600" : ""}
+                      />
+                      Helpful ({review.likes || 0})
+                    </button>
+                    <button
+                      onClick={() => handleVote(review.id, "dislike")}
+                      className={`flex items-center gap-1.5 transition scroll-mt-2 ${hasDisliked ? "text-red-500 font-medium" : "hover:text-red-500"}`}
+                    >
+                      <ThumbsDown
+                        size={16}
+                        className={hasDisliked ? "fill-red-500" : ""}
+                      />
+                      ({review.dislikes || 0})
+                    </button>
+                    <span className="text-xs text-gray-400 ml-auto">
+                      Verified Purchase
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {reviews.length > 0 && (
+            <button className="text-indigo-600 font-bold hover:underline mt-4">
+              View all {product.reviewCount || 0} reviews
+            </button>
+          )}
         </div>
       </div>
 

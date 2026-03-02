@@ -19,6 +19,7 @@ import {
   updateUserWithOtpAction,
 } from "../../store/admin/adminSlice";
 import { toast } from "react-hot-toast";
+import DataTable from "../../components/common/DataTable";
 
 const AdminUsers = () => {
   const dispatch = useDispatch();
@@ -31,6 +32,8 @@ const AdminUsers = () => {
   // Default to "user" tab so data loads immediately
   const [roleFilter, setRoleFilter] = useState("user");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [blockConfirmUser, setBlockConfirmUser] = useState(null);
 
@@ -43,8 +46,8 @@ const AdminUsers = () => {
   const [isOtpLoading, setIsOtpLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAdminUsers({ roleFilter, page, limit: 10 }));
-  }, [page, roleFilter, dispatch]);
+    dispatch(fetchAdminUsers({ roleFilter, page, limit }));
+  }, [page, roleFilter, limit, dispatch]);
 
   const switchTab = (role) => {
     setRoleFilter(role);
@@ -69,7 +72,7 @@ const AdminUsers = () => {
     if (targetPage !== page) {
       setPage(targetPage); // useEffect will re-fetch
     } else {
-      dispatch(fetchAdminUsers({ roleFilter, page, limit: 10 }));
+      dispatch(fetchAdminUsers({ roleFilter, page, limit }));
     }
   };
 
@@ -124,199 +127,160 @@ const AdminUsers = () => {
 
   const isSeller = roleFilter === "seller";
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* Tabs */}
-      <div className="border-b border-gray-100 flex">
-        <button
-          onClick={() => switchTab("user")}
-          className={`px-6 py-4 font-medium text-sm focus:outline-none flex items-center gap-2 transition-colors ${
-            roleFilter === "user"
-              ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-          }`}
-        >
-          <User size={16} /> Customers
-        </button>
-        <button
-          onClick={() => switchTab("seller")}
-          className={`px-6 py-4 font-medium text-sm focus:outline-none flex items-center gap-2 transition-colors ${
-            roleFilter === "seller"
-              ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-          }`}
-        >
-          <Shield size={16} /> Sellers
-        </button>
-      </div>
+  const filteredUsers = users.filter(
+    (user) =>
+      user.fullname?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase()),
+  );
 
-      {/* Table */}
-      <div className="p-0">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">
-            Loading {isSeller ? "sellers" : "customers"}...
+  const columns = [
+    {
+      header: isSeller ? "Seller" : "Customer",
+      render: (user) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-sm uppercase shrink-0">
+            {user.fullname?.[0] || "?"}
           </div>
-        ) : users.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No {isSeller ? "sellers" : "customers"} found.
+          <div>
+            <p className="font-medium text-gray-800">{user.fullname}</p>
+            <p className="text-xs text-gray-400">@{user.username}</p>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-gray-700 font-medium uppercase text-xs">
-                <tr>
-                  <th className="px-6 py-4">
-                    {isSeller ? "Seller" : "Customer"}
-                  </th>
-                  <th className="px-6 py-4">Email</th>
-                  {isSeller && <th className="px-6 py-4">Store</th>}
-                  <th className="px-6 py-4">Joined</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Name / Username */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-sm uppercase shrink-0">
-                          {user.fullname?.[0] || "?"}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {user.fullname}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            @{user.username}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Email */}
-                    <td className="px-6 py-4 text-gray-600">{user.email}</td>
-
-                    {/* Store (sellers only) */}
-                    {isSeller && (
-                      <td className="px-6 py-4">
-                        {user.sellerProfile ? (
-                          <div className="flex items-center gap-1.5 text-gray-700">
-                            <Store
-                              size={14}
-                              className="text-indigo-400 shrink-0"
-                            />
-                            <span className="font-medium">
-                              {user.sellerProfile.storeName || (
-                                <span className="text-gray-400 italic">
-                                  No store name
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs italic">
-                            No profile
-                          </span>
-                        )}
-                      </td>
+        </div>
+      ),
+    },
+    {
+      header: "Email",
+      accessor: "email",
+      className: "text-gray-600",
+    },
+    ...(isSeller
+      ? [
+          {
+            header: "Store",
+            render: (user) =>
+              user.sellerProfile ? (
+                <div className="flex items-center gap-1.5 text-gray-700">
+                  <Store size={14} className="text-indigo-400 shrink-0" />
+                  <span className="font-medium">
+                    {user.sellerProfile.storeName || (
+                      <span className="text-gray-400 italic">
+                        No store name
+                      </span>
                     )}
-
-                    {/* Joined */}
-                    <td className="px-6 py-4 text-gray-500 text-xs">
-                      {new Date(user.createdAt).toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="px-6 py-4">
-                      {user.isBlocked ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                          Blocked
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          Active
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* Block / Unblock */}
-                        <button
-                          onClick={() => setBlockConfirmUser(user)}
-                          className={`p-1.5 rounded-md transition-colors ${
-                            user.isBlocked
-                              ? "text-green-600 hover:bg-green-100"
-                              : "text-orange-500 hover:bg-orange-100"
-                          }`}
-                          title={user.isBlocked ? "Unblock" : "Block"}
-                        >
-                          {user.isBlocked ? (
-                            <Unlock size={17} />
-                          ) : (
-                            <Lock size={17} />
-                          )}
-                        </button>
-
-                        {/* Edit (OTP) */}
-                        <button
-                          onClick={() => openEditModal(user)}
-                          title="Edit Profile"
-                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                        >
-                          <Edit2 size={17} />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => setDeleteConfirmUser(user)}
-                          title="Delete"
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="px-3 py-1 text-sm text-gray-600">
-            Page {page} of {totalPages}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-gray-400 text-xs italic">No profile</span>
+              ),
+          },
+        ]
+      : []),
+    {
+      header: "Joined",
+      render: (user) => (
+        <span className="text-gray-500 text-xs">
+          {new Date(user.createdAt).toLocaleDateString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      render: (user) =>
+        user.isBlocked ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+            Blocked
           </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            Active
+          </span>
+        ),
+    },
+    {
+      header: "Actions",
+      className: "text-right",
+      render: (user) => (
+        <div className="flex items-center justify-end gap-1.5">
+          {/* Block / Unblock */}
           <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            onClick={() => setBlockConfirmUser(user)}
+            className={`p-1.5 rounded-md transition-colors ${
+              user.isBlocked
+                ? "text-green-600 hover:bg-green-100"
+                : "text-orange-500 hover:bg-orange-100"
+            }`}
+            title={user.isBlocked ? "Unblock" : "Block"}
           >
-            Next
+            {user.isBlocked ? <Unlock size={17} /> : <Lock size={17} />}
+          </button>
+
+          {/* Edit (OTP) */}
+          <button
+            onClick={() => openEditModal(user)}
+            title="Edit Profile"
+            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+          >
+            <Edit2 size={17} />
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={() => setDeleteConfirmUser(user)}
+            title="Delete"
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          >
+            <Trash2 size={17} />
           </button>
         </div>
-      )}
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <DataTable
+        columns={columns}
+        data={filteredUsers}
+        loading={loading}
+        onSearch={setSearch}
+        searchPlaceholder={`Search ${isSeller ? "sellers" : "customers"}...`}
+        emptyMessage={`No ${isSeller ? "sellers" : "customers"} found.`}
+        pagination={{
+          currentPage: page,
+          totalPages: totalPages,
+          onPageChange: setPage,
+          itemsPerPage: limit,
+          onItemsPerPageChange: setLimit,
+        }}
+        filters={
+          <div className="flex bg-white rounded-lg p-1 border border-gray-100 shadow-sm">
+            <button
+              onClick={() => switchTab("user")}
+              className={`px-4 py-2 font-medium text-sm rounded-md focus:outline-none flex items-center gap-2 transition-colors ${
+                roleFilter === "user"
+                  ? "text-indigo-700 bg-indigo-50 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <User size={16} /> Customers
+            </button>
+            <button
+              onClick={() => switchTab("seller")}
+              className={`px-4 py-2 font-medium text-sm rounded-md focus:outline-none flex items-center gap-2 transition-colors ${
+                roleFilter === "seller"
+                  ? "text-indigo-700 bg-indigo-50 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <Shield size={16} /> Sellers
+            </button>
+          </div>
+        }
+      />
 
       {/* Block / Unblock Confirmation Modal */}
       {blockConfirmUser && (

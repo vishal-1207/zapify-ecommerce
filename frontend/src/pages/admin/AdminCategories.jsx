@@ -221,6 +221,7 @@ const AdminCategories = () => {
         error={error}
         onRetry={fetchCategories}
         onSearch={setSearch}
+        clientPagination={true}
         searchPlaceholder="Search categories..."
         emptyMessage="No categories found."
         actions={

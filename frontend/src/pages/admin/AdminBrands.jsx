@@ -214,6 +214,7 @@ const AdminBrands = () => {
         error={error}
         onRetry={fetchBrands}
         onSearch={setSearch}
+        clientPagination={true}
         searchPlaceholder="Search brands..."
         emptyMessage="No brands found."
         actions={
