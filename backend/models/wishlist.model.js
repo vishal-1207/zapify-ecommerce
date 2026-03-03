@@ -14,6 +14,7 @@ export default (sequelize, DataTypes) => {
     });
     Wishlist.belongsTo(models.Product, {
       foreignKey: "productId",
+      as: "product",
       onDelete: "CASCADE",
     });
   };

@@ -15,6 +15,7 @@ export const getWishlistForUser = async (userId) => {
           include: [
             { model: db.Brand, as: "brand" },
             { model: db.Category, as: "category" },
+            { model: db.Media, as: "media", required: false },
           ],
         },
       ],

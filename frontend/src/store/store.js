@@ -1,9 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./auth/authSlice";
 import cartReducer from "./cart/cartSlice";
-
 import adminReducer from "./admin/adminSlice";
 import sellerReducer from "./seller/sellerSlice";
+import wishlistReducer from "./wishlist/wishlistSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,5 +11,6 @@ export const store = configureStore({
     cart: cartReducer,
     admin: adminReducer,
     seller: sellerReducer,
+    wishlist: wishlistReducer,
   },
 });
