@@ -3,6 +3,7 @@ import { formatCurrency } from "../../utils/currency";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Star, Plus, Minus, Zap } from "lucide-react";
 import { useCart } from "../../context/CartContext";
+import WishlistButton from "./WishlistButton";
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -42,36 +43,46 @@ const ProductCard = ({ product }) => {
       to={`/product/${product.slug}`}
       className="group block bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full flex flex-col"
     >
-      {/* Image Container */}
-      <div className="relative aspect-square bg-gray-50 p-4 flex items-center justify-center overflow-hidden">
-        <img
-          src={
-            product.media?.[0]?.url || "https://placehold.co/400?text=No+Image"
-          }
-          alt={product.name}
-          className="w-full h-full object-contain mix-blend-multiply "
-        />
+      {/* Image Container wrapper — relative context for the wishlist button */}
+      <div className="relative">
+        <div className="aspect-square bg-gray-50 p-4 flex items-center justify-center overflow-hidden">
+          <img
+            src={
+              product.media?.[0]?.url ||
+              "https://placehold.co/400?text=No+Image"
+            }
+            alt={product.name}
+            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+          />
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {product.isNew && (
-            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide w-fit">
-              New
-            </span>
-          )}
-          {showDeal && (
-            <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1 w-fit shadow-sm animate-pulse">
-              <Zap size={10} fill="currentColor" />
-              Deal
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.isNew && (
+              <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide w-fit">
+                New
+              </span>
+            )}
+            {showDeal && (
+              <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1 w-fit shadow-sm animate-pulse">
+                <Zap size={10} fill="currentColor" />
+                Deal
+              </span>
+            )}
+          </div>
+
+          {!product.inStock && product.totalOfferStock <= 0 && (
+            <span className="absolute top-2 right-12 bg-gray-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Out of Stock
             </span>
           )}
         </div>
 
-        {!product.inStock && product.totalOfferStock <= 0 && (
-          <span className="absolute top-2 right-2 bg-gray-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-            Out of Stock
-          </span>
-        )}
+        {/* Wishlist Button — inside relative wrapper, outside overflow-hidden image div */}
+        <WishlistButton
+          productId={product.id}
+          size={15}
+          className="absolute top-2 right-2 w-8 h-8 shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+        />
       </div>
 
       {/* Content */}

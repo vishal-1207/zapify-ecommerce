@@ -197,7 +197,7 @@ const Offers = () => {
             <Tag size={16} /> Deal
           </button>
           <button
-            className="text-gray-400 hover:text-gray-600"
+            className="cursor-pointer text-gray-400 hover:text-gray-600"
             title="Edit Offer"
           >
             <Edit size={16} />
@@ -211,7 +211,7 @@ const Offers = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Manage Offers</h1>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        <button className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
           Create New Offer
         </button>
       </div>
@@ -310,7 +310,7 @@ const Offers = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  className="cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                 >
                   Save Deal
                 </button>

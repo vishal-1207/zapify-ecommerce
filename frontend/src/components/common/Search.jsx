@@ -167,7 +167,7 @@ const CustomSearchBox = ({ isActive, setIsActive, onClose }) => {
        {/* Search Button */}
        <button 
           onClick={onSubmit}
-          className="bg-orange-400 hover:bg-orange-500 text-gray-900 px-4 flex items-center justify-center transition-colors"
+          className="cursor-pointer bg-orange-400 hover:bg-orange-500 text-gray-900 px-4 flex items-center justify-center transition-colors"
        >
           <SearchIcon size={20} />
        </button>

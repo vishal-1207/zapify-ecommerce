@@ -68,7 +68,7 @@ const SellerOrders = () => {
             <Clock size={11} /> Pending
           </span>
         );
-      case "processing":
+      case "processed":
         return (
           <span className={`${base} bg-blue-100 text-blue-800`}>
             <Package size={11} /> Processing
@@ -184,7 +184,7 @@ const SellerOrders = () => {
             disabled={["cancelled", "delivered"].includes(item.status)}
           >
             <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
+            <option value="processed">Processed</option>
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
@@ -236,7 +236,7 @@ const SellerOrders = () => {
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
+            <option value="processed">Processed</option>
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>

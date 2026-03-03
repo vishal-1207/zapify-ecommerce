@@ -296,13 +296,13 @@ const Address = () => {
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+              className="cursor-pointer px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-transform transform active:scale-95"
+              className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-transform transform active:scale-95"
             >
               {editingId ? "Update Address" : "Save Address"}
             </button>

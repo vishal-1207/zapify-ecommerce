@@ -1,12 +1,7 @@
 import api from "./axios";
 
-export const getAllProducts = async (params = {}) => {
-  const response = await api.get("/product", { params });
-  // New ApiResponse: response.data.data is { products, total }
-  // Calling code expects Array.
-  // We need to check if it returns { products, total } or just Array.
-  // In product.controller.js getAllProducts: new ApiResponse(200, { products, total, ... })
-  // So response.data.data.products is the array.
+export const getAllProducts = async (params = {}, signal) => {
+  const response = await api.get("/product", { params, signal });
   return response.data.data?.products || response.data.data || [];
 };
 
@@ -16,15 +11,8 @@ export const getPendingProducts = async (params = {}) => {
 };
 
 // Fetch single product by ID
-export const getProductById = async (id) => {
-  // If your backend has a direct GET /product/:id endpoint:
-  // const response = await api.get(`/product/${id}`);
-  // return response.data.data || response.data;
-
-  // Fallback: If only list is available (per doc interpretation), we fetch list and find.
-  // Ideally, backend should support /product/:id
-  // For now, let's assume standard REST:
-  const response = await api.get(`/product/${id}`);
+export const getProductById = async (id, signal) => {
+  const response = await api.get(`/product/${id}`, { signal });
   return response.data.data?.product || response.data.data || response.data;
 };
 
@@ -45,8 +33,8 @@ export const getPopularProducts = async () => {
   return products.slice(0, 5);
 };
 
-export const getRecommendations = async () => {
-  const products = await getAllProducts();
+export const getRecommendations = async (signal) => {
+  const products = await getAllProducts({}, signal);
   return products.slice(0, 4); // Just random for now
 };
 
@@ -58,7 +46,9 @@ export const searchProducts = async (query) => {
 };
 
 export const searchCatalog = async (query, params = {}) => {
-  const response = await api.get(`/product/catalog-search?q=${query}`, { params });
+  const response = await api.get(`/product/catalog-search?q=${query}`, {
+    params,
+  });
   return response.data.data.results;
 };
 

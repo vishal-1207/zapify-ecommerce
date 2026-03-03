@@ -114,7 +114,7 @@ const Cart = () => {
 
             <button
               onClick={handleCheckout}
-              className="block w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 mb-4 text-center"
+              className="cursor-pointer block w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 mb-4 text-center"
             >
               Proceed to Checkout
             </button>

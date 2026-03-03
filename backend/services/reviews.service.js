@@ -15,7 +15,7 @@ const updateProductAverageRating = async (productId) => {
   try {
     const result = await db.Review.findOne({
       where: { productId },
-      include: [
+      attributes: [
         [db.sequelize.fn("AVG", db.sequelize.col("rating")), "averageRating"],
         [db.sequelize.fn("COUNT", db.sequelize.col("id")), "reviewCount"],
       ],
@@ -31,6 +31,14 @@ const updateProductAverageRating = async (productId) => {
       { averageRating, reviewCount },
       { where: { id: productId } },
     );
+
+    const product = await db.Product.findByPk(productId, {
+      attributes: ["slug"],
+    });
+    if (product && product.slug) {
+      const { invalidateCache } = await import("../utils/cache.js");
+      await invalidateCache(`product:${product.slug}`);
+    }
   } catch (error) {
     console.error(
       `Failed to update average rating for product ${productId}:`,
@@ -147,9 +155,13 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
 
     await transaction.commit();
 
-    // Self Note: For large-scale application it is better to use background jobs for such process.
-    await updateProductAverageRating(orderItem.Offer.productId);
-    await updateSellerAverageRating(orderItem.Offer.sellerProfileId);
+    // Fire rating recalculations in the background — don't block the response.
+    updateProductAverageRating(orderItem.Offer.productId).catch((err) =>
+      console.error("[Review] Failed to update product rating:", err.message),
+    );
+    updateSellerAverageRating(orderItem.Offer.sellerProfileId).catch((err) =>
+      console.error("[Review] Failed to update seller rating:", err.message),
+    );
 
     return db.Review.findByPk(newReview.id, {
       include: [{ model: db.Media, as: "media" }],
@@ -355,6 +367,11 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
     });
 
     if (!review) throw new ApiError(404, "Review not found.");
+
+    // Prevent users from voting on their own review
+    if (review.userId === userId) {
+      throw new ApiError(403, "You cannot vote on your own review.");
+    }
 
     // Parse existing JSON arrays carefully.
     let likedBy = review.likedBy || [];

@@ -125,7 +125,7 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+            className="cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
           >
             Cancel
           </button>

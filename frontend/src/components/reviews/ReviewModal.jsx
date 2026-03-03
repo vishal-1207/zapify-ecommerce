@@ -98,7 +98,7 @@ const ReviewModal = ({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+          className="cursor-pointer absolute right-4 top-4 text-gray-400 hover:text-gray-600"
         >
           <X size={20} />
         </button>

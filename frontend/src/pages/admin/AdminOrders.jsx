@@ -13,7 +13,7 @@ import DataTable from "../../components/common/DataTable";
 
 const STATUS_OPTIONS = [
   "pending",
-  "processing",
+  "processed",
   "shipped",
   "delivered",
   "cancelled",
@@ -23,7 +23,7 @@ const statusColors = {
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
   shipped: "bg-purple-100 text-purple-800",
-  processing: "bg-yellow-100 text-yellow-800",
+  processed: "bg-yellow-100 text-yellow-800",
   pending: "bg-blue-100 text-blue-800",
   return_requested: "bg-orange-100 text-orange-700",
   refunded: "bg-purple-100 text-purple-700",
@@ -243,7 +243,7 @@ const AdminOrders = () => {
                 )}
                 <button
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -492,7 +492,7 @@ const AdminOrders = () => {
               <button
                 onClick={handleRefund}
                 disabled={isRefunding}
-                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                className="cursor-pointer flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {isRefunding ? (
                   <Loader2 size={16} className="animate-spin" />

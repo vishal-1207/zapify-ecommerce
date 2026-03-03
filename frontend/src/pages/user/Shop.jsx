@@ -430,7 +430,7 @@ const Shop = () => {
                     </span>
                     <button
                       onClick={clearAllFilters}
-                      className="text-xs text-red-600 hover:underline font-medium"
+                      className="cursor-pointer text-xs text-red-600 hover:underline font-medium"
                     >
                       Clear All
                     </button>
@@ -667,7 +667,7 @@ const Shop = () => {
             <div className="lg:hidden absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-4">
               <button
                 onClick={clearAllFilters}
-                className="flex-1 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl"
+                className="cursor-pointer flex-1 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl"
               >
                 Reset
               </button>
@@ -702,7 +702,7 @@ const Shop = () => {
                 </p>
                 <button
                   onClick={clearAllFilters}
-                  className="text-indigo-600 font-bold hover:underline text-sm"
+                  className="cursor-pointer text-indigo-600 font-bold hover:underline text-sm"
                 >
                   Clear All Filters
                 </button>

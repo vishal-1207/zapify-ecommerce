@@ -3,6 +3,7 @@ import paginate from "../utils/paginate.js";
 import { Op } from "sequelize";
 import { sendVerificationCode, verifyCode } from "./otp.service.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 /**
  * Admin dashboard service to counts of pending reviews and products, total sellers and revenues for stats card
@@ -233,10 +234,10 @@ export const getOrderActivityAnalytics = async (days) => {
         db.sequelize.fn(
           "SUM",
           db.sequelize.literal(
-            "CASE WHEN status = 'processing' THEN 1 ELSE 0 END",
+            "CASE WHEN status = 'processed' THEN 1 ELSE 0 END",
           ),
         ),
-        "processing",
+        "processed",
       ],
       [
         db.sequelize.fn(
@@ -261,7 +262,7 @@ export const getOrderActivityAnalytics = async (days) => {
     }),
   );
   const deliveredData = results.map((row) => row.delivered);
-  const processingData = results.map((row) => row.processing);
+  const processingData = results.map((row) => row.processed);
   const cancelledData = results.map((row) => row.cancelled);
 
   return {
@@ -449,7 +450,7 @@ export const getOrderDetailsService = async (orderId) => {
 export const updateOrderStatusService = async (orderId, status) => {
   const validStatuses = [
     "pending",
-    "processing",
+    "processed",
     "shipped",
     "delivered",
     "cancelled",
@@ -469,6 +470,14 @@ export const updateOrderStatusService = async (orderId, status) => {
 
   // Cascade status update to all OrderItems
   await db.OrderItem.update({ status }, { where: { orderId } });
+
+  // Notify the customer about the status change
+  const statusLabel =
+    status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
+  const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+  const message = `Your order #${shortId} status has been updated to: ${statusLabel}.`;
+  const linkUrl = `/account/orders/${orderId}`;
+  createNotification(order.userId, "order_status_update", message, linkUrl);
 
   return await getOrderDetailsService(orderId);
 };

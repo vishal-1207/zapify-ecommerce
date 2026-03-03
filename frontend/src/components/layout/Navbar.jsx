@@ -2,20 +2,24 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
-  Search,
   Menu,
   LogOut,
   LayoutDashboard,
   Zap,
+  Bell,
 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 import SearchComponent from "../common/Search";
+import NotificationsPanel from "../common/NotificationsPanel";
 
 const Navbar = () => {
   const { role, user, switchRole } = useAuth();
   const { cartCount } = useCart();
+  const { unreadCount } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -70,7 +74,7 @@ const Navbar = () => {
                       navigate("/seller/register");
                     }
                   }}
-                  className="hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide"
+                  className="cursor-pointer hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide"
                 >
                   {user?.roles?.includes("seller") ? (
                     <>
@@ -138,6 +142,28 @@ const Navbar = () => {
               )}
             </div>
 
+            {/* Notification Bell — only for logged-in users */}
+            {user && role === "user" && (
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen((o) => !o)}
+                  className="cursor-pointer relative flex items-center hover:text-orange-300 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell size={24} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-indigo-900 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-indigo-700 leading-none">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationsPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                />
+              </div>
+            )}
+
             {(role === "user" || !user) && (
               <Link
                 to="/cart"
@@ -153,7 +179,7 @@ const Navbar = () => {
             )}
 
             <button
-              className="md:hidden"
+              className="cursor-pointer md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <Menu />

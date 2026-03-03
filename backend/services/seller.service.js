@@ -55,7 +55,7 @@ export const createSellerProfile = async (data, optional) => {
         slug,
         userId,
       },
-      { transaction }
+      { transaction },
     );
 
     const user = await db.User.findByPk(userId, { transaction });
@@ -71,7 +71,7 @@ export const createSellerProfile = async (data, optional) => {
       }
     }
     if (!Array.isArray(currentRoles)) {
-        currentRoles = [currentRoles].filter(Boolean); // Handle single string case or empty
+      currentRoles = [currentRoles].filter(Boolean); // Handle single string case or empty
     }
 
     let newRoles = currentRoles;
@@ -79,18 +79,23 @@ export const createSellerProfile = async (data, optional) => {
       newRoles = [...currentRoles, "seller"];
       const [affectedRows] = await db.User.update(
         { roles: newRoles },
-        { where: { id: userId }, transaction, validate: false }
+        { where: { id: userId }, transaction, validate: false },
       );
       console.log(`[DEBUG] Roles update affected rows: ${affectedRows}`);
 
       if (affectedRows === 0) {
-        throw new Error("Failed to update user roles - User not found or no change.");
+        throw new Error(
+          "Failed to update user roles - User not found or no change.",
+        );
       }
     }
-    
+
     // await user.save({ transaction }); // User.update covers the roles. Other fields not changed on user.
 
-    console.log(`[DEBUG] Seller Profile Created for UserID: ${userId}. New Roles:`, newRoles);
+    console.log(
+      `[DEBUG] Seller Profile Created for UserID: ${userId}. New Roles:`,
+      newRoles,
+    );
 
     await transaction.commit();
     await invalidateCache(`user_session:${userId}`);
@@ -157,7 +162,7 @@ export const deleteSellerProfile = async (userId) => {
   const sellerProfile = await getSellerProfile(userId);
 
   const pendingItems = await db.OrderItem.count({
-    where: { status: { [Op.in]: ["pending", "processing"] } },
+    where: { status: { [Op.in]: ["pending", "processed"] } },
     include: [
       {
         model: db.Offer,
@@ -171,7 +176,7 @@ export const deleteSellerProfile = async (userId) => {
   if (pendingItems > 0) {
     throw new ApiError(
       400,
-      `You cannot close your store while you have ${pendingItems} pending order(s) to fulfill.`
+      `You cannot close your store while you have ${pendingItems} pending order(s) to fulfill.`,
     );
   }
 
@@ -186,7 +191,7 @@ export const deleteSellerProfile = async (userId) => {
 
     await db.User.update(
       { role: "user" },
-      { where: { id: userId }, transaction }
+      { where: { id: userId }, transaction },
     );
 
     await transaction.commit();
@@ -214,45 +219,54 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   dateRange.setDate(dateRange.getDate() - days);
 
   // 1. Total Revenue (for the selected period)
-  const [revenueResult] = await db.sequelize.query(`
+  const [revenueResult] = await db.sequelize.query(
+    `
     SELECT SUM(OI.priceAtTimeOfPurchase) as totalRevenue
     FROM OrderItems OI
     INNER JOIN Offers O ON OI.offerId = O.id
     WHERE O.sellerProfileId = :sellerProfileId
     AND OI.status = 'delivered'
     AND OI.createdAt >= :startDate
-  `, {
-    replacements: { sellerProfileId: profile.id, startDate: dateRange },
-    type: db.sequelize.QueryTypes.SELECT
-  });
+  `,
+    {
+      replacements: { sellerProfileId: profile.id, startDate: dateRange },
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
   const totalRevenue = revenueResult?.totalRevenue || 0.0;
 
   // 2. Total Orders (for the selected period)
-  const [ordersResult] = await db.sequelize.query(`
+  const [ordersResult] = await db.sequelize.query(
+    `
     SELECT COUNT(DISTINCT OI.orderId) as totalOrders
     FROM OrderItems OI
     INNER JOIN Offers O ON OI.offerId = O.id
     WHERE O.sellerProfileId = :sellerProfileId
     AND OI.status = 'delivered'
     AND OI.createdAt >= :startDate
-  `, {
-    replacements: { sellerProfileId: profile.id, startDate: dateRange },
-    type: db.sequelize.QueryTypes.SELECT
-  });
+  `,
+    {
+      replacements: { sellerProfileId: profile.id, startDate: dateRange },
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
   const totalOrders = ordersResult?.totalOrders || 0;
 
   // 3. Total Sales (Items Sold, for the selected period)
-  const [salesResult] = await db.sequelize.query(`
+  const [salesResult] = await db.sequelize.query(
+    `
     SELECT SUM(OI.quantity) as totalSales
     FROM OrderItems OI
     INNER JOIN Offers O ON OI.offerId = O.id
     WHERE O.sellerProfileId = :sellerProfileId
     AND OI.status = 'delivered'
     AND OI.createdAt >= :startDate
-  `, {
-    replacements: { sellerProfileId: profile.id, startDate: dateRange },
-    type: db.sequelize.QueryTypes.SELECT
-  });
+  `,
+    {
+      replacements: { sellerProfileId: profile.id, startDate: dateRange },
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
   const totalSales = salesResult?.totalSales || 0;
 
   // 4. Average Rating (across all seller's products)
@@ -265,16 +279,19 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
    * 4. Average Rating
    * Using Raw Query to avoid Sequelize include issues with aggregation
    */
-  const [avgResult] = await db.sequelize.query(`
+  const [avgResult] = await db.sequelize.query(
+    `
     SELECT AVG(R.rating) as averageRating
     FROM Reviews R
     INNER JOIN Products P ON R.productId = P.id
     INNER JOIN Offers O ON P.id = O.productId
     WHERE O.sellerProfileId = :sellerProfileId
-  `, {
-    replacements: { sellerProfileId: profile.id },
-    type: db.sequelize.QueryTypes.SELECT
-  });
+  `,
+    {
+      replacements: { sellerProfileId: profile.id },
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
 
   const avgRatingStr = avgResult?.averageRating || 0;
 
@@ -315,7 +332,7 @@ export const getSellerSalesAnalytics = async (userId, days) => {
       [
         db.sequelize.fn(
           "COUNT",
-          db.sequelize.fn("DISTINCT", db.sequelize.col("orderId"))
+          db.sequelize.fn("DISTINCT", db.sequelize.col("orderId")),
         ),
         "totalOrders",
       ],
@@ -339,7 +356,7 @@ export const getSellerSalesAnalytics = async (userId, days) => {
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })
+    }),
   );
   const revenueData = results.map((row) => row.totalRevenue);
   const orderData = results.map((row) => row.totalOrders);
@@ -483,6 +500,3 @@ export const getSellerCategoryPerformance = async (userId, days = 30) => {
     ],
   };
 };
-
-
-

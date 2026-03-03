@@ -160,7 +160,7 @@ const DataTable = ({
                     {onRetry && (
                       <button
                         onClick={onRetry}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                       >
                         <RefreshCw size={18} />
                         Retry

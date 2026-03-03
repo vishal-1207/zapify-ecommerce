@@ -537,7 +537,7 @@ const AdminUsers = () => {
                 <button
                   onClick={handleRequestOtp}
                   disabled={isOtpLoading}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="cursor-pointer flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {isOtpLoading ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -549,7 +549,7 @@ const AdminUsers = () => {
                 <button
                   onClick={handleSaveEdits}
                   disabled={isOtpLoading || !otpCode}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="cursor-pointer flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {isOtpLoading ? (
                     <Loader2 size={18} className="animate-spin" />

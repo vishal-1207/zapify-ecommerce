@@ -15,7 +15,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-2xl" }) => 
           <h3 className="font-bold text-gray-800">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-100 rounded-full"
+            className="cursor-pointer text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-100 rounded-full"
           >
             <X size={20} />
           </button>

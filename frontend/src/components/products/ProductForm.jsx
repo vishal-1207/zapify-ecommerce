@@ -445,7 +445,7 @@ const ProductForm = ({
               <button
                 type="button"
                 onClick={handleAddSpec}
-                className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
+                className="cursor-pointer flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
               >
                 <Plus size={16} /> Add Spec
               </button>
@@ -504,7 +504,7 @@ const ProductForm = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
+            className="cursor-pointer px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
           >
             Cancel
           </button>
@@ -514,7 +514,7 @@ const ProductForm = ({
           <button
             type="button"
             onClick={prevStep}
-            className="flex items-center gap-2 px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
+            className="cursor-pointer flex items-center gap-2 px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition"
           >
             <ArrowLeft size={18} /> Back
           </button>
@@ -524,7 +524,7 @@ const ProductForm = ({
           <button
             type="button"
             onClick={nextStep}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition"
+            className="cursor-pointer flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition"
           >
             Next <ArrowRight size={18} />
           </button>

@@ -30,14 +30,14 @@ const ConfirmationModal = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
+            className="cursor-pointer flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 ${
+            className={`cursor-pointer flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 ${
               variant === "danger"
                 ? "bg-red-600 hover:bg-red-700 shadow-red-200"
                 : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"

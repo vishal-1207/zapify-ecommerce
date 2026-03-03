@@ -36,7 +36,7 @@ const VerificationBanner = () => {
           <button
             onClick={handleResend}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold rounded transition disabled:opacity-50"
+            className="cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold rounded transition disabled:opacity-50"
           >
             <Send size={14} />
             {loading ? "Sending..." : "Resend Link"}

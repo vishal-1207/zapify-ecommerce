@@ -267,7 +267,7 @@ export const deleteProductOffer = async (userId, offerId) => {
   const activeOrders = await db.OrderItem.count({
     where: {
       offerId: offer.id,
-      status: { [Op.in]: ["pending", "processing"] },
+      status: { [Op.in]: ["pending", "processed"] },
     },
   });
 

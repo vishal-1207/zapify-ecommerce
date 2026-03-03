@@ -55,7 +55,7 @@ const AddProductValues = ({
                     <h3 className="text-lg font-semibold text-gray-800">Search Results</h3>
                     <button 
                         onClick={onCreateNew}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
+                        className="cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
                     >
                         Product not found? Create a new listing <ArrowRight size={16}/>
                     </button>
@@ -72,7 +72,7 @@ const AddProductValues = ({
                     </p>
                     <button
                         onClick={onCreateNew}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition shadow-sm"
                     >
                         <Plus size={18} /> Create a new product listing
                     </button>

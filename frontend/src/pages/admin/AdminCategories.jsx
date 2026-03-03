@@ -296,14 +296,14 @@ const AdminCategories = () => {
               type="button"
               onClick={handleCloseModal}
               disabled={submissionLoading}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
+              className="cursor-pointer flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submissionLoading}
-              className="flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="cursor-pointer flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {submissionLoading ? (
                 <>
