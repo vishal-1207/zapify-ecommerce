@@ -17,6 +17,7 @@ import { formatCurrency } from "../../utils/currency";
 import ProductCarousel from "../../components/product/ProductCarousel";
 import ProductReviews from "../../components/product/ProductReviews";
 import ProductTabs from "../../components/product/ProductTabs";
+import WishlistButton from "../../components/product/WishlistButton";
 
 const CountdownTimer = ({ targetDate }) => {
   const [timeLeft, setTimeLeft] = useState("");
@@ -77,9 +78,12 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
     setLoading(true);
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchData = async () => {
       try {
-        const foundProduct = await getProductById(slug);
+        const foundProduct = await getProductById(slug, signal);
         setProduct(foundProduct);
 
         // Find best offer logic based on priority: Deal > Offer > MRP
@@ -120,15 +124,23 @@ const ProductDetail = () => {
           setSelectedOffer(null);
         }
 
-        const recs = await getRecommendations();
+        const recs = await getRecommendations(signal);
         setSimilarProducts(recs.filter((p) => p.slug !== slug));
       } catch (error) {
+        // Ignore intentional request cancellations (e.g., navigating away)
+        if (
+          error?.code === "ERR_CANCELED" ||
+          error?.name === "AbortError" ||
+          error?.name === "CanceledError"
+        )
+          return;
         console.error("Product load error:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
+    return () => controller.abort();
   }, [slug]);
 
   const handleAddToCart = () => {
@@ -190,9 +202,11 @@ const ProductDetail = () => {
                 alt={product.name}
                 className="max-w-full max-h-full object-contain mix-blend-multiply"
               />
-              <button className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm hover:text-red-500 transition">
-                <Heart size={20} />
-              </button>
+              <WishlistButton
+                productId={product.id}
+                size={20}
+                className="absolute top-4 right-4 w-10 h-10 shadow-sm"
+              />
 
               {/* Badges */}
               {product.isNew && (
@@ -255,15 +269,22 @@ const ProductDetail = () => {
               <h3 className="text-gray-600 mb-8 leading-relaxed">
                 {product.model || "No model available."}
               </h3>
-              <div className="flex items-center gap-4 mb-6">
+              <div
+                className="flex items-center gap-4 mb-6 cursor-pointer group w-fit"
+                onClick={() =>
+                  document
+                    .getElementById("customer-reviews")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
                 <div className="flex items-center text-yellow-400 gap-0.5">
                   <Star size={18} fill="currentColor" />
-                  <span className="text-gray-900 font-bold ml-1">
+                  <span className="text-gray-900 font-bold ml-1 group-hover:text-indigo-600 transition-colors">
                     {Number(product.averageRating || 0).toFixed(1)}
                   </span>
                 </div>
                 <span className="text-gray-400 text-sm">|</span>
-                <span className="text-indigo-600 font-medium text-sm hover:underline cursor-pointer">
+                <span className="text-indigo-600 font-medium text-sm group-hover:underline">
                   {product.reviewCount || 0} Reviews
                 </span>
               </div>
@@ -513,9 +534,16 @@ const ProductDetail = () => {
                         </button>
                       )}
 
-                      <button className="w-full bg-orange-400 text-indigo-900 py-3.5 rounded-xl font-bold hover:bg-orange-500 transition">
+                      <button className="cursor-pointer w-full bg-orange-400 text-indigo-900 py-3.5 rounded-xl font-bold hover:bg-orange-500 transition">
                         Buy Now
                       </button>
+
+                      {/* Wishlist toggle */}
+                      <WishlistButton
+                        productId={product.id}
+                        size={18}
+                        className="w-full py-3.5 rounded-xl border border-gray-200 hover:border-red-300 gap-2 font-semibold text-sm text-gray-700"
+                      />
                     </>
                   ) : (
                     <button
@@ -544,7 +572,7 @@ const ProductDetail = () => {
                 )}
 
               <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
-                <button className="text-gray-500 text-sm font-medium flex items-center gap-2 hover:text-indigo-600 transition">
+                <button className="cursor-pointer text-gray-500 text-sm font-medium flex items-center gap-2 hover:text-indigo-600 transition">
                   <Share2 size={16} /> Share Product
                 </button>
               </div>
@@ -665,7 +693,9 @@ const ProductDetail = () => {
         </div>
 
         {/* Product Reviews Section */}
-        <ProductReviews product={product} />
+        <div id="customer-reviews">
+          <ProductReviews product={product} />
+        </div>
       </div>
     </div>
   );
