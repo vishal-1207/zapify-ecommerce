@@ -69,6 +69,22 @@ export const getSellerTransactions = asyncHandler(async (req, res) => {
     );
 });
 
+export const getMyTransactions = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const transactions = await paymentServices.getUserTransactions(userId);
+  res
+    .status(200)
+    .json(new ApiResponse(200, transactions, "Transactions fetched."));
+});
+
+export const verifyPayment = asyncHandler(async (req, res) => {
+  const { paymentIntentId } = req.body;
+  const payment = await paymentServices.verifyAndUpdatePayment(paymentIntentId);
+  res
+    .status(200)
+    .json(new ApiResponse(200, { payment }, "Payment verification complete."));
+});
+
 export const refundPayment = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const { amount = null, reason = "requested_by_customer" } = req.body;

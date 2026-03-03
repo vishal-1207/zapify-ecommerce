@@ -117,11 +117,81 @@ export const createOrderFromCart = async (userId, addressId) => {
 
     await clearCart(userId);
 
+    // ── 1. Notify the buyer: order placed ────────────────────────────────────
+    const shortId = newOrder.orderId;
+    createNotification(
+      userId,
+      "order_placed",
+      `🎉 Order #${shortId} placed! We're getting it ready for you.`,
+      `/account/orders/${newOrder.id}`,
+    );
+
+    // ── 2. Low-stock wishlist alerts ──────────────────────────────────────────
+    // Fire-and-forget: don't let this block or break the order creation response
+    notifyLowStockWishlisters(cartItems).catch((err) =>
+      console.error("Low-stock wishlist notification failed:", err),
+    );
+
     return newOrder;
   } catch (error) {
     await transaction.rollback();
     if (error instanceof ApiError) throw error;
     throw new ApiError(500, "Failed to create order.", error);
+  }
+};
+
+/**
+ * After stock is decremented by an order, check each purchased offer.
+ * If remaining stock is <= LOW_STOCK_THRESHOLD, notify users who have
+ * wishlisted that product with a catchy urgency message.
+ * @param {Array} cartItems - Items from the cart (each has offerId, details.productId)
+ */
+const LOW_STOCK_THRESHOLD = 5;
+
+const notifyLowStockWishlisters = async (cartItems) => {
+  const offerIds = cartItems.map((i) => i.offerId);
+
+  // Fetch fresh stock levels for all purchased offers along with their product id
+  const offers = await db.Offer.findAll({
+    where: { id: { [Op.in]: offerIds } },
+    attributes: ["id", "stockQuantity", "productId"],
+  });
+
+  for (const offer of offers) {
+    if (offer.stockQuantity > LOW_STOCK_THRESHOLD) continue;
+
+    // Find all users who wishlisted this product (excluding the buyer)
+    const wishlistEntries = await db.Wishlist.findAll({
+      where: { productId: offer.productId },
+      attributes: ["userId"],
+      include: [
+        {
+          model: db.Product,
+          as: "product",
+          attributes: ["name", "slug"],
+        },
+      ],
+    });
+
+    if (!wishlistEntries.length) continue;
+
+    const productName = wishlistEntries[0]?.product?.name ?? "A product";
+    const productSlug = wishlistEntries[0]?.product?.slug;
+
+    const remaining = offer.stockQuantity;
+    let message;
+    if (remaining <= 0) {
+      message = `😬 "${productName}" on your wishlist is now OUT OF STOCK — act fast if you want it!`;
+    } else {
+      message = `🔥 Only ${remaining} left! "${productName}" on your wishlist is almost gone. Grab it before it sells out!`;
+    }
+    const linkUrl = productSlug
+      ? `/product/${productSlug}`
+      : `/account/wishlist`;
+
+    for (const entry of wishlistEntries) {
+      createNotification(entry.userId, "low_stock_wishlist", message, linkUrl);
+    }
   }
 };
 
@@ -342,13 +412,15 @@ export const updateOrderItemStatus = async (
 
   const transaction = await db.sequelize.transaction();
   try {
-    item.status = status;
+    // Normalize to lowercase so DB ENUM validation always passes
+    const normalizedStatus = status.toLowerCase();
+    item.status = normalizedStatus;
     await item.save({ transaction });
 
     // Sync status with parent Order
     await syncOrderStatus(item.orderId, transaction);
 
-    if (status === "Shipped") {
+    if (normalizedStatus === "shipped") {
       if (!trackingData?.trackingNumber || !trackingData?.shippingCarrier) {
         throw new ApiError(
           400,
@@ -370,8 +442,11 @@ export const updateOrderItemStatus = async (
     await transaction.commit();
 
     const customerId = item.Order.userId;
-    const message = `Update: Your item '${item.Offer.product.name}' has been ${status}.`;
-    const linkUrl = `/my-orders/${item.Order.id}`;
+    const statusLabel =
+      normalizedStatus.charAt(0).toUpperCase() +
+      normalizedStatus.slice(1).replace(/_/g, " ");
+    const message = `Your item '${item.Offer.product.name}' has been updated to: ${statusLabel}.`;
+    const linkUrl = `/account/orders/${item.orderId}`;
     createNotification(customerId, "order_status_update", message, linkUrl);
 
     return item;
@@ -434,7 +509,7 @@ const syncOrderStatus = async (orderId, transaction) => {
     ["shipped", "delivered", "cancelled"].includes(s),
   );
   const isProcessing = statuses.some((s) =>
-    ["processing", "shipped", "delivered"].includes(s),
+    ["processed", "shipped", "delivered"].includes(s),
   );
 
   if (isCancelled) {
@@ -445,7 +520,7 @@ const syncOrderStatus = async (orderId, transaction) => {
     // If all are processed (shipped/delivered/cancelled) but not all delivered/cancelled
     newStatus = "shipped";
   } else if (isProcessing) {
-    newStatus = "processing";
+    newStatus = "processed";
   } else {
     newStatus = "pending";
   }
@@ -468,7 +543,7 @@ export const cancelOrderService = async (orderId, userId, reason) => {
 
   if (!order) throw new ApiError(404, "Order not found.");
 
-  const cancellable = ["pending", "processing"];
+  const cancellable = ["pending", "processed"];
   if (!cancellable.includes(order.status)) {
     throw new ApiError(
       400,

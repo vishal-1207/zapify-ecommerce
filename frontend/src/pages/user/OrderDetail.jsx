@@ -25,7 +25,7 @@ import { toast } from "react-hot-toast";
 const statusColors = {
   delivered: "bg-green-100 text-green-800",
   pending: "bg-yellow-100 text-yellow-800",
-  processing: "bg-blue-100 text-blue-800",
+  processed: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
   cancelled: "bg-red-100 text-red-800",
   return_requested: "bg-orange-100 text-orange-800",
@@ -199,7 +199,7 @@ const OrderDetail = () => {
       );
     }, 0) || 0;
 
-  const isCancellable = ["pending", "processing"].includes(order.status);
+  const isCancellable = ["pending", "processed"].includes(order.status);
   const isReturnable = order.status === "delivered";
 
   return (
@@ -537,7 +537,7 @@ const OrderDetail = () => {
               <button
                 onClick={handleCancel}
                 disabled={isCancelling || !cancelReason}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                className="cursor-pointer flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {isCancelling ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -631,7 +631,7 @@ const OrderDetail = () => {
               <button
                 onClick={handleReturn}
                 disabled={isReturning || !returnReason}
-                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                className="cursor-pointer flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {isReturning ? (
                   <Loader2 size={15} className="animate-spin" />

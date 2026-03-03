@@ -8,6 +8,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { createPaymentIntent } from "../../api/payment";
+import { verifyPayment } from "../../api/payments";
 import { createOrder, getOrderDetails } from "../../api/orders";
 import { useCart } from "../../context/CartContext";
 import { formatCurrency } from "../../utils/currency";
@@ -60,7 +61,17 @@ const CheckoutForm = ({ order, clientSecret }) => {
       setProcessing(false);
     } else {
       if (result.paymentIntent.status === "succeeded") {
-        refreshCart(); // The backend already cleared the cart, we just need to sync the frontend badge
+        // Notify the backend to sync payment status from Stripe.
+        // This is the reliable fallback for when webhooks aren't delivered (e.g. local dev).
+        try {
+          await verifyPayment(result.paymentIntent.id);
+        } catch (err) {
+          console.warn(
+            "Payment verify call failed, webhook may handle it:",
+            err,
+          );
+        }
+        refreshCart();
         navigate(`/order-success/${order.id}`);
       }
     }

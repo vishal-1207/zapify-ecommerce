@@ -25,6 +25,12 @@ router
   .route("/create-intent")
   .post(csrfProtection, isVerified, paymentControllers.createPaymentIntent);
 
+// User: get their own transaction history
+router.route("/my-transactions").get(paymentControllers.getMyTransactions);
+
+// User: verify payment status directly with Stripe (fallback for when webhooks aren't delivered, e.g. local dev)
+router.route("/verify").post(paymentControllers.verifyPayment);
+
 // Admin: issue a full or partial refund for an order
 router
   .route("/:orderId/refund")

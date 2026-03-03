@@ -3,6 +3,7 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import { getSellerProfile } from "./seller.service.js";
 import paginate from "../utils/paginate.js";
+import { createNotification } from "./notification.service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -232,13 +233,21 @@ export const handleStripeWebhook = async (event) => {
         ],
       });
       if (order) {
-        order.status = "processing";
+        order.status = "processed";
         await order.save();
+
+        // In-app payment confirmation notification
+        const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+        createNotification(
+          order.userId,
+          "order_status_update",
+          `✅ Payment confirmed! Your order #${shortId} is being processed.`,
+          `/account/orders/${orderId}`,
+        );
 
         sendOrderConfirmationEmail(order).catch((err) =>
           console.error("Failed to send confirmation email:", err),
         );
-        // sendOrderConfirmationSms(order).catch(err => console.error("Failed to send confirmation SMS:", err)); // Uncomment to enable
         notifySellersOfNewOrder(order).catch((err) =>
           console.error("Failed to notify sellers:", err),
         );
@@ -365,4 +374,168 @@ export const initiateRefund = async (
   }
 
   return payment;
+};
+
+/**
+ * Verifies a Stripe PaymentIntent directly from Stripe and updates the local
+ * payment/order status. This is an alternative to relying solely on webhooks,
+ * which is essential in local development where Stripe cannot reach localhost.
+ * @param {string} paymentIntentId - The Stripe PaymentIntent ID (pi_xxx).
+ * @returns {Promise<Payment>} The updated Payment record.
+ */
+export const verifyAndUpdatePayment = async (paymentIntentId) => {
+  if (!paymentIntentId) {
+    throw new ApiError(400, "paymentIntentId is required.");
+  }
+
+  const payment = await db.Payment.findOne({
+    where: { gatewayTransactionId: paymentIntentId },
+  });
+
+  if (!payment) {
+    throw new ApiError(404, "Payment record not found for this PaymentIntent.");
+  }
+
+  // Already in a terminal state — nothing to do
+  if (payment.status !== "pending") {
+    return payment;
+  }
+
+  // Retrieve the PaymentIntent from Stripe to get authoritative status
+  let fullIntent;
+  try {
+    fullIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["payment_method"],
+    });
+  } catch (err) {
+    throw new ApiError(
+      502,
+      `Could not retrieve PaymentIntent from Stripe: ${err.message}`,
+    );
+  }
+
+  if (fullIntent.status !== "succeeded") {
+    // Payment not confirmed yet on Stripe's side — return as-is
+    return payment;
+  }
+
+  // Update payment record
+  const paymentMethodType =
+    fullIntent.payment_method?.type ||
+    fullIntent.payment_method_types?.[0] ||
+    "card";
+  const paymentMethodDetails =
+    fullIntent.payment_method?.[paymentMethodType] || null;
+
+  payment.status = "succeeded";
+  payment.paymentMethod = paymentMethodType;
+  payment.paymentMethodDetails = paymentMethodDetails;
+  payment.gatewayResponse = {
+    id: fullIntent.id,
+    amount: fullIntent.amount,
+    currency: fullIntent.currency,
+    status: fullIntent.status,
+    created: fullIntent.created,
+  };
+  await payment.save();
+
+  // Fetch the order with all associations needed for notifications
+  const orderId = fullIntent.metadata?.orderId || payment.orderId;
+  const order = await db.Order.findByPk(orderId, {
+    include: [
+      {
+        model: db.User,
+        attributes: ["id", "email", "fullname", "phoneNumber"],
+      },
+      {
+        model: db.OrderItem,
+        as: "orderItems",
+        include: [
+          {
+            model: db.Offer,
+            include: [
+              { model: db.Product, as: "product" },
+              { model: db.SellerProfile, as: "sellerProfile" },
+            ],
+          },
+        ],
+      },
+      {
+        model: db.Payment,
+        as: "payments",
+      },
+    ],
+  });
+
+  if (order) {
+    order.status = "processed";
+    await order.save();
+
+    // In-app payment confirmation notification
+    const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+    createNotification(
+      order.userId,
+      "order_status_update",
+      `✅ Payment confirmed! Your order #${shortId} is being processed.`,
+      `/account/orders/${orderId}`,
+    );
+
+    sendOrderConfirmationEmail(order).catch((err) =>
+      console.error("Failed to send confirmation email:", err),
+    );
+    notifySellersOfNewOrder(order).catch((err) =>
+      console.error("Failed to notify sellers:", err),
+    );
+  }
+
+  return payment;
+};
+
+/**
+ * Fetches all payment transactions for a specific user.
+ * @param {string} userId - The ID of the user.
+ * @returns {Promise<Payment[]>} Array of Payment records with order details.
+ */
+export const getUserTransactions = async (userId) => {
+  const payments = await db.Payment.findAll({
+    include: [
+      {
+        model: db.Order,
+        required: true,
+        where: { userId },
+        attributes: ["id", "totalAmount", "status", "createdAt"],
+        include: [
+          {
+            model: db.OrderItem,
+            as: "orderItems",
+            attributes: ["id", "quantity", "priceAtTimeOfPurchase", "status"],
+            include: [
+              {
+                model: db.Offer,
+                attributes: ["id"],
+                include: [
+                  {
+                    model: db.Product,
+                    as: "product",
+                    attributes: ["id", "name", "slug"],
+                    include: [
+                      {
+                        model: db.Media,
+                        as: "media",
+                        required: false,
+                        limit: 1,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: [["createdAt", "DESC"]],
+  });
+
+  return payments;
 };
