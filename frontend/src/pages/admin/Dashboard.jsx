@@ -15,6 +15,7 @@ import {
 import { Line, Pie, Bar } from "react-chartjs-2";
 import { Package, Users, Star, ShoppingBag, IndianRupee } from "lucide-react";
 import api from "../../api/axios";
+import axios from "axios";
 
 ChartJS.register(
   CategoryScale,
@@ -25,7 +26,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 );
 
 const Dashboard = () => {
@@ -46,9 +47,17 @@ const Dashboard = () => {
         setStats(statsRes.data.stats);
         setSalesData(salesRes.data.salesData);
         setCategoryData(categoryRes.data.categoryData);
+        setLoading(false);
       } catch (error) {
+        if (
+          axios.isCancel(error) ||
+          error.message === "Request aborted" ||
+          error?.code === "ERR_CANCELED"
+        ) {
+          setLoading(false);
+          return;
+        }
         console.error("Failed to fetch dashboard data", error);
-      } finally {
         setLoading(false);
       }
     };
@@ -56,7 +65,8 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
+  if (loading)
+    return <div className="p-8 text-center">Loading dashboard...</div>;
 
   const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -101,12 +111,28 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Sales Overview (Last 30 Days)</h3>
-          {salesData && <Line data={salesData} options={{ responsive: true, maintainAspectRatio: false }} height={300} />}
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Sales Overview (Last 30 Days)
+          </h3>
+          {salesData && (
+            <Line
+              data={salesData}
+              options={{ responsive: true, maintainAspectRatio: false }}
+              height={300}
+            />
+          )}
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Sales by Category</h3>
-          {categoryData && <Pie data={categoryData} options={{ responsive: true, maintainAspectRatio: false }} height={300} />}
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Sales by Category
+          </h3>
+          {categoryData && (
+            <Pie
+              data={categoryData}
+              options={{ responsive: true, maintainAspectRatio: false }}
+              height={300}
+            />
+          )}
         </div>
       </div>
     </div>

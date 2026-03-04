@@ -23,7 +23,7 @@ const AdminBrands = () => {
   const dispatch = useDispatch();
   const {
     brands,
-    loading,
+    productsLoading: loading,
     error: reduxError,
   } = useSelector((state) => state.admin);
 

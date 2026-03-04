@@ -38,7 +38,7 @@ const AdminOrders = () => {
   const {
     orders,
     selectedOrder,
-    loading,
+    ordersLoading: loading,
     ordersTotalPages: totalPages,
   } = useSelector((state) => state.admin);
 

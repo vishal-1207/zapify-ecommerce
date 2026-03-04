@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import * as reviewServices from "../services/reviews.service.js";
+import ApiError from "../utils/ApiError.js";
 
 /**
  * Controller to create a new review for a purchased order item.
@@ -78,14 +79,14 @@ export const getPendingReviewsController = asyncHandler(async (req, res) => {
  * Admin controller to review and moderate a user's review for a specific product.
  */
 export const moderateReviewController = asyncHandler(async (req, res) => {
-  const { decision } = req.body;
-  if (!decision) throw new ApiError(400, "Decision is required.");
+  const { status } = req.body;
+  if (!status) throw new ApiError(400, "Status is required.");
 
   const review = await reviewServices.moderateReview(
     req.params.reviewId,
-    decision,
+    status,
   );
-  return res.status(200).json({ message: `Review ${decision}.`, review });
+  return res.status(200).json({ message: `Review ${status}.`, review });
 });
 
 /**

@@ -10,7 +10,7 @@ const AdminReviews = () => {
   const dispatch = useDispatch();
   const {
     pendingReviews: reviews,
-    loading,
+    reviewsLoading: loading,
     error: reduxError,
   } = useSelector((state) => state.admin);
 

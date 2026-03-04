@@ -12,6 +12,11 @@ import {
 import { toast } from "react-hot-toast";
 import { CURRENCY_SYMBOL } from "../../utils/currency";
 
+const FieldError = ({ message }) =>
+  message ? (
+    <p className="mt-1 text-xs text-red-500 font-medium">{message}</p>
+  ) : null;
+
 const ProductForm = ({
   initialData,
   categories = [],
@@ -23,6 +28,7 @@ const ProductForm = ({
   showStock = true,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState({});
   const isEditing = !!initialData;
 
   const [formData, setFormData] = useState({
@@ -159,10 +165,16 @@ const ProductForm = ({
   };
 
   const nextStep = () => {
-    if (!formData.name || !formData.price || !formData.categoryId) {
-      toast.error("Please fill in all required fields (Name, Price, Category)");
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Product name is required.";
+    if (!formData.price) newErrors.price = "Price is required.";
+    if (!formData.categoryId)
+      newErrors.categoryId = "Please select a category.";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+    setErrors({});
     setCurrentStep(2);
   };
 
@@ -232,14 +244,18 @@ const ProductForm = ({
               </label>
               <input
                 type="text"
-                required
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name)
+                    setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition ${
+                  errors.name ? "border-red-400 bg-red-50" : "border-gray-300"
+                }`}
                 placeholder="e.g. Wireless Headphones"
               />
+              <FieldError message={errors.name} />
             </div>
 
             {/* Model */}
@@ -268,14 +284,18 @@ const ProductForm = ({
               <input
                 type="number"
                 step="0.01"
-                required
                 value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                onChange={(e) => {
+                  setFormData({ ...formData, price: e.target.value });
+                  if (errors.price)
+                    setErrors((prev) => ({ ...prev, price: undefined }));
+                }}
+                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition ${
+                  errors.price ? "border-red-400 bg-red-50" : "border-gray-300"
+                }`}
                 placeholder="0.00"
               />
+              <FieldError message={errors.price} />
             </div>
 
             {/* Stock */}
@@ -306,12 +326,17 @@ const ProductForm = ({
                 Category <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white"
+                onChange={(e) => {
+                  setFormData({ ...formData, categoryId: e.target.value });
+                  if (errors.categoryId)
+                    setErrors((prev) => ({ ...prev, categoryId: undefined }));
+                }}
+                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white ${
+                  errors.categoryId
+                    ? "border-red-400 bg-red-50"
+                    : "border-gray-300"
+                }`}
               >
                 <option value="">Select Category</option>
                 {categories.map((cat) => (
@@ -320,6 +345,7 @@ const ProductForm = ({
                   </option>
                 ))}
               </select>
+              <FieldError message={errors.categoryId} />
             </div>
 
             {/* Brand */}

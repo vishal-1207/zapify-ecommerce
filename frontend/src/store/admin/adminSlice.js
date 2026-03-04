@@ -296,8 +296,9 @@ export const fetchPendingReviews = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get("/reviews/admin/pending-reviews");
-      // res.data.reviews could be directly the array since reviews is often the top-level property
-      return res.data.reviews || res.data || [];
+      // Backend spreads paginate() result: { data: [], total, page, ... }
+      // When total === 0, the controller returns { message } with no data key
+      return Array.isArray(res.data.data) ? res.data.data : [];
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch reviews");
     }
@@ -326,7 +327,12 @@ const initialState = {
   users: [],
   usersTotalPages: 1,
   pendingReviews: [],
-  loading: false,
+  // Per-feature loading flags so one page's abort doesn't freeze others
+  productsLoading: false,
+  ordersLoading: false,
+  usersLoading: false,
+  reviewsLoading: false,
+  loading: false, // kept for shared use (order details, etc.)
   error: null,
 };
 
@@ -338,15 +344,21 @@ const adminSlice = createSlice({
     builder
       // Fetch Products
       .addCase(fetchAdminProducts.pending, (state) => {
-        state.loading = true;
+        state.productsLoading = true;
         state.error = null;
       })
       .addCase(fetchAdminProducts.fulfilled, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
         state.products = action.payload;
       })
       .addCase(fetchAdminProducts.rejected, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Toggle Product Status
@@ -367,15 +379,21 @@ const adminSlice = createSlice({
       })
       // Fetch Categories
       .addCase(fetchAdminCategories.pending, (state) => {
-        state.loading = true;
+        state.productsLoading = true;
         state.error = null;
       })
       .addCase(fetchAdminCategories.fulfilled, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
         state.categories = action.payload;
       })
       .addCase(fetchAdminCategories.rejected, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Toggle Category Status
@@ -394,15 +412,21 @@ const adminSlice = createSlice({
       })
       // Fetch Brands
       .addCase(fetchAdminBrands.pending, (state) => {
-        state.loading = true;
+        state.productsLoading = true;
         state.error = null;
       })
       .addCase(fetchAdminBrands.fulfilled, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
         state.brands = action.payload;
       })
       .addCase(fetchAdminBrands.rejected, (state, action) => {
-        state.loading = false;
+        state.productsLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Toggle Brand Status
@@ -419,16 +443,22 @@ const adminSlice = createSlice({
       })
       // Fetch Orders
       .addCase(fetchAdminOrders.pending, (state) => {
-        state.loading = true;
+        state.ordersLoading = true;
         state.error = null;
       })
       .addCase(fetchAdminOrders.fulfilled, (state, action) => {
-        state.loading = false;
+        state.ordersLoading = false;
         state.orders = action.payload.data || [];
         state.ordersTotalPages = action.payload.totalPages || 1;
       })
       .addCase(fetchAdminOrders.rejected, (state, action) => {
-        state.loading = false;
+        state.ordersLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Fetch Order Details
@@ -454,16 +484,22 @@ const adminSlice = createSlice({
       })
       // Fetch Users
       .addCase(fetchAdminUsers.pending, (state) => {
-        state.loading = true;
+        state.usersLoading = true;
         state.error = null;
       })
       .addCase(fetchAdminUsers.fulfilled, (state, action) => {
-        state.loading = false;
+        state.usersLoading = false;
         state.users = action.payload.data || [];
         state.usersTotalPages = action.payload.totalPages || 1;
       })
       .addCase(fetchAdminUsers.rejected, (state, action) => {
-        state.loading = false;
+        state.usersLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Toggle User Block Status
@@ -488,15 +524,23 @@ const adminSlice = createSlice({
       })
       // Fetch Pending Reviews
       .addCase(fetchPendingReviews.pending, (state) => {
-        state.loading = true;
+        state.reviewsLoading = true;
         state.error = null;
       })
       .addCase(fetchPendingReviews.fulfilled, (state, action) => {
-        state.loading = false;
-        state.pendingReviews = action.payload;
+        state.reviewsLoading = false;
+        state.pendingReviews = Array.isArray(action.payload)
+          ? action.payload
+          : [];
       })
       .addCase(fetchPendingReviews.rejected, (state, action) => {
-        state.loading = false;
+        state.reviewsLoading = false;
+        if (
+          action.payload === "Request aborted" ||
+          action.payload === "canceled" ||
+          action.error?.name === "AbortError"
+        )
+          return;
         state.error = action.payload;
       })
       // Moderate Review

@@ -25,7 +25,7 @@ const AdminUsers = () => {
   const dispatch = useDispatch();
   const {
     users,
-    loading,
+    usersLoading: loading,
     usersTotalPages: totalPages,
   } = useSelector((state) => state.admin);
 

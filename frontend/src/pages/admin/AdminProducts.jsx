@@ -38,7 +38,7 @@ const AdminProducts = () => {
   const dispatch = useDispatch();
   const {
     products,
-    loading,
+    productsLoading: loading,
     error: reduxError,
   } = useSelector((state) => state.admin);
 
