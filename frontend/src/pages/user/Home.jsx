@@ -15,6 +15,7 @@ import CategoryCarousel from "../../components/home/CategoryCarousel";
 import BrandCarousel from "../../components/home/BrandCarousel";
 import ProductCarousel from "../../components/product/ProductCarousel";
 import { getAllCategories } from "../../api/categories";
+import { getAllBrands } from "../../api/brands";
 import {
   getFeaturedProducts,
   getNewArrivals,
@@ -28,23 +29,26 @@ const Home = () => {
   const [popular, setPopular] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [feat, newItems, pop, rec, cats] = await Promise.all([
+        const [feat, newItems, pop, rec, cats, brnds] = await Promise.all([
           getFeaturedProducts(),
           getNewArrivals(),
           getPopularProducts(),
           getRecommendations(),
           getAllCategories(),
+          getAllBrands(),
         ]);
         setFeatured(feat);
         setNewArrivals(newItems);
         setPopular(pop);
         setRecommended(rec);
         setCategories(cats);
+        setBrands(brnds);
       } catch (error) {
         console.error("Failed to load home data", error);
       } finally {
@@ -117,7 +121,7 @@ const Home = () => {
         </div>
 
         <ProductCarousel title="Fresh Arrivals" products={newArrivals} />
-        <BrandCarousel />
+        <BrandCarousel brands={brands} />
         <ProductCarousel title="Best Sellers in Tech" products={popular} />
         <ProductCarousel title="Recommended for You" products={recommended} />
 

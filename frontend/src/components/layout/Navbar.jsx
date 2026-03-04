@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
@@ -13,6 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import SearchComponent from "../common/Search";
 import NotificationsPanel from "../common/NotificationsPanel";
+import { getAllCategories } from "../../api/categories";
 
 const Navbar = () => {
   const { role, user, switchRole } = useAuth();
@@ -20,7 +21,16 @@ const Navbar = () => {
   const { unreadCount } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getAllCategories()
+      .then((data) => setCategories(data))
+      .catch((error) =>
+        console.error("Failed to load categories in navbar", error),
+      );
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -220,30 +230,22 @@ const Navbar = () => {
         <div className="hidden md:flex bg-indigo-900 text-indigo-100 text-xs py-2 px-4 gap-6 overflow-x-auto border-b border-indigo-800">
           <Link
             to="/shop"
-            className="font-bold hover:text-white flex items-center gap-1"
+            className="font-bold hover:text-white flex items-center gap-1 shrink-0"
           >
             <Menu size={14} /> All Electronics
           </Link>
-          {[
-            "Smartphones",
-            "Laptops",
-            "Audio",
-            "Gaming",
-            "Cameras",
-            "Wearables",
-            "Accessories",
-          ].map((cat) => (
+          {categories.slice(0, 8).map((cat) => (
             <Link
-              key={cat}
-              to="/shop"
-              className="hover:text-white cursor-pointer transition-colors"
+              key={cat.id}
+              to={`/shop?category=${cat.slug}`}
+              className="hover:text-white cursor-pointer transition-colors whitespace-nowrap"
             >
-              {cat}
+              {cat.name}
             </Link>
           ))}
           <Link
             to="/shop"
-            className="hover:text-white ml-auto font-bold text-orange-400"
+            className="hover:text-white ml-auto font-bold text-orange-400 shrink-0"
           >
             Daily Deals
           </Link>
