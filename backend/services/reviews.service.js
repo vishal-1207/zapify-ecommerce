@@ -1,20 +1,23 @@
 import cloudinary from "../config/cloudinary.js";
 import db from "../models/index.js";
+import { Op } from "sequelize";
 import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import paginate from "../utils/paginate.js";
 import { getSellerProfile } from "./seller.service.js";
+import { moderationQueue } from "../workers/moderation.worker.js";
+import { checkLocalNsfwMedia } from "./moderation.service.js";
 
 /**
  * Helper function to calculate and update a product's average rating.
  * @private
  */
-const updateProductAverageRating = async (productId) => {
+export const updateProductAverageRating = async (productId) => {
   if (!productId) return;
 
   try {
     const result = await db.Review.findOne({
-      where: { productId },
+      where: { productId, status: "approved", isHidden: false },
       attributes: [
         [db.sequelize.fn("AVG", db.sequelize.col("rating")), "averageRating"],
         [db.sequelize.fn("COUNT", db.sequelize.col("id")), "reviewCount"],
@@ -50,7 +53,7 @@ const updateProductAverageRating = async (productId) => {
  * Helper function to calculate and update a seller's average rating based on all reviews for their products.
  * @private
  */
-const updateSellerAverageRating = async (sellerProfileId) => {
+export const updateSellerAverageRating = async (sellerProfileId) => {
   if (!sellerProfileId) return;
 
   try {
@@ -122,6 +125,19 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
     );
   }
 
+  let initialStatus = "pending";
+  let preUploadReason = null;
+  let skipUploadAndQueue = false;
+
+  if (files && files.length > 0) {
+    const { isNsfw } = await checkLocalNsfwMedia(files);
+    if (isNsfw) {
+      initialStatus = "rejected";
+      preUploadReason = "Automated: inappropriate image content detected.";
+      skipUploadAndQueue = true;
+    }
+  }
+
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -132,11 +148,29 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
         userId,
         orderItemId,
         productId: orderItem.Offer.productId,
+        status: initialStatus,
+        moderationReason: preUploadReason,
+        autoModScore: skipUploadAndQueue ? 0.8 : 0.0,
+        autoModFlags: skipUploadAndQueue
+          ? {
+              profanity: false,
+              spam: false,
+              suspicious: false,
+              toxicity: 0.0,
+              nsfw: true,
+            }
+          : {
+              profanity: false,
+              spam: false,
+              suspicious: false,
+              toxicity: 0.0,
+              nsfw: false,
+            },
       },
       { transaction },
     );
 
-    if (files && files.length > 0) {
+    if (files && files.length > 0 && !skipUploadAndQueue) {
       const uploadPromises = files.map((file) =>
         uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER),
       );
@@ -155,13 +189,15 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
 
     await transaction.commit();
 
-    // Fire rating recalculations in the background — don't block the response.
-    updateProductAverageRating(orderItem.Offer.productId).catch((err) =>
-      console.error("[Review] Failed to update product rating:", err.message),
-    );
-    updateSellerAverageRating(orderItem.Offer.sellerProfileId).catch((err) =>
-      console.error("[Review] Failed to update seller rating:", err.message),
-    );
+    if (!skipUploadAndQueue) {
+      // Fire automated moderation pipeline — non-blocking, runs in background worker.
+      // It will set status to approved/flagged/rejected and update ratings if approved.
+      moderationQueue
+        .add("moderate-review", { reviewId: newReview.id })
+        .catch((err) =>
+          console.error("[Review] Failed to queue moderation:", err.message),
+        );
+    }
 
     return db.Review.findByPk(newReview.id, {
       include: [{ model: db.Media, as: "media" }],
@@ -178,7 +214,15 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
  */
 export const getReviewsForProduct = async (productId) => {
   return db.Review.findAll({
-    where: { productId },
+    where: { productId, status: "approved", isHidden: false },
+    attributes: {
+      exclude: [
+        "autoModScore",
+        "autoModFlags",
+        "moderationNote",
+        "moderatedBy",
+      ],
+    },
     include: [
       {
         model: db.User,
@@ -209,6 +253,37 @@ export const getReviewsForProduct = async (productId) => {
     ],
     order: [["createdAt", "DESC"]],
   });
+};
+
+/**
+ * Fetches all reviews submitted by a specific user (for their "My Reviews" dashboard).
+ */
+export const getUserReviews = async (userId, page = 1, limit = 10) => {
+  return paginate(
+    db.Review,
+    {
+      where: { userId },
+      attributes: {
+        exclude: ["moderatedBy", "moderationNote"], // Hide internal admin details
+      },
+      include: [
+        {
+          model: db.Product,
+          as: "product",
+          attributes: ["id", "name", "slug", "model"],
+          include: [{ model: db.Media, as: "media" }],
+        },
+        { model: db.Media, as: "media" },
+        {
+          model: db.OrderItem,
+          include: [{ model: db.Offer, attributes: ["sellerProfileId"] }],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    },
+    page,
+    limit,
+  );
 };
 
 /**
@@ -265,7 +340,20 @@ export const updateUserReview = async (
       }
     }
 
+    let newStatus = "pending";
+    let newReason = null;
+    let skipUploadAndQueue = false;
+
     if (newFiles && newFiles.length > 0) {
+      const { isNsfw } = await checkLocalNsfwMedia(newFiles);
+      if (isNsfw) {
+        newStatus = "rejected";
+        newReason = "Automated: inappropriate image content detected.";
+        skipUploadAndQueue = true;
+      }
+    }
+
+    if (newFiles && newFiles.length > 0 && !skipUploadAndQueue) {
       const uploadPromises = newFiles.map((file) =>
         uploadToCloudinary(file.path, process.env.CLOUDINARY_REVIEW_FOLDER),
       );
@@ -282,21 +370,52 @@ export const updateUserReview = async (
       await db.Media.bulkCreate(mediaEntries, { transaction });
     }
 
+    // Reset to pending so the updated content goes through moderation again
+    review.status = newStatus;
+    review.moderationReason = newReason;
+    review.autoModScore = skipUploadAndQueue ? 0.8 : 0.0;
+    review.autoModFlags = skipUploadAndQueue
+      ? {
+          profanity: false,
+          spam: false,
+          suspicious: false,
+          toxicity: 0.0,
+          nsfw: true,
+        }
+      : {
+          profanity: false,
+          spam: false,
+          suspicious: false,
+          toxicity: 0.0,
+          nsfw: false,
+        };
+
     await review.save({ transaction });
     await transaction.commit();
 
-    await updateProductAverageRating(review.productId);
-    if (review.OrderItem?.Offer?.sellerProfileId) {
-      await updateSellerAverageRating(review.OrderItem.Offer.sellerProfileId);
+    if (!skipUploadAndQueue) {
+      // Re-run the moderation pipeline on the updated content (via background worker)
+      moderationQueue
+        .add("moderate-review", { reviewId: review.id })
+        .catch((err) =>
+          console.error(
+            "[Review] Failed to queue moderation for update:",
+            err.message,
+          ),
+        );
     }
 
     return db.Review.findByPk(review.id, {
       include: [{ model: db.Media, as: "media" }],
     });
   } catch (error) {
-    await transaction.rollback();
+    console.error("[updateUserReview Error]", error);
+    try {
+      if (!transaction.finished) await transaction.rollback();
+    } catch (e) {} // ignore rollback error if already finished
+
     if (error instanceof ApiError) throw error;
-    throw new ApiError(500, "Failed to update review.", error);
+    throw new ApiError(500, `Failed to update review: ${error.message}`);
   }
 };
 
@@ -452,7 +571,11 @@ export const getPendingReviews = async (page, limit) => {
       where: { status: "pending" },
       include: [
         { model: db.User, as: "user", attributes: ["id", "fullname"] },
-        { model: db.Product, attributes: ["id", "name"] },
+        {
+          model: db.Product,
+          as: "product",
+          attributes: ["id", "name", "model"],
+        },
       ],
       order: [["createdAt", "ASC"]],
     },
@@ -474,7 +597,7 @@ export const moderateReview = async (reviewId, decision) => {
   const review = await db.Review.findOne({
     where: { id: reviewId, status: "pending" },
     include: [
-      { model: db.Product, attributes: ["name"] },
+      { model: db.Product, as: "product", attributes: ["name", "model"] },
       { model: db.User, as: "user", attributes: ["id"] },
       {
         model: db.OrderItem,
@@ -495,28 +618,76 @@ export const moderateReview = async (reviewId, decision) => {
   }
 
   // Notify the user who wrote the review about the admin's decision.
-  const message = `Your review for '${review.Product.name}' has been ${decision}.`;
-  const linkUrl = `/products/${review.productId}?review=${review.id}`;
-  createNotification(review.User.id, `review_${decision}`, message, linkUrl);
+  if (review.product?.name && review.user?.id) {
+    const message = `Your review for '${review.product.name} ${review.product.model}' has been ${decision}.`;
+    const linkUrl = `/products/${review.productId}?review=${review.id}`;
+    const { createNotification } = await import("./notification.service.js");
+    createNotification(review.user.id, `review_${decision}`, message, linkUrl);
+  }
 
   return review;
 };
 
-// Seller dashboard reviews service (read only)
+// ======== SELLER SERVICES FOR REVIEWS ========
+
 /**
- * Fetches all (approved) reviews written about a seller's products.
+ * Fetches all reviews for a seller's products with optional filters.
+ * Includes seller response status and supports filtering.
  */
-export const getMyProductReviews = async (userId, page, limit) => {
+export const getSellerReviews = async (userId, page, limit, filters = {}) => {
   const profile = await getSellerProfile(userId);
+
+  const reviewWhere = {};
+  if (filters.status) reviewWhere.status = filters.status;
+  if (filters.hasResponse === "true") {
+    reviewWhere.sellerResponse = { [Op.ne]: null };
+  } else if (filters.hasResponse === "false") {
+    reviewWhere.sellerResponse = null;
+  }
+  if (filters.rating) {
+    reviewWhere.rating = filters.rating;
+  }
+  if (filters.search) {
+    reviewWhere.comment = { [Op.like]: `%${filters.search}%` };
+  }
+
+  let order = [["createdAt", "DESC"]];
+  if (filters.sortBy === "oldest") {
+    order = [["createdAt", "ASC"]];
+  } else if (filters.sortBy === "highest") {
+    order = [
+      ["rating", "DESC"],
+      ["createdAt", "DESC"],
+    ];
+  } else if (filters.sortBy === "lowest") {
+    order = [
+      ["rating", "ASC"],
+      ["createdAt", "DESC"],
+    ];
+  }
+
   return paginate(
     db.Review,
     {
-      where: { status: "approved" },
+      where: reviewWhere,
+      distinct: true,
       include: [
+        {
+          model: db.ReviewReport,
+          as: "reports",
+          where: { reporterId: userId },
+          required: false,
+          attributes: ["id"],
+        },
+        {
+          model: db.User,
+          as: "user",
+          attributes: ["id", "fullname"],
+        },
         {
           model: db.Product,
           as: "product",
-          attributes: ["id", "name"],
+          attributes: ["id", "name", "slug"],
           required: true,
           include: [
             {
@@ -528,10 +699,93 @@ export const getMyProductReviews = async (userId, page, limit) => {
             },
           ],
         },
+        { model: db.Media, as: "media" },
       ],
-      order: [["createdAt", "DESC"]],
+      order: order,
     },
     page,
     limit,
   );
+};
+
+/**
+ * Allows a seller to add or update their public response to a review.
+ * Validates that the seller actually owns the product being reviewed.
+ */
+export const addSellerResponse = async (
+  reviewId,
+  sellerUserId,
+  responseText,
+) => {
+  const profile = await getSellerProfile(sellerUserId);
+
+  // Load review + offer relationship to verify ownership
+  const review = await db.Review.findOne({
+    where: { id: reviewId, status: "approved" },
+    include: [
+      {
+        model: db.OrderItem,
+        include: [
+          {
+            model: db.Offer,
+            attributes: ["sellerProfileId"],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!review) throw new ApiError(404, "Approved review not found.");
+
+  if (review.OrderItem?.Offer?.sellerProfileId !== profile.id) {
+    throw new ApiError(
+      403,
+      "Forbidden: You can only respond to reviews for your own products.",
+    );
+  }
+
+  review.sellerResponse = responseText.trim();
+  review.sellerResponseAt = new Date();
+  review.sellerProfileId = profile.id;
+  await review.save();
+
+  return review;
+};
+
+/**
+ * Allows a user or seller to report a review for abuse.
+ * Auto-escalates to 'flagged' if the review accumulates >= 5 open reports.
+ */
+export const reportReview = async (
+  reviewId,
+  reporterId,
+  reporterRole,
+  reason,
+  description,
+) => {
+  const review = await db.Review.findByPk(reviewId);
+  if (!review) throw new ApiError(404, "Review not found.");
+
+  // ReviewReport model has a beforeCreate hook preventing duplicate reports
+  const report = await db.ReviewReport.create({
+    reviewId,
+    reporterId,
+    reporterRole,
+    reason,
+    description: description?.trim() || null,
+  });
+
+  // Count open reports — auto-escalate if threshold reached
+  const openReports = await db.ReviewReport.count({
+    where: { reviewId, status: "open" },
+  });
+
+  if (openReports >= 5 && review.status === "approved") {
+    await review.update({ status: "flagged" });
+    console.log(
+      `[Review] Auto-escalated review ${reviewId} to flagged (${openReports} reports).`,
+    );
+  }
+
+  return report;
 };

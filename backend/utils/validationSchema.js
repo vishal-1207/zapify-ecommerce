@@ -305,3 +305,38 @@ export const updateOfferSchema = Joi.object({
   status: Joi.string().valid("draft", "active").optional(),
 });
 
+export const reviewReportSchema = Joi.object({
+  reason: Joi.string()
+    .valid(
+      "spam",
+      "fake_review",
+      "profanity",
+      "competitor_manipulation",
+      "hate_speech",
+      "misleading",
+      "irrelevant",
+      "abuse",
+      "other",
+    )
+    .required()
+    .messages({ "any.required": "Report reason is required." }),
+  description: Joi.string()
+    .trim()
+    .max(500)
+    .optional()
+    .allow("")
+    .custom(sanitize),
+});
+
+export const sellerResponseSchema = Joi.object({
+  responseText: Joi.string()
+    .trim()
+    .min(1)
+    .max(1000)
+    .required()
+    .custom(sanitize)
+    .messages({
+      "string.empty": "Response text is required.",
+      "string.max": "Response cannot exceed 1000 characters.",
+    }),
+});

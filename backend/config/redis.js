@@ -15,7 +15,9 @@ const redisClient = createClient({
     host: process.env.REDIS_HOST,
     port: redisPort,
     tls: !isLocalhost,
+    connectTimeout: 5000,
   },
+  disableOfflineQueue: true,
 });
 
 redisClient.on("error", (err) => console.log("Redis Client Error", err));

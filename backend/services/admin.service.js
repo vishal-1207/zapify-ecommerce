@@ -552,3 +552,179 @@ export const editUserWithOtpService = async (
     },
   });
 };
+
+// ======== ADMIN REVIEW MODERATION SERVICES ========
+
+/**
+ * Fetch the admin review moderation queue, filterable by status.
+ * Includes automated moderation flag breakdown per review.
+ */
+export const getReviewQueue = async (
+  statusFilter = "pending",
+  page = 1,
+  limit = 10,
+) => {
+  const where = {};
+  const validStatuses = [
+    "pending",
+    "flagged",
+    "approved",
+    "rejected",
+    "hidden",
+  ];
+  if (statusFilter && statusFilter !== "all") {
+    if (!validStatuses.includes(statusFilter)) {
+      throw new ApiError(
+        400,
+        `Invalid status filter. Must be one of: ${validStatuses.join(", ")}`,
+      );
+    }
+    where.status = statusFilter;
+  }
+
+  return paginate(
+    db.Review,
+    {
+      where,
+      include: [
+        { model: db.User, as: "user", attributes: ["id", "fullname", "email"] },
+        {
+          model: db.Product,
+          as: "product",
+          attributes: ["id", "name", "slug"],
+        },
+        { model: db.Media, as: "media" },
+      ],
+      order: [["createdAt", "ASC"]],
+    },
+    page,
+    limit,
+  );
+};
+
+/**
+ * Admin action to approve, reject, flag, or hide a review.
+ * Records who acted, when, and with what reason.
+ */
+export const adminModerateReview = async (
+  reviewId,
+  adminId,
+  decision,
+  reason,
+  note,
+) => {
+  const validDecisions = ["approved", "rejected", "flagged", "hidden"];
+  if (!validDecisions.includes(decision)) {
+    throw new ApiError(
+      400,
+      `Invalid decision. Must be one of: ${validDecisions.join(", ")}`,
+    );
+  }
+
+  const review = await db.Review.findByPk(reviewId, {
+    include: [
+      { model: db.Product, as: "product", attributes: ["name", "id"] },
+      { model: db.User, as: "user", attributes: ["id"] },
+      {
+        model: db.OrderItem,
+        include: [{ model: db.Offer, attributes: ["sellerProfileId"] }],
+      },
+    ],
+  });
+  if (!review) throw new ApiError(404, "Review not found.");
+
+  const previousStatus = review.status;
+
+  review.status = decision;
+  review.moderatedBy = adminId;
+  review.moderatedAt = new Date();
+  if (reason) review.moderationReason = reason;
+  if (note) review.moderationNote = note;
+
+  await review.save();
+
+  // Recalculate product + seller rating if approving or if moving away from approved
+  const { updateProductAverageRating, updateSellerAverageRating } =
+    await import("./reviews.service.js");
+
+  if (decision === "approved" || previousStatus === "approved") {
+    updateProductAverageRating(review.productId).catch(() => {});
+    if (review.OrderItem?.Offer?.sellerProfileId) {
+      updateSellerAverageRating(review.OrderItem.Offer.sellerProfileId).catch(
+        () => {},
+      );
+    }
+  }
+
+  // Notify the user (lowercase alias names from association)
+  if (review.user?.id && review.product?.name) {
+    const message = `Your review for '${review.product.name}' has been ${decision}.${
+      reason ? ` Reason: ${reason}` : ""
+    }`;
+    const linkUrl = `/products/${review.productId}`;
+    createNotification(review.user.id, `review_${decision}`, message, linkUrl);
+  }
+
+  return review;
+};
+
+/**
+ * Fetch all user/seller-submitted review reports for admin.
+ */
+export const getReviewReports = async (
+  statusFilter = "open",
+  page = 1,
+  limit = 10,
+) => {
+  const where = {};
+  if (statusFilter && statusFilter !== "all") {
+    where.status = statusFilter;
+  }
+
+  return paginate(
+    db.ReviewReport,
+    {
+      where,
+      include: [
+        {
+          model: db.Review,
+          attributes: ["id", "comment", "rating", "status"],
+          include: [
+            { model: db.User, as: "user", attributes: ["id", "fullname"] },
+          ],
+        },
+        {
+          model: db.User,
+          as: "reporter",
+          attributes: ["id", "fullname", "email"],
+        },
+      ],
+      order: [["createdAt", "ASC"]],
+    },
+    page,
+    limit,
+  );
+};
+
+/**
+ * Admin resolves or dismisses a review report.
+ */
+export const resolveReport = async (reportId, adminId, resolution) => {
+  const validResolutions = ["resolved", "dismissed"];
+  if (!validResolutions.includes(resolution)) {
+    throw new ApiError(400, "Resolution must be 'resolved' or 'dismissed'.");
+  }
+
+  const report = await db.ReviewReport.findByPk(reportId);
+  if (!report) throw new ApiError(404, "Report not found.");
+  if (report.status !== "open") {
+    throw new ApiError(409, "This report has already been closed.");
+  }
+
+  report.status = resolution;
+  report.resolvedBy = adminId;
+  report.resolvedAt = new Date();
+  await report.save();
+
+  return report;
+};

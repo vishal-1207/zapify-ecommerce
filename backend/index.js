@@ -25,6 +25,7 @@ import cartRoutes from "./routes/cart.routes.js";
 import wishlistRoutes from "./routes/wishlist.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { startCleanupService } from "./services/cleanup.service.js";
+import { startModerationWorker } from "./workers/moderation.worker.js";
 import otpRoutes from "./routes/otp.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import passport from "passport";
@@ -109,13 +110,21 @@ const startServer = async () => {
       console.log("✅ 'uploads' directory created.");
     }
 
-    await redisClient.ping();
-    console.log("Redis client connected...");
+    try {
+      await redisClient.ping();
+      console.log("Redis client connected...");
+    } catch (redisErr) {
+      console.warn(
+        "⚠️ Redis client failed to connect on startup. The application will continue running with degraded cache/features, while Redis attempts to reconnect in the background.",
+      );
+      console.warn("Redis Error:", redisErr.message);
+    }
 
     await db.sequelize.sync();
     console.log("Database synced...");
 
     startCleanupService();
+    startModerationWorker();
 
     app.listen(PORT, () => {
       console.log(`Listening on port ${PORT}`);
