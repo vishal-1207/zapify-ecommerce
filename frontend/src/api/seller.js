@@ -74,6 +74,5 @@ export const updateSellerOrderItemStatus = async (orderItemId, status) => {
 
 export const getSellerTransactions = async (params) => {
   const response = await api.get("/seller/transactions", { params });
-  console.log(response.data.data);
   return response.data.data;
 };

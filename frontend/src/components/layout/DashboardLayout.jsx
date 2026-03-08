@@ -30,10 +30,10 @@ const DashboardLayout = ({
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Reusable Header */}
         <DashboardHeader
-            links={links}
-            user={user}
-            theme={theme}
-            actions={headerActions}
+          links={links}
+          user={user}
+          theme={theme}
+          actions={headerActions}
         />
 
         {/* Page Content */}

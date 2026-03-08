@@ -8,6 +8,7 @@ import {
   CreditCard,
   Zap,
   Store,
+  Star,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -30,6 +31,7 @@ const SellerLayout = () => {
     { name: "Orders", path: "/seller/orders", icon: ShoppingCart },
     { name: "Offers/Deals", path: "/seller/offers", icon: Megaphone },
     { name: "Payments", path: "/seller/payments", icon: CreditCard },
+    { name: "Reviews", path: "/seller/reviews", icon: Star },
   ];
 
   const footerActions = (

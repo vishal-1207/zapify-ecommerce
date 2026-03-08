@@ -28,11 +28,21 @@ const ReviewModal = ({
   }, [isOpen, startingIndex, itemsToReview.length]);
 
   const resetForm = () => {
-    setRating(0);
+    const current =
+      itemsToReview[
+        Math.min(startingIndex, Math.max(0, itemsToReview.length - 1))
+      ];
+    const existing = current?.existingReview;
+
+    setRating(existing?.rating || 0);
     setHoverRating(0);
-    setComment("");
+    setComment(existing?.comment || "");
     setFiles([]);
-    setPreviews([]);
+
+    // Show existing media as previews if editing
+    const existingMedia = existing?.media?.map((m) => m.url) || [];
+    setPreviews(existingMedia);
+
     setShowSuccess(false);
   };
 
@@ -69,8 +79,31 @@ const ReviewModal = ({
     if (comment.trim()) {
       formData.append("comment", comment.trim());
     }
+
+    // Pass existing media to keep, filtering out ones removed by the user
+    // Since we initialized previews with existing media URLs, any URL starting with "http" is existing
+    const existingMediaToKeepIds =
+      currentItem?.existingReview?.media
+        ?.filter((m) => previews.includes(m.url))
+        ?.map((m) => m.id) || [];
+
+    // The API expects 'mediaToDelete' to flag removed items, but in this frontend design
+    // it's easier to find the difference between what was there and what remains.
+    const originalMediaIds =
+      currentItem?.existingReview?.media?.map((m) => m.id) || [];
+    const mediaToDelete = originalMediaIds.filter(
+      (id) => !existingMediaToKeepIds.includes(id),
+    );
+
+    if (mediaToDelete.length > 0) {
+      formData.append("mediaToDelete", JSON.stringify(mediaToDelete));
+    }
+
+    // Filter `files` only to true File objects (not URLs)
     files.forEach((file) => {
-      formData.append("gallery", file);
+      if (file instanceof File) {
+        formData.append("gallery", file);
+      }
     });
 
     try {

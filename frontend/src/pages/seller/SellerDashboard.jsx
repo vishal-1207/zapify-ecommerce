@@ -100,26 +100,6 @@ const SellerDashboard = () => {
 
       // Process Category Data for Pie Chart
       if (categoryRes && Array.isArray(categoryRes)) {
-        // Backend returns { labels: [], datasets: [] } structure for category performance?
-        // Wait, backend service `getSellerCategoryPerformance` returns: { labels: [...], datasets: [...] }
-        // So categoryRes IS the chart data structure already!
-        // Let's check api/seller.js: returns `response.data.categoryData`.
-        // Backend service returns: { labels, datasets }.
-        // So we can use it directly or map it if it was raw.
-
-        // Actually, looking at backend service `getSellerCategoryPerformance` (lines 453), it returns the chart data object directly.
-        // But `categoryRes` here is `response.data.categoryData`.
-        // The code below tries to map it: `labels: categoryRes.map(...)`.
-        // This interprets `categoryRes` as an ARRAY.
-        // IF backend returns object, this map will FAIL.
-
-        // DEBUG: Backend service line 453 returns an OBJECT `{ labels: [...], datasets: [...] }`.
-        // Frontend `getSellerCategoryPerformance` returns `response.data.categoryData`.
-        // Frontend `SellerDashboard` (original line 76) `if (categoryRes && Array.isArray(categoryRes))`.
-        // This means the existing frontend Expects an ARRAY, but backend sends an OBJECT.
-        // This is likely ANOTHER bug causing issues (though maybe not 500).
-
-        // Fix: Use the object directly if it matches chart structure.
         if (categoryRes && categoryRes.labels) {
           setCategoryData(categoryRes);
         } else if (Array.isArray(categoryRes)) {

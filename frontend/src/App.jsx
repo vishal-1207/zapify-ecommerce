@@ -41,6 +41,7 @@ import OrderDetail from "./pages/user/OrderDetail";
 import Wishlist from "./pages/user/Wishlist";
 import Transactions from "./pages/user/Transactions";
 import Notifications from "./pages/user/Notifications";
+import MyReviews from "./pages/user/MyReviews";
 import { NotificationProvider } from "./context/NotificationContext";
 
 // Admin Pages
@@ -60,6 +61,7 @@ import SellerOrders from "./pages/seller/SellerOrders";
 import SellerPayments from "./pages/seller/SellerPayments";
 import Offers from "./pages/seller/Offers";
 import AddProduct from "./pages/seller/AddProduct";
+import SellerReviews from "./pages/seller/SellerReviews";
 import BrandStore from "./pages/user/BrandStore";
 
 const Placeholder = ({ title }) => (
@@ -248,6 +250,7 @@ function App() {
                   }
                 >
                   <Route index element={<Profile />} />
+                  <Route path="reviews" element={<MyReviews />} />
                   <Route path="orders" element={<Orders />} />
                   <Route path="orders/:orderId" element={<OrderDetail />} />
                   <Route path="addresses" element={<Address />} />
@@ -273,6 +276,7 @@ function App() {
                   <Route path="orders" element={<SellerOrders />} />
                   <Route path="offers" element={<Offers />} />
                   <Route path="payments" element={<SellerPayments />} />
+                  <Route path="reviews" element={<SellerReviews />} />
                 </Route>
 
                 {/* Admin Routes */}

@@ -295,9 +295,7 @@ export const fetchPendingReviews = createAsyncThunk(
   "admin/fetchPendingReviews",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/reviews/admin/pending-reviews");
-      // Backend spreads paginate() result: { data: [], total, page, ... }
-      // When total === 0, the controller returns { message } with no data key
+      const res = await api.get("/review/admin/queue?status=pending&limit=100");
       return Array.isArray(res.data.data) ? res.data.data : [];
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch reviews");
@@ -307,10 +305,14 @@ export const fetchPendingReviews = createAsyncThunk(
 
 export const moderateReviewAction = createAsyncThunk(
   "admin/moderateReview",
-  async ({ reviewId, status }, { rejectWithValue }) => {
+  async ({ reviewId, decision, reason, note }, { rejectWithValue }) => {
     try {
-      await api.post(`/reviews/admin/review/${reviewId}/moderate`, { status });
-      return { reviewId, status };
+      await api.post(`/review/admin/review/${reviewId}/moderate`, {
+        decision,
+        reason,
+        note,
+      });
+      return { reviewId, decision };
     } catch (error) {
       return rejectWithValue(error.message || "Failed to moderate review");
     }

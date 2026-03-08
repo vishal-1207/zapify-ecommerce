@@ -6,6 +6,7 @@ import {
   MapPin,
   Package,
   Heart,
+  Star,
   CreditCard,
   Bell,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const AccountLayout = () => {
 
   const menuItems = [
     { name: "My Profile", path: "/account", icon: User },
+    { name: "My Reviews", path: "/account/reviews", icon: Star },
     { name: "Orders", path: "/account/orders", icon: Package },
     { name: "Wishlist", path: "/account/wishlist", icon: Heart },
     { name: "Transactions", path: "/account/transactions", icon: CreditCard },
