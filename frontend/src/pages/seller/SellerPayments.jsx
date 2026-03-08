@@ -37,8 +37,6 @@ const SellerPayments = () => {
     );
   }
 
-  console.log(transactions);
-
   const filteredTransactions = transactions.filter(
     (txn) =>
       txn.Offer?.product?.name?.toLowerCase().includes(search.toLowerCase()) ||

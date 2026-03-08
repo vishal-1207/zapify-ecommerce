@@ -124,7 +124,7 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Email or Username
               </label>
-              <div className="mt-1">
+              <div className="mt-1 rounded-md shadow-sm">
                 <input
                   name="userId"
                   type="text"

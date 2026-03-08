@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Zap, AlertCircle, User, Mail, Lock, AtSign, Eye, EyeOff } from "lucide-react";
+import {
+  Zap,
+  AlertCircle,
+  User,
+  Mail,
+  Lock,
+  AtSign,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { registerUser, getCsrfToken } from "../../api/auth";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
