@@ -64,6 +64,11 @@ router.get(
   authorizeRoles("seller"),
   sellerController.getSellerCategoryPerformance,
 );
+router.get(
+  "/dashboard/recent-orders",
+  authorizeRoles("seller"),
+  sellerController.getSellerRecentOrders,
+);
 
 router.get("/transactions", authorizeRoles("seller"), getSellerTransactions);
 

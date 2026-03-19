@@ -157,3 +157,31 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     .status(200)
     .json({ message: `Order status updated to ${status}.`, order });
 });
+
+/**
+ * Get top-selling products by revenue
+ */
+export const getTopProducts = asyncHandler(async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const data = await adminService.getTopProducts(limit);
+  return res.status(200).json({ message: "Top products fetched.", data });
+});
+
+/**
+ * Get top-performing sellers by revenue
+ */
+export const getTopSellers = asyncHandler(async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const data = await adminService.getTopSellers(limit);
+  return res.status(200).json({ message: "Top sellers fetched.", data });
+});
+
+/**
+ * Get the most recent orders (for the activity feed)
+ */
+export const getRecentOrders = asyncHandler(async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 8;
+  const data = await adminService.getRecentOrders(limit);
+  return res.status(200).json({ message: "Recent orders fetched.", data });
+});
+

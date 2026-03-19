@@ -38,4 +38,8 @@ router
   .route("/orders/:orderId/status")
   .patch(adminController.updateOrderStatus);
 
+router.route("/stats/top-products").get(adminController.getTopProducts);
+router.route("/stats/top-sellers").get(adminController.getTopSellers);
+router.route("/stats/recent-orders").get(adminController.getRecentOrders);
+
 export default router;

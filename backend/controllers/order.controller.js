@@ -5,6 +5,7 @@ import * as orderService from "../services/order.service.js";
 
 /**
  * Controller to create a new order from the user's cart.
+ * Executes synchronously, returning the new order upon successful DB transaction.
  */
 export const placeOrder = asyncHandler(async (req, res) => {
   const { addressId } = req.body;
@@ -14,13 +15,13 @@ export const placeOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Shipping address Id is required.");
   }
 
-  const newOrder = await orderService.createOrderFromCart(userId, addressId);
+  const result = await orderService.createOrderFromCart(userId, addressId);
   return res
     .status(201)
     .json(
       new ApiResponse(
         201,
-        newOrder,
+        result,
         "Order created successfully. Proceed to payment.",
       ),
     );

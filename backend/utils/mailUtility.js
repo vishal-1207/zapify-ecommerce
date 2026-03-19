@@ -24,7 +24,7 @@ const createDevelopmentTransporter = async () => {
   const testAccount = await nodemailer.createTestAccount();
   console.log(
     "Ethereal test account created. Preview emails at:",
-    nodemailer.getTestMessageUrl(testAccount)
+    nodemailer.getTestMessageUrl(testAccount),
   );
 
   return nodemailer.createTransport({
@@ -78,7 +78,7 @@ const sendMail = async (to, subject, html) => {
     if (process.env.NODE_ENV !== "production" && !process.env.EMAIL_HOST) {
       console.log(
         "Email sent (Ethereal), preview URL: %s",
-        nodemailer.getTestMessageUrl(info)
+        nodemailer.getTestMessageUrl(info),
       );
     } else {
       console.log("Email sent successfully: ", info.messageId);
@@ -91,3 +91,19 @@ const sendMail = async (to, subject, html) => {
 };
 
 export default sendMail;
+
+/**
+ * Executes an email job asynchronously in the background.
+ * Replaces the previous BullMQ implementation.
+ *
+ * @param {string} to - Recipient email address.
+ * @param {string} subject - Email subject.
+ * @param {string} html - HTML body.
+ */
+export const enqueueMail = async (to, subject, html) => {
+  // Fire and forget: run the send operation in the background
+  // and catch any errors so they don't crash the server.
+  sendMail(to, subject, html).catch((err) => {
+    console.error("Async background mail failed:", err);
+  });
+};

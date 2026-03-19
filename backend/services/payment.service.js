@@ -4,6 +4,8 @@ import ApiError from "../utils/ApiError.js";
 import { getSellerProfile } from "./seller.service.js";
 import paginate from "../utils/paginate.js";
 import { createNotification } from "./notification.service.js";
+import { enqueueMail } from "../utils/mailUtility.js";
+import { enqueueSms } from "../utils/smsUtility.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -34,7 +36,7 @@ const sendOrderConfirmationEmail = async (order) => {
     <p><strong>Total Amount:</strong> ₹${order.totalAmount}</p>
   `;
 
-  await sendEmail(order.User.email, subject, html);
+  await enqueueMail(order.User.email, subject, html);
 };
 
 /**
@@ -50,7 +52,7 @@ const sendOrderConfirmationSms = async (order) => {
   const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${
     order.totalAmount
   } has been placed successfully.`;
-  await sendSms(order.User.phoneNumber, messageBody);
+  await enqueueSms(order.User.phoneNumber, messageBody);
 };
 
 /**
@@ -102,7 +104,7 @@ const notifySellersOfNewOrder = async (order) => {
       <p>Please update the shipment status in your seller dashboard once the items are dispatched.</p>
     `;
 
-    await sendEmail(sellerUser.email, subject, html);
+    await enqueueMail(sellerUser.email, subject, html);
 
     // --- Send In-App Notification ---
     const message = `New Sale! You have ${
@@ -171,7 +173,6 @@ export const handleStripeWebhook = async (event) => {
     const paymentIntent = event.data.object;
     const orderId = paymentIntent.metadata.orderId;
 
-    // BUG FIX: was missing `await` — payment was a Promise object, not the record
     const payment = await db.Payment.findOne({
       where: { gatewayTransactionId: paymentIntent.id },
     });
@@ -257,7 +258,6 @@ export const handleStripeWebhook = async (event) => {
 
   if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object;
-    // BUG FIX: was `db.findOne` — wrong model reference
     const payment = await db.Payment.findOne({
       where: { gatewayTransactionId: paymentIntent.id },
     });

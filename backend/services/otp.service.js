@@ -1,6 +1,6 @@
 import db from "../models/index.js";
-import sendSms from "../utils/smsUtility.js";
-import sendMail from "../utils/mailUtility.js";
+import { enqueueSms } from "../utils/smsUtility.js";
+import { enqueueMail } from "../utils/mailUtility.js";
 import ApiError from "../utils/ApiError.js";
 
 /**
@@ -42,7 +42,7 @@ export const sendVerificationCode = async (userId, method) => {
       <p>Your verification code for <strong>Zapify</strong> is: <strong>${code}</strong>. It will expire in 10 minutes.</p>
       <p>Or click <a href="${frontendUrl}/verify-email">here</a> to verify.</p>
     `;
-    await sendMail(user.email, subject, html);
+    await enqueueMail(user.email, subject, html);
     return { message: "Verification code sent successfully to your email." };
   }
 
@@ -50,7 +50,7 @@ export const sendVerificationCode = async (userId, method) => {
     if (!user.phoneNumber)
       throw new ApiError(400, "User does not have a phone number.");
     const messageBody = `Your verification code for <Your Store Name> is: ${code}. It will expire in 10 minutes.`;
-    // await sendSms(user.phoneNumber, messageBody);
+    // await enqueueSms(user.phoneNumber, messageBody);
     return { message: "Verification code sent successfully to your phone." };
   }
 };

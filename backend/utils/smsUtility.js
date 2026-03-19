@@ -1,5 +1,4 @@
 import ApiError from "./ApiError.js";
-
 const BREVO_API_URL = "https://api.brevo.com/v3/transactionalSMS/send";
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const SENDER_NAME = process.env.SMS_SENDER_NAME;
@@ -14,13 +13,13 @@ const sendSms = async (to, content) => {
     if (!to || !content) {
       throw new ApiError(
         400,
-        "Recipient phone number and message content are required."
+        "Recipient phone number and message content are required.",
       );
     }
 
     if (!BREVO_API_KEY || SENDER_NAME) {
       console.error(
-        "Brevo API Key or sender name is not configured in .env file."
+        "Brevo API Key or sender name is not configured in .env file.",
       );
       return;
     }
@@ -44,7 +43,7 @@ const sendSms = async (to, content) => {
       const data = await response.json();
       console.error(
         "Failed to send SMS via Brevo: ",
-        data.message || "Unknown error."
+        data.message || "Unknown error.",
       );
       return;
     }
@@ -54,3 +53,18 @@ const sendSms = async (to, content) => {
 };
 
 export default sendSms;
+
+/**
+ * Executes an SMS job asynchronously in the background.
+ * Replaces the previous BullMQ implementation.
+ *
+ * @param {string} to - Recipient phone number in E.164 format.
+ * @param {string} content - SMS message content.
+ */
+export const enqueueSms = async (to, content) => {
+  // Fire and forget: run the send operation in the background
+  // and catch any errors so they don't crash the server.
+  sendSms(to, content).catch((err) => {
+    console.error("Async background SMS failed:", err);
+  });
+};

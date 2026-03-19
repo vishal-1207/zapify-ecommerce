@@ -2,7 +2,7 @@
  * Moderation Service
  *
  * Provides an automated content moderation pipeline for reviews.
- * All ML models (nsfwjs, toxicity) are loaded ONCE at first use (lazy singleton)
+ * The NSFW ML model is loaded ONCE at first use (lazy singleton)
  * to avoid re-loading on every review and to prevent blocking server startup.
  *
  * Pipeline steps:
@@ -10,7 +10,7 @@
  *   2. Spam check       — heuristics (length, caps, URLs, repetition)
  *   3. Velocity check   — Redis counters per userId
  *   4. Duplicate check  — DB query (same comment, same user, multiple products)
- *   5. Toxicity check   — @tensorflow-models/toxicity (offline TF.js model)
+ *   5. Toxicity check   — Sentiment analysis (offline AFINN lexicon)
  *   6. NSFW image check — nsfwjs + sharp (offline TF.js model)
  *   7. Scoring + decision → update review status
  */
@@ -20,12 +20,14 @@ import db from "../models/index.js";
 import fs from "fs/promises";
 import { Op } from "sequelize";
 import { createRequire } from "module";
+import Sentiment from "sentiment";
+
 const require = createRequire(import.meta.url);
+const sentimentAnalyzer = new Sentiment();
 
 // ─── Model Singletons ──────────────────────────────────────────────────────────
 // Models are loaded once on first pipeline run and cached in memory.
 let _nsfwModel = null;
-let _toxicityModel = null;
 
 async function getNsfwModel() {
   if (!_nsfwModel) {
@@ -37,16 +39,6 @@ async function getNsfwModel() {
     console.log("[Moderation] NSFW model loaded.");
   }
   return _nsfwModel;
-}
-
-async function getToxicityModel() {
-  if (!_toxicityModel) {
-    const toxicity = await import("@tensorflow-models/toxicity");
-    // 0.75 threshold — only flag when 75%+ confident
-    _toxicityModel = await toxicity.load(0.75);
-    console.log("[Moderation] Toxicity model loaded.");
-  }
-  return _toxicityModel;
 }
 
 // ─── Step 1: Profanity ─────────────────────────────────────────────────────────
@@ -159,9 +151,8 @@ async function checkDuplicateComment(comment, userId) {
 
 // ─── Step 5: Toxicity Check ───────────────────────────────────────────────────
 /**
- * Runs the TF.js toxicity model on the comment text.
- * Categories: identity_attack, insult, obscene, severe_toxicity,
- *             sexually_explicit, threat, toxicity
+ * Runs a dictionary-based AFINN Sentiment Analysis on the comment text.
+ * Extracts highly negative sentiment elements as "toxic" categories.
  * @returns {{ isToxic: boolean, score: number, categories: string[] }}
  */
 async function checkTextToxicity(comment) {
@@ -169,18 +160,23 @@ async function checkTextToxicity(comment) {
     return { isToxic: false, score: 0, categories: [] };
   }
   try {
-    const model = await getToxicityModel();
-    const predictions = await model.classify([comment]);
-    const flagged = predictions.filter((p) => p.results[0].match === true);
-    const score =
-      predictions.length > 0 ? flagged.length / predictions.length : 0;
+    const result = sentimentAnalyzer.analyze(comment);
+
+    // A significantly negative sentiment score (<= -3) flags as toxic
+    const isToxic = result.score <= -3;
+
+    // Normalize absolute score to a 0-1 scale ceiling at 1.0 (e.g. -5 -> 0.5)
+    const normalizedScore = isToxic
+      ? Math.min(Math.abs(result.score) / 10, 1.0)
+      : 0;
+
     return {
-      isToxic: flagged.length > 0,
-      score: parseFloat(score.toFixed(2)),
-      categories: flagged.map((p) => p.label),
+      isToxic,
+      score: parseFloat(normalizedScore.toFixed(2)),
+      categories: isToxic ? result.negative : [],
     };
   } catch (err) {
-    console.error("[Moderation] Toxicity check failed:", err.message);
+    console.error("[Moderation] Sentiment toxicity check failed:", err.message);
     return { isToxic: false, score: 0, categories: [] };
   }
 }

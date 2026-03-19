@@ -126,6 +126,17 @@ export const getSellerCategoryPerformance = asyncHandler(async (req, res) => {
 // Offer Management Controllers
 
 /**
+ * Gets the seller's most recent orders requiring attention.
+ */
+export const getSellerRecentOrders = asyncHandler(async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 8;
+  const recentOrders = await sellerService.getSellerRecentOrders(req.user.id, limit);
+  return res.status(200).json({ message: "Recent orders fetched.", recentOrders });
+});
+
+
+
+/**
  * Get all offers for a seller
  */
 /**

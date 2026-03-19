@@ -6,30 +6,73 @@ import ApiError from "../utils/ApiError.js";
 import { createNotification } from "./notification.service.js";
 
 /**
- * Admin dashboard service to counts of pending reviews and products, total sellers and revenues for stats card
- * @returns
+ * Admin dashboard service to get KPI stats for all stat cards.
+ * Includes: revenue, sellers, users, orders, pending items, today's revenue,
+ * and a 30-day revenue growth % for trend badges.
  */
 export const getAdminDashboardStats = async () => {
-  const pendingProducts = await db.Product.count({
-    where: { status: "pending" },
-  });
-  const pendingReviews = await db.Review.count({
-    where: { status: "pending" },
-  });
-  const totalSellers = await db.User.count({
-    where: db.sequelize.literal(`JSON_CONTAINS(roles, '"seller"')`),
-  });
-  const totalRevenue = await db.Order.sum("totalAmount", {
-    where: { status: "delivered" },
-  });
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 30);
+  const sixtyDaysAgo = new Date(now);
+  sixtyDaysAgo.setDate(now.getDate() - 60);
+
+  const [
+    pendingProducts,
+    pendingReviews,
+    totalSellers,
+    totalUsers,
+    totalOrders,
+    totalRevenue,
+    todayRevenue,
+    revenueThisPeriod,
+    revenueLastPeriod,
+    ordersThisPeriod,
+    ordersLastPeriod,
+  ] = await Promise.all([
+    db.Product.count({ where: { status: "pending" } }),
+    db.Review.count({ where: { status: "pending" } }),
+    db.User.count({ where: db.sequelize.literal(`JSON_CONTAINS(roles, '"seller"')`) }),
+    db.User.count({ where: db.sequelize.literal(`JSON_CONTAINS(roles, '"user"')`) }),
+    db.Order.count(),
+    db.Order.sum("totalAmount", { where: { status: "delivered" } }),
+    db.Order.sum("totalAmount", {
+      where: { status: "delivered", createdAt: { [Op.gte]: startOfToday } },
+    }),
+    db.Order.sum("totalAmount", {
+      where: { status: "delivered", createdAt: { [Op.gte]: thirtyDaysAgo } },
+    }),
+    db.Order.sum("totalAmount", {
+      where: {
+        status: "delivered",
+        createdAt: { [Op.gte]: sixtyDaysAgo, [Op.lt]: thirtyDaysAgo },
+      },
+    }),
+    db.Order.count({ where: { createdAt: { [Op.gte]: thirtyDaysAgo } } }),
+    db.Order.count({
+      where: { createdAt: { [Op.gte]: sixtyDaysAgo, [Op.lt]: thirtyDaysAgo } },
+    }),
+  ]);
+
+  const calcGrowth = (curr, prev) => {
+    if (!prev || prev === 0) return curr > 0 ? 100 : 0;
+    return parseFloat((((curr - prev) / prev) * 100).toFixed(1));
+  };
 
   return {
     pendingProducts: pendingProducts || 0,
     pendingReviews: pendingReviews || 0,
     totalSellers: totalSellers || 0,
+    totalUsers: totalUsers || 0,
+    totalOrders: totalOrders || 0,
     totalRevenue: totalRevenue || 0.0,
+    todayRevenue: todayRevenue || 0.0,
+    revenueGrowth: calcGrowth(revenueThisPeriod || 0, revenueLastPeriod || 0),
+    ordersGrowth: calcGrowth(ordersThisPeriod || 0, ordersLastPeriod || 0),
   };
 };
+
 
 /**
  * Get platform-wide sales data grouped by day for a line chart.
@@ -88,7 +131,6 @@ export const getPlatformSalesByCategory = async () => {
     include: [
       {
         model: db.Offer,
-        as: "offer",
         attributes: [],
         include: [
           {
@@ -107,7 +149,7 @@ export const getPlatformSalesByCategory = async () => {
       },
     ],
     where: { status: "delivered" },
-    group: ["offer.product.category.id", "offer.product.category.name"],
+    group: ["Offer.product.category.id", "Offer.product.category.name"],
     order: [
       [
         db.sequelize.fn("SUM", db.sequelize.col("priceAtTimeOfPurchase")),
@@ -118,7 +160,7 @@ export const getPlatformSalesByCategory = async () => {
     nest: true,
   });
 
-  const labels = results.map((row) => row.Offer.Product.Category.name);
+  const labels = results.map((row) => row.Offer.product.category.name);
   const data = results.map((row) => row.totalSales);
 
   return {
@@ -728,3 +770,172 @@ export const resolveReport = async (reportId, adminId, resolution) => {
 
   return report;
 };
+
+/**
+ * Returns the top N best-selling products by total revenue (delivered orders).
+ * @param {number} limit - Number of top products to return (default 5).
+ */
+export const getTopProducts = async (limit = 5) => {
+  // Step 1: Aggregate revenue and quantity grouped by offerId
+  const aggregates = await db.OrderItem.findAll({
+    attributes: [
+      "offerId",
+      [
+        db.sequelize.fn(
+          "SUM",
+          db.sequelize.literal("priceAtTimeOfPurchase * quantity"),
+        ),
+        "revenue",
+      ],
+      [db.sequelize.fn("SUM", db.sequelize.col("quantity")), "unitsSold"],
+    ],
+    where: { status: "delivered" },
+    group: ["offerId"],
+    order: [[db.sequelize.literal("revenue"), "DESC"]],
+    limit,
+    raw: true,
+  });
+
+  if (!aggregates.length) return [];
+
+  // Step 2: Fetch the product details for these offers
+  const offerIds = aggregates.map((a) => a.offerId);
+  const offers = await db.Offer.findAll({
+    where: { id: offerIds },
+    include: [
+      {
+        model: db.Product,
+        as: "product",
+        attributes: ["id", "name", "slug"],
+        include: [{ model: db.Media, as: "media", attributes: ["url"], limit: 1 }],
+      },
+    ],
+  });
+
+  const offerMap = offers.reduce((acc, o) => {
+    acc[o.id] = o;
+    return acc;
+  }, {});
+
+  // Step 3: Map and combine
+  return aggregates.map((agg) => {
+    const offer = offerMap[agg.offerId];
+    if (!offer) return null;
+    return {
+      id: offer.product.id,
+      name: offer.product.name,
+      slug: offer.product.slug,
+      imageUrl: offer.product.media?.[0]?.url || null,
+      revenue: parseFloat(agg.revenue) || 0,
+      unitsSold: parseInt(agg.unitsSold) || 0,
+    };
+  }).filter(Boolean);
+};
+
+/**
+ * Returns the top N best-performing sellers by total revenue.
+ * @param {number} limit - Number of top sellers to return (default 5).
+ */
+export const getTopSellers = async (limit = 5) => {
+  // Step 1: Aggregate grouped by offerId
+  const aggregates = await db.OrderItem.findAll({
+    attributes: [
+      "offerId",
+      [
+        db.sequelize.fn(
+          "SUM",
+          db.sequelize.literal("priceAtTimeOfPurchase * quantity"),
+        ),
+        "revenue",
+      ],
+      [db.sequelize.fn("SUM", db.sequelize.col("quantity")), "unitsSold"],
+    ],
+    where: { status: "delivered" },
+    group: ["offerId"],
+    order: [[db.sequelize.literal("revenue"), "DESC"]],
+    raw: true,
+  });
+
+  if (!aggregates.length) return [];
+
+  // Step 2: Fetch seller profiles
+  const offerIds = aggregates.map((a) => a.offerId);
+  const offers = await db.Offer.findAll({
+    where: { id: offerIds },
+    include: [
+      {
+        model: db.SellerProfile,
+        as: "sellerProfile",
+        attributes: ["id", "storeName", "averageRating"],
+      },
+    ],
+  });
+
+  const offerMap = offers.reduce((acc, o) => {
+    acc[o.id] = o;
+    return acc;
+  }, {});
+
+  // Group by sellerId manually to aggregate multiple offers from same seller
+  const sellerData = {};
+  
+  aggregates.forEach((agg) => {
+    const offer = offerMap[agg.offerId];
+    if (!offer || !offer.sellerProfile) return;
+    
+    const sId = offer.sellerProfile.id;
+    if (!sellerData[sId]) {
+      sellerData[sId] = {
+        id: sId,
+        storeName: offer.sellerProfile.storeName,
+        averageRating: offer.sellerProfile.averageRating || 0,
+        revenue: 0,
+        unitsSold: 0,
+      };
+    }
+    sellerData[sId].revenue += parseFloat(agg.revenue) || 0;
+    sellerData[sId].unitsSold += parseInt(agg.unitsSold) || 0;
+  });
+
+  // Sort and limit
+  return Object.values(sellerData)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, limit);
+};
+
+/**
+ * Returns the most recent N orders with buyer name, amount, and status.
+ * @param {number} limit - Number of recent orders to return (default 8).
+ */
+export const getRecentOrders = async (limit = 8) => {
+  return db.Order.findAll({
+    attributes: ["id", "orderId", "totalAmount", "status", "createdAt"],
+    include: [
+      {
+        model: db.User,
+        as: "user",
+        attributes: ["id", "fullname", "email"],
+      },
+      {
+        model: db.OrderItem,
+        as: "orderItems",
+        include: [
+          {
+            model: db.Offer,
+            attributes: [],
+            include: [
+              {
+                model: db.Product,
+                as: "product",
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: [["createdAt", "DESC"]],
+    limit,
+  });
+};
+

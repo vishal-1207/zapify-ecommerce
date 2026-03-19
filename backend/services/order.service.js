@@ -2,6 +2,7 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import { getSellerProfile } from "./seller.service.js";
 import { createNotification } from "./notification.service.js";
+import { enqueueMail } from "../utils/mailUtility.js";
 import { getCart, clearCart } from "./cart.service.js";
 import { Sequelize, Op } from "sequelize";
 
@@ -397,7 +398,11 @@ export const updateOrderItemStatus = async (
         model: db.Offer,
         include: [{ model: db.Product, as: "product", attributes: ["name"] }],
       },
-      { model: db.Order, attributes: ["id", "userId"] },
+      { 
+        model: db.Order, 
+        attributes: ["id", "userId"],
+        include: [{ model: db.User, as: "user", attributes: ["email", "fullname"] }]
+      },
     ],
   });
 
@@ -441,6 +446,7 @@ export const updateOrderItemStatus = async (
 
     await transaction.commit();
 
+    const customer = item.Order.user;
     const customerId = item.Order.userId;
     const statusLabel =
       normalizedStatus.charAt(0).toUpperCase() +
@@ -448,6 +454,28 @@ export const updateOrderItemStatus = async (
     const message = `Your item '${item.Offer.product.name}' has been updated to: ${statusLabel}.`;
     const linkUrl = `/account/orders/${item.orderId}`;
     createNotification(customerId, "order_status_update", message, linkUrl);
+
+    if (normalizedStatus === "delivered" && customer?.email) {
+      const subject = `Your item has been Delivered!`;
+      const html = `
+        <h1>Hi ${customer.fullname || "Customer"},</h1>
+        <p>Good news! Your item <strong>${item.Offer.product.name}</strong> from Order #${item.orderId.slice(0, 8)} has been delivered.</p>
+        <p>We hope you enjoy your purchase!</p>
+      `;
+      enqueueMail(customer.email, subject, html).catch(err => 
+        console.error("Delivered email error:", err)
+      );
+    } else if (normalizedStatus === "cancelled" && customer?.email) {
+      const subject = `Order Item Cancelled`;
+      const html = `
+        <h1>Hi ${customer.fullname || "Customer"},</h1>
+        <p>Your order for <strong>${item.Offer.product.name}</strong> (Order #${item.orderId.slice(0, 8)}) has been cancelled.</p>
+        <p>If you have already been charged, a refund will be processed automatically.</p>
+      `;
+      enqueueMail(customer.email, subject, html).catch(err => 
+        console.error("Cancelled email error:", err)
+      );
+    }
 
     return item;
   } catch (error) {
@@ -538,7 +566,10 @@ const syncOrderStatus = async (orderId, transaction) => {
 export const cancelOrderService = async (orderId, userId, reason) => {
   const order = await db.Order.findOne({
     where: { id: orderId, userId },
-    include: [{ model: db.Payment, as: "payments" }],
+    include: [
+      { model: db.Payment, as: "payments" },
+      { model: db.User, as: "user", attributes: ["email", "fullname"] }
+    ],
   });
 
   if (!order) throw new ApiError(404, "Order not found.");
@@ -572,6 +603,18 @@ export const cancelOrderService = async (orderId, userId, reason) => {
         refundErr.message,
       );
     }
+  }
+
+  if (order.user?.email) {
+    const subject = `Order Cancelled`;
+    const html = `
+      <h1>Hi ${order.user.fullname || "Customer"},</h1>
+      <p>Your Order #${orderId.slice(0, 8)} has been successfully cancelled.</p>
+      <p>If you have already been charged, a refund will be processed automatically to your original payment method.</p>
+    `;
+    enqueueMail(order.user.email, subject, html).catch(err => 
+      console.error("Cancelled email error:", err)
+    );
   }
 
   return await db.Order.findByPk(orderId);
