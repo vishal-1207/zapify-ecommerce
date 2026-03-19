@@ -2,31 +2,36 @@ import api from "./axios";
 
 export const getSellerDashboardStats = async (days = 30) => {
   const response = await api.get(`/seller/dashboard/stats?days=${days}`);
-  return response.data.data?.stats || response.data.data;
+  return response.data?.stats || response.data;
 };
 
 export const getSellerSalesAnalytics = async (days = 30) => {
   const response = await api.get(
     `/seller/dashboard/sales-analytics?days=${days}`,
   );
-  return response.data.data?.salesData || response.data.data;
+  return response.data?.salesData || response.data;
 };
 
 export const getSellerTopProducts = async (days = 30) => {
   const response = await api.get(`/seller/dashboard/top-products?days=${days}`);
-  return response.data.data?.products || response.data.data;
+  return response.data?.products || response.data;
 };
 
 export const getSellerCategoryPerformance = async (days = 30) => {
   const response = await api.get(
     `/seller/dashboard/category-performance?days=${days}`,
   );
-  return response.data.data?.categoryData || response.data.data;
+  return response.data?.categoryData || response.data;
+};
+
+export const getSellerRecentOrders = async (limit = 8) => {
+  const response = await api.get(`/seller/dashboard/recent-orders?limit=${limit}`);
+  return response.data?.recentOrders || response.data;
 };
 
 export const getSellerProfile = async () => {
   const response = await api.get("/seller/profile");
-  return response.data.data?.profile || response.data.data;
+  return response.data?.profile || response.data;
 };
 
 export const getMyProductSuggestions = async (params = {}) => {
