@@ -13,7 +13,7 @@ import { Sequelize, Op } from "sequelize";
  * @param {string} addressId - The ID of the user's chosen shipping address.
  * @returns {Promise<Order>} The newly created order.
  */
-export const createOrderFromCart = async (userId, addressId) => {
+export const createOrderFromCart = async (userId, addressId, affiliateCode = null) => {
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -64,6 +64,30 @@ export const createOrderFromCart = async (userId, addressId) => {
       .toString()
       .padStart(3, "0")}`;
 
+    // Process Affiliate Commission
+    let affiliateId = null;
+    let affiliateCommission = 0;
+
+    if (affiliateCode) {
+      const affiliate = await db.AffiliateProfile.findOne({
+        where: { referralCode: affiliateCode },
+        transaction,
+      });
+
+      // Cannot refer yourself, and affiliate must be active
+      if (
+        affiliate &&
+        affiliate.userId !== userId &&
+        affiliate.status === "active"
+      ) {
+        affiliateId = affiliate.id;
+        const rate = parseFloat(affiliate.commissionRate || 10);
+        affiliateCommission = parseFloat(
+          (subtotal * (rate / 100)).toFixed(2)
+        );
+      }
+    }
+
     // Create the main order record.
     const newOrder = await db.Order.create(
       {
@@ -74,6 +98,8 @@ export const createOrderFromCart = async (userId, addressId) => {
         discountAmount: mrpTotal - subtotal + discount,
         deliveryFee: 0,
         totalAmount,
+        affiliateId,
+        affiliateCommission,
         shippingAddress: address.toJSON(),
         status: "pending",
       },
@@ -113,6 +139,16 @@ export const createOrderFromCart = async (userId, addressId) => {
         ),
       ),
     );
+
+    // Update Affiliate Pending Earnings if applicable
+    if (affiliateId && affiliateCommission > 0) {
+      await db.AffiliateProfile.update(
+        {
+          pendingEarnings: Sequelize.literal(`pendingEarnings + ${affiliateCommission}`),
+        },
+        { where: { id: affiliateId }, transaction }
+      );
+    }
 
     await transaction.commit();
 

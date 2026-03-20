@@ -8,14 +8,14 @@ import * as orderService from "../services/order.service.js";
  * Executes synchronously, returning the new order upon successful DB transaction.
  */
 export const placeOrder = asyncHandler(async (req, res) => {
-  const { addressId } = req.body;
+  const { addressId, affiliateCode } = req.body;
   const userId = req.user.id;
 
   if (!addressId) {
     throw new ApiError(400, "Shipping address Id is required.");
   }
 
-  const result = await orderService.createOrderFromCart(userId, addressId);
+  const result = await orderService.createOrderFromCart(userId, addressId, affiliateCode);
   return res
     .status(201)
     .json(

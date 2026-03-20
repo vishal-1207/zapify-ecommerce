@@ -46,6 +46,15 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    affiliateId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    affiliateCommission: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
     shippingAddress: {
       type: DataTypes.JSON,
       allowNull: false,
@@ -74,6 +83,10 @@ export default (sequelize, DataTypes) => {
       as: "payments",
       foreignKey: "orderId",
       onDelete: "CASCADE",
+    });
+    Order.belongsTo(models.AffiliateProfile, {
+      as: "affiliate",
+      foreignKey: "affiliateId"
     });
   };
 
