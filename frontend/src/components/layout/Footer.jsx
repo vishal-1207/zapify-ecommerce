@@ -9,18 +9,23 @@ const Footer = () => {
           <h4 className="text-white font-bold mb-4">Get to Know Us</h4>
           <ul className="space-y-2">
             <li>
-              <Link to="#" className="hover:underline">
+              <Link to="/about" className="hover:underline">
                 About Zapify
               </Link>
             </li>
             <li>
-              <Link to="#" className="hover:underline">
-                Careers
+              <Link to="/faq" className="hover:underline">
+                FAQs
               </Link>
             </li>
             <li>
-              <Link to="#" className="hover:underline">
-                Press
+              <Link to="/privacy" className="hover:underline">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" className="hover:underline">
+                Terms of Service
               </Link>
             </li>
           </ul>
@@ -29,12 +34,12 @@ const Footer = () => {
           <h4 className="text-white font-bold mb-4">Make Money with Us</h4>
           <ul className="space-y-2">
             <li>
-              <Link to="/seller/dashboard" className="hover:underline">
+              <Link to="/sell" className="hover:underline">
                 Sell on Zapify
               </Link>
             </li>
             <li>
-              <Link to="#" className="hover:underline">
+              <Link to="/affiliate" className="hover:underline">
                 Affiliate Program
               </Link>
             </li>
@@ -54,7 +59,7 @@ const Footer = () => {
               </Link>
             </li>
             <li>
-              <Link to="#" className="hover:underline">
+              <Link to="/help" className="hover:underline">
                 Help Center
               </Link>
             </li>

@@ -9,6 +9,7 @@ import {
   Star,
   CreditCard,
   Bell,
+  Award,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -30,6 +31,7 @@ const AccountLayout = () => {
       icon: Bell,
       badge: unreadCount,
     },
+    { name: "Affiliate Dashboard", path: "/affiliate/dashboard", icon: Award },
     { name: "Addresses", path: "/account/addresses", icon: MapPin },
     { name: "Settings", path: "/account/settings", icon: Settings },
   ];

@@ -45,7 +45,7 @@ const BrandCarousel = ({ brands = [] }) => {
         {brands.map((brand) => (
           <Link
             key={brand.id}
-            to={`/shop?brand=${brand.slug}`}
+            to={`/store/${brand.slug || brand.id}`}
             className="flex flex-col items-center gap-3 min-w-[100px] snap-start group/brand"
           >
             <div className="w-24 h-24 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center p-5 hover:shadow-md hover:scale-105 transition-all duration-300 group-hover/brand:border-indigo-100 overflow-hidden">

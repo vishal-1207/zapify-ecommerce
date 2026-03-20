@@ -124,38 +124,6 @@ const Home = () => {
         <BrandCarousel brands={brands} />
         <ProductCarousel title="Best Sellers in Tech" products={popular} />
         <ProductCarousel title="Recommended for You" products={recommended} />
-
-        {/* Promo Banner */}
-        <div className="my-16 bg-gray-900 rounded-3xl overflow-hidden relative text-white shadow-2xl">
-          <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-indigo-900/80 to-transparent skew-x-12 translate-x-20"></div>
-          <div className="p-12 md:p-20 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="max-w-xl">
-              <span className="text-orange-400 font-bold tracking-widest uppercase text-sm mb-2 block">
-                Gaming Week
-              </span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
-                Level Up Your Setup
-              </h2>
-              <p className="text-gray-400 text-lg mb-8">
-                Save up to 40% on gaming laptops, consoles, and high-performance
-                peripherals.
-              </p>
-              <Link
-                to="/shop"
-                className="bg-orange-500 text-white px-8 py-4 rounded-xl font-bold hover:bg-orange-600 transition inline-flex items-center gap-2 shadow-lg shadow-orange-900/20"
-              >
-                Browse Gaming Gear <Gamepad size={20} />
-              </Link>
-            </div>
-            <div className="hidden md:block">
-              <Gamepad
-                size={200}
-                strokeWidth={0.5}
-                className="text-white/10 rotate-12"
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

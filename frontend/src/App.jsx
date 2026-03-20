@@ -64,6 +64,16 @@ import AddProduct from "./pages/seller/AddProduct";
 import SellerReviews from "./pages/seller/SellerReviews";
 import BrandStore from "./pages/user/BrandStore";
 
+// Info Pages
+import About from "./pages/info/About";
+import FAQ from "./pages/info/FAQ";
+import Terms from "./pages/info/Terms";
+import Privacy from "./pages/info/Privacy";
+import Help from "./pages/info/Help";
+import SellOnZapify from "./pages/info/SellOnZapify";
+import Affiliate from "./pages/info/Affiliate";
+import AffiliateDashboard from "./pages/user/AffiliateDashboard";
+
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center min-h-[50vh] text-2xl font-bold text-gray-400">
     {title} - Coming Soon
@@ -174,6 +184,19 @@ function App() {
     });
   }, [dispatch]);
 
+  // Handle Affiliate referrals globally
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("affiliateRef", ref);
+      // Clean up the URL to prevent sharing the link with the ref forever
+      const url = new URL(window.location);
+      url.searchParams.delete("ref");
+      window.history.replaceState({}, "", url);
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <Toaster position="top-right" />
@@ -189,6 +212,15 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
+
+                {/* Info Routes */}
+                <Route path="/about" element={<About />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/help" element={<Help />} />
+                <Route path="/sell" element={<SellOnZapify />} />
+                <Route path="/affiliate" element={<Affiliate />} />
 
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />

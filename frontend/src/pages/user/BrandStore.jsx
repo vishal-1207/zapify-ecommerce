@@ -15,6 +15,7 @@ const BrandStore = () => {
     // Local State for Search/Sort/Pagination within the Brand Store
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState("newest");
+    const [selectedCategory, setSelectedCategory] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 12;
 
@@ -24,11 +25,12 @@ const BrandStore = () => {
             try {
                 // Fetch Brand Details by Slug
                 const brandRes = await axios.get(`/brand/${slug}`);
-                setBrand(brandRes.data.brand);
+                const brandData = brandRes.data.data;
+                setBrand(brandData);
                 
                 // Fetch Brand Products
-                if (brandRes.data.brand?.id) {
-                     const productsData = await getAllProducts({ brandId: brandRes.data.brand.id, limit: 1000 }); // Fetch all to paginate locally
+                if (brandData?.id) {
+                     const productsData = await getAllProducts({ brandId: brandData.id, limit: 1000 }); // Fetch all to paginate locally
                      setProducts(productsData || []); // Fix: Use returned array directly
                 }
             } catch (error) {
@@ -46,6 +48,11 @@ const BrandStore = () => {
     // Derived State: Filter & Sort & Paginate
     const processedProducts = useMemo(() => {
         let result = [...products];
+
+        // 0. Category Filter
+        if (selectedCategory !== "all") {
+            result = result.filter(p => p.category?.name === selectedCategory);
+        }
 
         // 1. Search
         if (searchQuery) {
@@ -78,10 +85,15 @@ const BrandStore = () => {
         return processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     }, [processedProducts, currentPage]);
 
+    const availableCategories = useMemo(() => {
+        const cats = new Set(products.map(p => p.category?.name).filter(Boolean));
+        return Array.from(cats);
+    }, [products]);
+
     // Reset page on filter change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, sortOption]);
+    }, [searchQuery, sortOption, selectedCategory]);
 
 
     if (loading) {
@@ -106,16 +118,18 @@ const BrandStore = () => {
         <div className="bg-gray-50 min-h-screen pb-12">
             {/* Hero Section */}
             <div className="bg-white border-b border-gray-200">
-                <div className="relative h-48 md:h-64 bg-gradient-to-r from-gray-900 to-gray-800 overflow-hidden">
-                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                     {/* Decorative Circles */}
-                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white opacity-5 mix-blend-overlay blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 rounded-full bg-indigo-500 opacity-10 mix-blend-overlay blur-2xl"></div>
+                <div className="relative h-48 md:h-64 bg-gradient-to-r from-gray-900 to-gray-800">
+                    {/* Background & Decorative Circles (Clipped) */}
+                    <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white opacity-5 mix-blend-overlay blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 rounded-full bg-indigo-500 opacity-10 mix-blend-overlay blur-2xl"></div>
+                    </div>
 
                     <div className="container mx-auto px-4 h-full flex items-end pb-8 relative z-10">
                          {/* Brand Logo & Info Overlay */}
                         <div className="flex flex-col md:flex-row items-end md:items-end gap-6 w-full">
-                            <div className="w-28 h-28 md:w-32 md:h-32 bg-white rounded-2xl shadow-lg p-2 flex items-center justify-center -mb-12 md:-mb-14 border border-gray-100">
+                            <div className="w-28 h-28 md:w-32 md:h-32 bg-white rounded-2xl shadow-lg p-2 flex items-center justify-center -mb-12 md:-mb-14 border border-gray-100 z-20">
                                 {brand.media ? (
                                     <img src={brand.media.url} alt={brand.name} className="w-full h-full object-contain" />
                                 ) : (
@@ -124,7 +138,6 @@ const BrandStore = () => {
                             </div>
                             <div className="flex-1 text-white mb-1 md:mb-0">
                                 <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-2">{brand.name}</h1>
-                                {/* <p className="text-gray-300 text-sm md:text-base max-w-2xl line-clamp-1">{brand.description}</p> */}
                             </div>
                         </div>
                     </div>
@@ -144,6 +157,20 @@ const BrandStore = () => {
                     </h2>
 
                     <div className="flex flex-col sm:flex-row gap-3">
+                        {/* Category Dropdown */}
+                        {availableCategories.length > 0 && (
+                            <select 
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white w-full sm:w-auto text-sm cursor-pointer"
+                            >
+                                <option value="all">All Categories</option>
+                                {availableCategories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        )}
+
                         {/* Search Brand Products */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />

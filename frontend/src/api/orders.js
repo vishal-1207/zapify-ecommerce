@@ -1,7 +1,11 @@
 import api from "./axios";
 
 export const createOrder = async (addressId) => {
-  const response = await api.post("/order", { addressId });
+  const affiliateCode = localStorage.getItem("affiliateRef");
+  const payload = { addressId };
+  if (affiliateCode) payload.affiliateCode = affiliateCode;
+
+  const response = await api.post("/order", payload);
   return response.data.data;
 };
 
