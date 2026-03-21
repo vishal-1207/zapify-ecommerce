@@ -31,6 +31,7 @@ export const NotificationProvider = ({ children }) => {
       const data = await getMyNotifications();
       setNotifications(data?.rows ?? data ?? []);
     } catch {
+      // ignore error
     }
   }, [user]);
 

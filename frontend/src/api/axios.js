@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
@@ -13,7 +13,7 @@ const getCookie = (name) => {
 };
 
 let isRefreshing = false;
-let refreshQueue = []; // callbacks waiting for the new access token
+let refreshQueue = [];
 
 const processQueue = (error, accessToken = null) => {
   refreshQueue.forEach((cb) =>
