@@ -19,8 +19,8 @@ import {
 } from "react-instantsearch";
 
 const searchClient = liteClient(
-  import.meta.env.ALGOLIA_APP_ID,
-  import.meta.env.LGOLIA_SEARCH_KEY,
+  import.meta.env.VITE_ALGOLIA_APP_ID,
+  import.meta.env.VITE_ALGOLIA_SEARCH_KEY,
 );
 
 const AddProductValues = ({ onSellYours, onCreateNew }) => {
