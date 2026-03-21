@@ -8,10 +8,8 @@ import { categorySchema } from "../utils/validationSchema.js";
 import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
-// Public Routes
 router.route("/").get(categoryController.getCategories);
 
-// Protected Routes (Admin)
 router.use(authenticate);
 
 router

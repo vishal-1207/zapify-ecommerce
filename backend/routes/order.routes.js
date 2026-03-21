@@ -18,10 +18,8 @@ router
   .route("/:orderId/tracking")
   .get(orderControllers.getOrderTrackingDetails);
 
-// User-initiated cancel (pending/processing only)
 router.route("/:orderId/cancel").patch(orderControllers.cancelOrder);
 
-// User-initiated return request (delivered, within 7 days)
 router.route("/:orderId/return").post(orderControllers.requestReturn);
 
 router

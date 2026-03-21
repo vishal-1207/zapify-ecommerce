@@ -13,7 +13,6 @@ import {
 const router = express.Router();
 router.use(authenticate);
 
-// Profile Management
 router
   .route("/profile/register")
   .post(
@@ -43,7 +42,6 @@ router
     sellerController.deleteSellerProfile,
   );
 
-// Dashboard
 router.get(
   "/dashboard/stats",
   authorizeRoles("seller"),
@@ -72,7 +70,6 @@ router.get(
 
 router.get("/transactions", authorizeRoles("seller"), getSellerTransactions);
 
-// Offer Management
 router.get(
   "/offers",
   authorizeRoles("seller"),
@@ -94,7 +91,6 @@ router.delete(
   sellerController.deleteSellerOffer,
 );
 
-// Order Management
 router.get(
   "/orders",
   authorizeRoles("seller"),

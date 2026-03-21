@@ -62,8 +62,6 @@ export default sendSms;
  * @param {string} content - SMS message content.
  */
 export const enqueueSms = async (to, content) => {
-  // Fire and forget: run the send operation in the background
-  // and catch any errors so they don't crash the server.
   sendSms(to, content).catch((err) => {
     console.error("Async background SMS failed:", err);
   });

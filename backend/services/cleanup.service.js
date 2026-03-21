@@ -30,7 +30,6 @@ export const purgeDeletedCategories = async () => {
     const { reSyncProductsByCriteria } = await import("./algolia.service.js");
 
     for (const category of categoriesToPurge) {
-      // 1. Delete image from Cloudinary
       if (category.media) {
         try {
           await cloudinary.uploader.destroy(category.media.publicId);
@@ -40,14 +39,12 @@ export const purgeDeletedCategories = async () => {
         }
       }
 
-      // 2. Sync Algolia (products become uncategorized)
       try {
         await reSyncProductsByCriteria({ categoryId: category.id });
       } catch (algoliaError) {
         console.error(`Failed to sync Algolia for category ${category.id}:`, algoliaError);
       }
 
-      // 3. Hard Delete Category
       await category.destroy({ force: true, transaction });
     }
 
@@ -110,11 +107,9 @@ export const startCleanupService = () => {
 
   console.log("Cleanup service started.");
   
-  // User Purge
   purgeExpiredUsers();
   setInterval(purgeExpiredUsers, USER_PURGE_INTERVAL);
 
-  // Category Purge
   purgeDeletedCategories();
   setInterval(purgeDeletedCategories, CATEGORY_PURGE_INTERVAL);
 };

@@ -195,7 +195,6 @@ export const getSignupAnalytics = async (days) => {
     },
     attributes: [
       [db.sequelize.fn("DATE", db.sequelize.col("createdAt")), "date"],
-      // Use SUM(CASE...) to count customers and sellers in one query
       [
         db.sequelize.fn(
           "SUM",
@@ -220,7 +219,6 @@ export const getSignupAnalytics = async (days) => {
     raw: true,
   });
 
-  // Format data for Chart.js
   const labels = results.map((row) =>
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
@@ -296,7 +294,6 @@ export const getOrderActivityAnalytics = async (days) => {
     raw: true,
   });
 
-  // Format data for Chart.js
   const labels = results.map((row) =>
     new Date(row.date).toLocaleDateString("en-US", {
       month: "short",
@@ -351,8 +348,6 @@ export const getUsersList = async (role = "user", page, limit) => {
   };
 
   if (role) {
-    // JSON_CONTAINS correctly queries JSON array columns like `roles`
-    // Must be wrapped in Op.and so Sequelize treats it as a WHERE condition
     queryOptions.where[Op.and] = [
       db.sequelize.literal(`JSON_CONTAINS(\`roles\`, '"${role}"')`),
     ];
@@ -372,22 +367,7 @@ export const updateUserStatusService = async (userId, status) => {
   const user = await db.User.findByPk(userId);
   if (!user) throw new Error("User not found");
 
-  // Assuming we use 'isActive' boolean or a status field.
-  // The User model currently doesn't have a 'status' field, but it has 'roles'.
-  // Blocking might mean removing access.
-  // Let's assume we want to add a 'isBlocked' field or similar, OR use 'paranoid' soft delete for blocking?
-  // User model has 'scheduledForDeletionAt'.
-  // For now, let's assume valid status is 'blocked' or 'active' and we might toggling a boolean if it existed.
-  // Wait, I saw User model. It doesn't have `status` or `isBlocked`.
-  // It has `paranoid: true`.
-  // Let's implement Block as SOFT DELETE for now? OR we should add `isBlocked` to model?
-  // The user prompt asked for Block/Unblock. Soft delete is separate (DELETE /user/:id).
-  // I should probably add `isBlocked` to User model to support this cleanly.
-  // For now, I will use a placeholder implementation that throws if we can't persist it,
-  // BUT I will add `isBlocked` to the model in the next step to be correct.
 
-  // For this step, I'll update the 'roles' to include 'blocked' maybe? No that's hacky.
-  // Let's UPDATE the User model to include `isBlocked`.
 
   if (status === "blocked") {
     user.isBlocked = true;
@@ -510,10 +490,8 @@ export const updateOrderStatusService = async (orderId, status) => {
   order.status = status;
   await order.save();
 
-  // Cascade status update to all OrderItems
   await db.OrderItem.update({ status }, { where: { orderId } });
 
-  // Notify the customer about the status change
   const statusLabel =
     status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
   const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
@@ -531,8 +509,6 @@ export const requestUserEditOtpService = async (userId, adminId) => {
   const user = await db.User.findByPk(userId);
   if (!user) throw new ApiError(404, "User not found.");
 
-  // Send OTP to the user's email so they can hand it to the admin
-  // otp.service.js uses `user.email`
   await sendVerificationCode(userId, "email");
 
   return { success: true };
@@ -547,7 +523,6 @@ export const editUserWithOtpService = async (
   updateData,
   adminId,
 ) => {
-  // Verify the OTP via the otp service
   await verifyCode(userId, otp, "email");
 
   const user = await db.User.findByPk(userId, {
@@ -555,7 +530,6 @@ export const editUserWithOtpService = async (
   });
   if (!user) throw new ApiError(404, "User not found.");
 
-  // Apply user updates
   if (updateData.fullname) user.fullname = updateData.fullname;
   if (updateData.email) user.email = updateData.email;
   if (updateData.phoneNumber !== undefined)
@@ -563,7 +537,6 @@ export const editUserWithOtpService = async (
 
   await user.save();
 
-  // If this user is a seller and seller data was provided, update it
   if (user.roles.includes("seller") && user.sellerProfile) {
     const sp = user.sellerProfile;
     let sellerUpdated = false;
@@ -586,7 +559,6 @@ export const editUserWithOtpService = async (
     }
   }
 
-  // Refresh user data to return
   return await db.User.findByPk(userId, {
     include: [{ model: db.SellerProfile, as: "sellerProfile" }],
     attributes: {
@@ -595,7 +567,6 @@ export const editUserWithOtpService = async (
   });
 };
 
-// ======== ADMIN REVIEW MODERATION SERVICES ========
 
 /**
  * Fetch the admin review moderation queue, filterable by status.
@@ -685,7 +656,6 @@ export const adminModerateReview = async (
 
   await review.save();
 
-  // Recalculate product + seller rating if approving or if moving away from approved
   const { updateProductAverageRating, updateSellerAverageRating } =
     await import("./reviews.service.js");
 
@@ -698,7 +668,6 @@ export const adminModerateReview = async (
     }
   }
 
-  // Notify the user (lowercase alias names from association)
   if (review.user?.id && review.product?.name) {
     const message = `Your review for '${review.product.name}' has been ${decision}.${
       reason ? ` Reason: ${reason}` : ""
@@ -776,7 +745,6 @@ export const resolveReport = async (reportId, adminId, resolution) => {
  * @param {number} limit - Number of top products to return (default 5).
  */
 export const getTopProducts = async (limit = 5) => {
-  // Step 1: Aggregate revenue and quantity grouped by offerId
   const aggregates = await db.OrderItem.findAll({
     attributes: [
       "offerId",
@@ -798,7 +766,6 @@ export const getTopProducts = async (limit = 5) => {
 
   if (!aggregates.length) return [];
 
-  // Step 2: Fetch the product details for these offers
   const offerIds = aggregates.map((a) => a.offerId);
   const offers = await db.Offer.findAll({
     where: { id: offerIds },
@@ -817,7 +784,6 @@ export const getTopProducts = async (limit = 5) => {
     return acc;
   }, {});
 
-  // Step 3: Map and combine
   return aggregates.map((agg) => {
     const offer = offerMap[agg.offerId];
     if (!offer) return null;
@@ -837,7 +803,6 @@ export const getTopProducts = async (limit = 5) => {
  * @param {number} limit - Number of top sellers to return (default 5).
  */
 export const getTopSellers = async (limit = 5) => {
-  // Step 1: Aggregate grouped by offerId
   const aggregates = await db.OrderItem.findAll({
     attributes: [
       "offerId",
@@ -858,7 +823,6 @@ export const getTopSellers = async (limit = 5) => {
 
   if (!aggregates.length) return [];
 
-  // Step 2: Fetch seller profiles
   const offerIds = aggregates.map((a) => a.offerId);
   const offers = await db.Offer.findAll({
     where: { id: offerIds },
@@ -876,7 +840,6 @@ export const getTopSellers = async (limit = 5) => {
     return acc;
   }, {});
 
-  // Group by sellerId manually to aggregate multiple offers from same seller
   const sellerData = {};
   
   aggregates.forEach((agg) => {
@@ -897,7 +860,6 @@ export const getTopSellers = async (limit = 5) => {
     sellerData[sId].unitsSold += parseInt(agg.unitsSold) || 0;
   });
 
-  // Sort and limit
   return Object.values(sellerData)
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, limit);

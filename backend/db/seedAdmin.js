@@ -11,7 +11,6 @@ const createAdmin = async () => {
   const transaction = await db.sequelize.transaction();
 
   try {
-    // Ensure database is in sync before proceeding
     await db.sequelize.authenticate();
 
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -44,7 +43,6 @@ const createAdmin = async () => {
         username: process.env.ADMIN_NAME || "admin",
         email: adminEmail,
         password: hashedPassword,
-        // FIXED: Roles MUST be an array for the authorizeRoles middleware to work
         roles: ["admin"],
         isEmailVerified: true, // Auto-verify admin to skip OTP flow
       },

@@ -73,7 +73,6 @@ export const registerService = async (userData) => {
         console.error("Failed to send welcome email:", err.message),
       );
 
-      // Send Verification Email
       otpServices
         .sendVerificationCode(user.id, "email")
         .catch((err) =>
@@ -130,9 +129,6 @@ export const loginService = async (userData) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    // Check if the user already has a valid (non-expired) refresh token.
-    // If yes — reuse it and only issue a new access token.
-    // If no — create a fresh session (new refresh + access token).
     const existingToken = await db.RefreshToken.findOne({
       where: { userId: user.id },
       order: [["createdAt", "DESC"]],
@@ -141,11 +137,9 @@ export const loginService = async (userData) => {
 
     let tokens;
     if (existingToken && new Date() < new Date(existingToken.expiresAt)) {
-      // Valid session exists — reuse the stored refresh token
       const accessToken = generateAccessToken(user);
       tokens = { accessToken, refreshToken: existingToken.token };
     } else {
-      // No valid session — destroy any stale record and create a fresh one
       if (existingToken) {
         await existingToken.destroy({ transaction });
       }
@@ -179,7 +173,6 @@ export const refreshAccessToken = async (incomingToken) => {
     throw new ApiError(401, message);
   }
 
-  // Look up the DB record using the tokenId embedded in the refresh JWT.
   const storedToken = await db.RefreshToken.findOne({
     where: { tokenId: decodedToken.tokenId, userId: decodedToken.id },
   });
@@ -191,7 +184,6 @@ export const refreshAccessToken = async (incomingToken) => {
     );
   }
 
-  // DB-level expiry double-check (JWT verify above is the primary guard).
   if (new Date() > new Date(storedToken.expiresAt)) {
     await storedToken.destroy();
     throw new ApiError(401, "Refresh token expired. Please login again.");
@@ -205,10 +197,8 @@ export const refreshAccessToken = async (incomingToken) => {
     throw new ApiError(401, "User account no longer exists.");
   }
 
-  // Issue a new access token ONLY — refresh token in DB is left completely unchanged.
   const accessToken = generateAccessToken(user);
 
-  // Return the storedToken so the controller can compute the remaining TTL for the cookie.
   return { user, accessToken, storedToken };
 };
 

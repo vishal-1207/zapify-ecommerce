@@ -19,13 +19,11 @@ const uploadToCloudinary = async (localFilePath, folder = "products") => {
       throw new Error(`File not found at path: ${absolutePath}`);
     }
 
-    // We use the absolute path for reliability
     const response = await cloudinary.uploader.upload(absolutePath, {
       resource_type: "auto",
       folder: folder,
     });
 
-    // Standard fs.unlink(path) requires a callback and will cause issues here
     try {
       await fs.promises.unlink(absolutePath);
     } catch (unlinkErr) {
@@ -37,7 +35,6 @@ const uploadToCloudinary = async (localFilePath, folder = "products") => {
 
     return response;
   } catch (error) {
-    // If the upload failed, we still want to remove the temp file to avoid disk bloating
     if (localFilePath && fs.existsSync(localFilePath)) {
       try {
         fs.unlinkSync(localFilePath);

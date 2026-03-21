@@ -32,13 +32,10 @@ export const getAllCategories = async ({ includeInactive = false } = {}) => {
     ],
   });
 
-  // Self-healing: Check for missing slugs and update them
-  // This is needed for legacy data created before slug field was added
   for (const cat of categories) {
       if (!cat.slug) {
           const newSlug = `${slugify(cat.name, { lower: true, strict: true })}-${nanoid(6)}`;
           cat.slug = newSlug;
-          // We update strictly the slug field to avoid side effects
           await db.Category.update({ slug: newSlug }, { where: { id: cat.id } });
       }
   }
@@ -58,7 +55,6 @@ export const addCategory = async (name, file) => {
   
   if (existingCategory) {
     if (existingCategory.isActive === false) {
-       // Reactivate if it was disabled
        existingCategory.isActive = true;
        await existingCategory.save();
        return existingCategory;
@@ -73,7 +69,6 @@ export const addCategory = async (name, file) => {
     await transaction.commit();
 
     if (file) {
-      // Fire-and-forget background upload
       processBackgroundUpload({
         filePath: file.path,
         folder: process.env.CLOUDINARY_CATEGORY_FOLDER,
@@ -107,33 +102,15 @@ export const updateCategory = async (data, file) => {
     }
 
     if (file) {
-      // In update, we might want to remove the old image first? 
-      // Or just let the new one be added and maybe multiple images are allowed?
-      // The Relation is HasOne. So if we add a new one, does it replace?
-      // The Media model is polymorphic.
-      // Ideally, we should remove the OLD one.
-      // Let's do a quick cleanup of old media synchronously if possible (metadata only)
-      // OR let the background worker handle it.
       
-      // For speed, let's just Destroy the metadata in DB transaction if it exists,
-      // and let the background worker create the new one.
-      // The physical old file in Cloudinary will be orphaned though.
-      // BETTER: Queue the OLD one for deletion in background too.
       
       if (category.media) {
-        // We can't easily queue deletion without an ID or publicID.
-        // But we have category.media.
-        // Let's just destroy the DB record here (fast).
-        // The Cloudinary file will remain as garbage. 
-        // We could add a "purgeOldMedia" to the worker.
         
         await category.media.destroy({ transaction });
         
         // TODO: Ideally queue Cloudinary deletion for category.media.publicId
-        // but for now, focus on upload speed.
       }
       
-      // Fire-and-forget background upload
       processBackgroundUpload({
         filePath: file.path,
         folder: process.env.CLOUDINARY_CATEGORY_FOLDER,
@@ -162,8 +139,6 @@ export const deleteCategory = async (id) => {
   if (!category) throw new ApiError(404, "Category not found.");
 
   try {
-    // Soft delete the category
-    // Background worker will handle Cloudinary image deletion and Algolia sync
     await category.destroy();
     return { message: "Category deleted." };
   } catch (error) {

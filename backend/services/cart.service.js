@@ -102,7 +102,6 @@ export const getCart = async (userId) => {
       );
     }
 
-    // Check for active deal
     let currentPrice = parseFloat(detail.price);
     let isDealActive = false;
 
@@ -171,11 +170,9 @@ export const getCart = async (userId) => {
 export const addItemToCart = async (userId, offerId, quantity) => {
   let offer = await db.Offer.findByPk(offerId);
 
-  // If offer not found, check if offerId is actually a productId
   if (!offer) {
     const product = await db.Product.findByPk(offerId);
     if (product) {
-      // Find the cheapest offer for this product
       const cheapestOffer = await db.Offer.findOne({
         where: {
           productId: product.id,
@@ -276,7 +273,6 @@ export const clearCart = async (userId) => {
  */
 export const applyCouponToCart = async (userId, code) => {
   const cartKey = getCartKey(userId);
-  // Store the code in a special field 'meta:coupon'
   await redisClient.hSet(cartKey, "meta:coupon", code);
   return getCart(userId);
 };

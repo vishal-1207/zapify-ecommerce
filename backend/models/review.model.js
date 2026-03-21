@@ -17,7 +17,6 @@ export default (sequelize, DataTypes) => {
     likedBy: { type: DataTypes.JSON, defaultValue: [] },
     dislikedBy: { type: DataTypes.JSON, defaultValue: [] },
 
-    // ── Moderation ──────────────────────────────────────────────────────────
     status: {
       type: DataTypes.ENUM(
         "pending",
@@ -29,13 +28,9 @@ export default (sequelize, DataTypes) => {
       defaultValue: "pending",
       allowNull: false,
     },
-    // Reason shown to the user when their review is rejected or flagged
     moderationReason: { type: DataTypes.TEXT, allowNull: true },
-    // Internal note visible to admins only (never sent to user)
     moderationNote: { type: DataTypes.TEXT, allowNull: true },
-    // Composite automated moderation score (0.0 = clean, 1.0 = very harmful)
     autoModScore: { type: DataTypes.FLOAT, defaultValue: 0.0 },
-    // Breakdown of flags from the automated pipeline
     autoModFlags: {
       type: DataTypes.JSON,
       defaultValue: {
@@ -46,15 +41,12 @@ export default (sequelize, DataTypes) => {
         nsfw: false,
       },
     },
-    // Admin who last acted on this review
     moderatedBy: { type: DataTypes.UUID, allowNull: true },
     moderatedAt: { type: DataTypes.DATE, allowNull: true },
 
-    // ── Seller Response ──────────────────────────────────────────────────────
     sellerResponse: { type: DataTypes.TEXT, allowNull: true },
     sellerResponseAt: { type: DataTypes.DATE, allowNull: true },
 
-    // ── Soft hide ────────────────────────────────────────────────────────────
     isHidden: { type: DataTypes.BOOLEAN, defaultValue: false },
   });
 

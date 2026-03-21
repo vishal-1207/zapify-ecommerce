@@ -73,12 +73,6 @@ export const syncProductToAlgolia = async (productId) => {
       return;
     }
 
-    // We now index ALL products (including pending) so sellers can search their own catalog.
-    // Public search must filter by status:approved.
-    // if (product.status !== "approved") {
-    //   await client.deleteObject({ indexName: INDEX_NAME, objectID: productId });
-    //   return;
-    // }
 
     const record = await formatProductForAlgolia(product);
     if (!record || !record.objectID) {
@@ -182,21 +176,16 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
   } catch (error) {
     console.warn("[Algolia] Search failed, falling back to Database:", error.message);
     
-    // Database Fallback
     const offset = (page - 1) * limit;
     const whereClause = {
         status: "approved",
         [db.Sequelize.Op.or]: [
             { name: { [db.Sequelize.Op.like]: `%${query}%` } },
             { description: { [db.Sequelize.Op.like]: `%${query}%` } },
-             // Add model search if exists in schema, otherwise remove
-             // { model: { [db.Sequelize.Op.like]: `%${query}%` } } 
         ]
     };
 
     if (category) {
-        // This requires joining with Category model or having categoryId
-        // For simplicity in fallback, we might skip complex filters or implementation needed
     }
 
     const { count, rows } = await db.Product.findAndCountAll({
@@ -210,7 +199,6 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
         ]
     });
 
-    // Format DB results to match Algolia structure (somewhat)
     const formattedProducts = rows.map(p => ({
         objectID: p.id,
         name: p.name,

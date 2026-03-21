@@ -76,7 +76,6 @@ export const deleteSellerProfile = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: result });
 });
 
-// Seller Dashboard Analytics Controllers
 /**
  * Gets dashboard stats cards details for different sections of dashboard.
  */
@@ -123,7 +122,6 @@ export const getSellerCategoryPerformance = asyncHandler(async (req, res) => {
     .json({ message: "Category performance fetched.", categoryData });
 });
 
-// Offer Management Controllers
 
 /**
  * Gets the seller's most recent orders requiring attention.
@@ -159,7 +157,6 @@ export const updateSellerOffer = asyncHandler(async (req, res) => {
 /**
  * Delete a seller offer
  */
-// ... existing code ...
 export const deleteSellerOffer = asyncHandler(async (req, res) => {
   const { offerId } = req.params;
   const result = await offerService.deleteProductOffer(req.user.id, offerId);

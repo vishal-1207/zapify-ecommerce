@@ -22,7 +22,6 @@ export const searchStorefront = asyncHandler(async (req, res) => {
     maxPrice: priceMax,
   };
 
-  // Use Algolia service for high-performance search
   const results = await searchProductsAlgolia(q, filters);
 
   return res

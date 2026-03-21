@@ -16,8 +16,6 @@ export const getCache = async (key) => {
   } catch (error) {
     console.error(`Redis Get Error for key ${key}: `, error);
 
-    // Return null so the application can fall back to the database
-    // instead of crashing if Redis is down.
     return null;
   }
 };

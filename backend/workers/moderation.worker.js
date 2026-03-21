@@ -3,8 +3,6 @@ import Redis from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 
-// BullMQ strictly requires ioredis, so we configure a connection for it
-// using the same environment variables as the standard redisClient.
 const redisPort = parseInt(process.env.REDIS_PORT, 10) || 6379;
 const isLocalhost =
   process.env.REDIS_HOST === "localhost" ||
@@ -19,10 +17,8 @@ const connection = new Redis({
   maxRetriesPerRequest: null, // BullMQ recommendation
 });
 
-// Create the moderation queue
 export const moderationQueue = new Queue("review-moderation", { connection });
 
-// Define the worker that processes the moderation jobs
 let worker;
 
 export const startModerationWorker = () => {

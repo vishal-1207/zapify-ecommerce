@@ -13,13 +13,9 @@ import * as reviewControllers from "../controllers/reviews.controller.js";
 
 const router = express.Router();
 
-// ── Public ──────────────────────────────────────────────────────────────────────
-// GET all approved reviews for a product
 router.route("/product/:productId").get(reviewControllers.getReviewController);
 
-// ── User (buyer) ────────────────────────────────────────────────────────────────
 
-// Get user's own reviews (My Reviews)
 router
   .route("/my-reviews")
   .get(
@@ -28,7 +24,6 @@ router
     reviewControllers.getUserReviewsController,
   );
 
-// Submit a new review for a purchased order item
 router
   .route("/order-item/:orderItemId")
   .post(
@@ -40,7 +35,6 @@ router
     reviewControllers.createReviewController,
   );
 
-// Update or delete own review
 router
   .route("/:reviewId")
   .patch(
@@ -58,7 +52,6 @@ router
     reviewControllers.deleteReviewController,
   );
 
-// Like / dislike a review
 router
   .route("/:reviewId/vote")
   .post(
@@ -68,7 +61,6 @@ router
     reviewControllers.toggleReviewVoteController,
   );
 
-// Report a review (user or seller)
 router
   .route("/:reviewId/report")
   .post(
@@ -79,8 +71,6 @@ router
     reviewControllers.reportReviewController,
   );
 
-// ── Seller ──────────────────────────────────────────────────────────────────────
-// Get all reviews for this seller's products (with filters)
 router
   .route("/seller/my-reviews")
   .get(
@@ -89,7 +79,6 @@ router
     reviewControllers.getSellerReviewsController,
   );
 
-// Add or update a public seller response on a review
 router
   .route("/:reviewId/response")
   .post(
@@ -100,8 +89,6 @@ router
     reviewControllers.addSellerResponseController,
   );
 
-// ── Admin ───────────────────────────────────────────────────────────────────────
-// Get paginated review queue (filterable by status: pending, flagged, approved, rejected, hidden, all)
 router
   .route("/admin/queue")
   .get(
@@ -110,7 +97,6 @@ router
     reviewControllers.getReviewQueueController,
   );
 
-// Approve / reject / flag / hide a review
 router
   .route("/admin/review/:reviewId/moderate")
   .post(
@@ -120,7 +106,6 @@ router
     reviewControllers.adminModerateReviewController,
   );
 
-// Get all review reports (filterable by status: open, resolved, dismissed, all)
 router
   .route("/admin/reports")
   .get(
@@ -129,7 +114,6 @@ router
     reviewControllers.getReviewReportsController,
   );
 
-// Resolve or dismiss a specific report
 router
   .route("/admin/reports/:reportId")
   .post(

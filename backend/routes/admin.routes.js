@@ -6,7 +6,6 @@ import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 const router = express.Router();
 router.use(authenticate, authorizeRoles("admin"));
 
-// --- Dashboard & Stats Routes ---
 router.route("/stats").get(adminController.getDashboardStats);
 router.route("/stats/sales-over-time").get(adminController.getSalesOverTime);
 router

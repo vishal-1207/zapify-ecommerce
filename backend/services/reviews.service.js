@@ -190,8 +190,6 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
     await transaction.commit();
 
     if (!skipUploadAndQueue) {
-      // Fire automated moderation pipeline — non-blocking, runs in background worker.
-      // It will set status to approved/flagged/rejected and update ratings if approved.
       moderationQueue
         .add("moderate-review", { reviewId: newReview.id })
         .catch((err) =>
@@ -370,7 +368,6 @@ export const updateUserReview = async (
       await db.Media.bulkCreate(mediaEntries, { transaction });
     }
 
-    // Reset to pending so the updated content goes through moderation again
     review.status = newStatus;
     review.moderationReason = newReason;
     review.autoModScore = skipUploadAndQueue ? 0.8 : 0.0;
@@ -394,7 +391,6 @@ export const updateUserReview = async (
     await transaction.commit();
 
     if (!skipUploadAndQueue) {
-      // Re-run the moderation pipeline on the updated content (via background worker)
       moderationQueue
         .add("moderate-review", { reviewId: review.id })
         .catch((err) =>
@@ -487,12 +483,10 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
 
     if (!review) throw new ApiError(404, "Review not found.");
 
-    // Prevent users from voting on their own review
     if (review.userId === userId) {
       throw new ApiError(403, "You cannot vote on your own review.");
     }
 
-    // Parse existing JSON arrays carefully.
     let likedBy = review.likedBy || [];
     let dislikedBy = review.dislikedBy || [];
 
@@ -502,20 +496,16 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
     const hasLiked = likedBy.includes(userId);
     const hasDisliked = dislikedBy.includes(userId);
 
-    // Default counters based on arrays just to be safe
     let likes = likedBy.length;
     let dislikes = dislikedBy.length;
 
     if (voteType === "like") {
       if (hasLiked) {
-        // Toggle OFF (remove like)
         likedBy = likedBy.filter((id) => id !== userId);
         likes -= 1;
       } else {
-        // Toggle ON (add like)
         likedBy.push(userId);
         likes += 1;
-        // If they had previously disliked it, remove the dislike.
         if (hasDisliked) {
           dislikedBy = dislikedBy.filter((id) => id !== userId);
           dislikes -= 1;
@@ -523,14 +513,11 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
       }
     } else if (voteType === "dislike") {
       if (hasDisliked) {
-        // Toggle OFF (remove dislike)
         dislikedBy = dislikedBy.filter((id) => id !== userId);
         dislikes -= 1;
       } else {
-        // Toggle ON (add dislike)
         dislikedBy.push(userId);
         dislikes += 1;
-        // If they had previously liked it, remove the like.
         if (hasLiked) {
           likedBy = likedBy.filter((id) => id !== userId);
           likes -= 1;
@@ -543,7 +530,6 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
       );
     }
 
-    // Ensure we don't go below 0 purely as a defensive measure
     review.likes = Math.max(0, likes);
     review.dislikes = Math.max(0, dislikes);
     review.likedBy = likedBy;
@@ -560,7 +546,6 @@ export const toggleReviewVote = async (reviewId, userId, voteType) => {
   }
 };
 
-// ======== ADMIN SERVICES FOR REVIEWS ========
 /**
  * Admin review service to get the list of pending reviews for verification.
  */
@@ -617,7 +602,6 @@ export const moderateReview = async (reviewId, decision) => {
     }
   }
 
-  // Notify the user who wrote the review about the admin's decision.
   if (review.product?.name && review.user?.id) {
     const message = `Your review for '${review.product.name} ${review.product.model}' has been ${decision}.`;
     const linkUrl = `/products/${review.productId}?review=${review.id}`;
@@ -628,7 +612,6 @@ export const moderateReview = async (reviewId, decision) => {
   return review;
 };
 
-// ======== SELLER SERVICES FOR REVIEWS ========
 
 /**
  * Fetches all reviews for a seller's products with optional filters.
@@ -719,7 +702,6 @@ export const addSellerResponse = async (
 ) => {
   const profile = await getSellerProfile(sellerUserId);
 
-  // Load review + offer relationship to verify ownership
   const review = await db.Review.findOne({
     where: { id: reviewId, status: "approved" },
     include: [
@@ -766,7 +748,6 @@ export const reportReview = async (
   const review = await db.Review.findByPk(reviewId);
   if (!review) throw new ApiError(404, "Review not found.");
 
-  // ReviewReport model has a beforeCreate hook preventing duplicate reports
   const report = await db.ReviewReport.create({
     reviewId,
     reporterId,
@@ -775,7 +756,6 @@ export const reportReview = async (
     description: description?.trim() || null,
   });
 
-  // Count open reports — auto-escalate if threshold reached
   const openReports = await db.ReviewReport.count({
     where: { reviewId, status: "open" },
   });

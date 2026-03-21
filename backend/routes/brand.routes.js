@@ -9,7 +9,6 @@ import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-// Public routes
 router
   .route("/")
   .get(brandController.getBrands)

@@ -19,7 +19,6 @@ router
   .route("/available")
   .get(authenticate, discountController.getAvailableCoupons);
 
-// Seller Deal Routes
 router.post(
   "/seller-deal/:offerId",
   authenticate,

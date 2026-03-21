@@ -56,7 +56,6 @@ const wishlistSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch
       .addCase(fetchWishlist.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -70,7 +69,6 @@ const wishlistSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Toggle
       .addCase(toggleWishlist.fulfilled, (state, action) => {
         const { productId, action: act, item } = action.payload;
         if (act === "removed") {
@@ -89,7 +87,6 @@ const wishlistSlice = createSlice({
 
 export const { clearWishlist } = wishlistSlice.actions;
 
-// Selectors
 export const selectWishlistIds = (state) => state.wishlist.ids;
 export const selectWishlistItems = (state) => state.wishlist.items;
 export const selectWishlistLoading = (state) => state.wishlist.loading;

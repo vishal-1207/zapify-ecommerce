@@ -9,7 +9,6 @@ import { limiter } from "../utils/rateLimiter.util.js";
 
 const router = express.Router();
 
-//Register route
 router
   .route("/register")
   .post(
@@ -19,7 +18,6 @@ router
     authControllers.registerController,
   );
 
-//Login routes for admin and user
 router
   .route("/admin/login")
   .post(
@@ -45,7 +43,6 @@ router
   .route("/reset-password/:token")
   .post(csrfProtection, limiter, authControllers.resetPasswordController);
 
-//Social auth routes
 router
   .route("/google")
   .get(passport.authenticate("google", { scope: ["profile", "email"] }));
@@ -70,7 +67,6 @@ router.get(
   authControllers.socialCallbackHandler
 );
 
-// GitHub OAuth
 router
   .route("/github")
   .get(passport.authenticate("github", { scope: ["user:email"] }));

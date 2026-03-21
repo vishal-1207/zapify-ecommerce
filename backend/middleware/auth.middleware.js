@@ -4,7 +4,6 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import { getCache, setCache } from "../utils/cache.js";
 
-//Authenticate Middleware
 const authenticate = asyncHandler(async (req, res, next) => {
   try {
     const token =
@@ -40,10 +39,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
       }
     }
 
-    // If not in cache or parsing failed, fetch from DB
     if (!user || !user.id) {
-      // Fetch from DB if not in cache
-      // We exclude sensitive fields but keep 'roles' for the authorizeRoles middleware
       user = await db.User.findByPk(decoded.id, {
         attributes: {
           exclude: ["password", "verificationCode", "verificationCodeExpiry"],
@@ -55,11 +51,9 @@ const authenticate = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, "User no longer exists.");
       }
 
-      // Store in Redis for 10 minutes (600 seconds)
       await setCache(cacheKey, JSON.stringify(user), 3600);
     }
 
-    // Ensure roles is an array
     if (user && typeof user.roles === 'string') {
         try {
             user.roles = JSON.parse(user.roles);
@@ -69,7 +63,6 @@ const authenticate = asyncHandler(async (req, res, next) => {
         }
     }
     
-    // Fallback if roles is missing
     if (user && !user.roles) {
         user.roles = ["user"];
     }

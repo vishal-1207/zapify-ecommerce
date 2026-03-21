@@ -13,17 +13,14 @@ import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-// 1. Specific Public Routes
 router.route("/catalog-search").get(productController.searchCatalog);
 
-// 2. Specific Protected Routes (prevent collision with :slug)
 router.route("/suggestions").get(
   authenticate,
   authorizeRoles("seller"),
   productController.getProductSuggestions
 );
 
-// 3. Root Routes relative to /product
 router
   .route("/")
   .get(productController.getAllProducts) // Public
@@ -39,10 +36,8 @@ router
     productController.createProduct,
   );
 
-// 4. Generic Slug Route (Public) - Must be after specific single-segment routes
 router.route("/:slug").get(productController.getProductDetailsForCustomer);
 
-// 5. Other Protected Routes
 router.route("/suggest-product/:sellerId").post(
   authenticate,
   authorizeRoles("seller"),

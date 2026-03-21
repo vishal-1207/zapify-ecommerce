@@ -55,10 +55,8 @@ const sendMail = async (to, subject, html) => {
       process.env.EMAIL_USER &&
       process.env.EMAIL_PASS
     ) {
-      // Use Production (Brevo/SMTP) if credentials are provided in .env
       transporter = createProductionTransporter();
     } else {
-      // Fallback to Ethereal if no credentials
       transporter = await createDevelopmentTransporter();
     }
 
@@ -101,8 +99,6 @@ export default sendMail;
  * @param {string} html - HTML body.
  */
 export const enqueueMail = async (to, subject, html) => {
-  // Fire and forget: run the send operation in the background
-  // and catch any errors so they don't crash the server.
   sendMail(to, subject, html).catch((err) => {
     console.error("Async background mail failed:", err);
   });

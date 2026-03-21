@@ -26,7 +26,6 @@ const findStore = async (storeName) => {
   return { slug, existingSeller };
 };
 
-// Profile Management Services
 
 /**
  * Creates a seller profile for an existing user, upgrading their role.
@@ -59,9 +58,6 @@ export const createSellerProfile = async (data, optional) => {
     );
 
     const user = await db.User.findByPk(userId, { transaction });
-    // Update user role to seller if not already
-    // Update user role to seller if not already
-    // Update user role to seller if not already
     let currentRoles = user.roles;
     if (typeof currentRoles === "string") {
       try {
@@ -90,7 +86,6 @@ export const createSellerProfile = async (data, optional) => {
       }
     }
 
-    // await user.save({ transaction }); // User.update covers the roles. Other fields not changed on user.
 
     console.log(
       `[DEBUG] Seller Profile Created for UserID: ${userId}. New Roles:`,
@@ -205,7 +200,6 @@ export const deleteSellerProfile = async (userId) => {
   }
 };
 
-// Seller Dashboard Analytics Services
 
 export const getSellerDashboardStats = async (userId, days = 30) => {
   const profile = await getSellerProfile(userId);
@@ -217,7 +211,6 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   const previousPeriodStart = new Date(currentPeriodStart);
   previousPeriodStart.setDate(previousPeriodStart.getDate() - days);
 
-  // Helper for raw queries
   const runQuery = async (query, replacements) => {
     const [result] = await db.sequelize.query(query, {
       replacements,
@@ -226,7 +219,6 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
     return result;
   };
 
-  // 1. Current Period Stats
   const currentMetrics = await runQuery(`
     SELECT 
       SUM(OI.priceAtTimeOfPurchase * OI.quantity) as totalRevenue,
@@ -243,7 +235,6 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   const totalOrders = parseInt(currentMetrics?.totalOrders) || 0;
   const totalSales = parseInt(currentMetrics?.totalSales) || 0;
 
-  // 2. Previous Period Revenue (for Growth %)
   const prevMetrics = await runQuery(`
     SELECT SUM(OI.priceAtTimeOfPurchase * OI.quantity) as totalRevenue
     FROM OrderItems OI
@@ -263,7 +254,6 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   if (prevRevenue === 0 && totalRevenue > 0) revenueGrowth = 100;
   else if (prevRevenue > 0) revenueGrowth = ((totalRevenue - prevRevenue) / prevRevenue) * 100;
 
-  // 3. Average Rating
   const avgResult = await runQuery(`
     SELECT AVG(R.rating) as averageRating
     FROM Reviews R
@@ -274,7 +264,6 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   
   const averageRating = parseFloat(avgResult?.averageRating) || 0;
 
-  // 4. Pending Orders (items awaiting fulfillment)
   const pendingResult = await runQuery(`
     SELECT COUNT(*) as pendingOrders
     FROM OrderItems OI
@@ -284,12 +273,10 @@ export const getSellerDashboardStats = async (userId, days = 30) => {
   `, { sellerProfileId: profile.id });
   const pendingOrders = parseInt(pendingResult?.pendingOrders) || 0;
 
-  // 5. Active Offers
   const activeOffers = await db.Offer.count({
     where: { sellerProfileId: profile.id, status: 'active' }
   });
 
-  // 6. Out of Stock Offers (active but 0 quantity)
   const outOfStock = await db.Offer.count({
     where: { 
       sellerProfileId: profile.id,
@@ -370,7 +357,6 @@ export const getSellerTopProducts = async (userId, days = 30) => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  // Step 1: Aggregate revenue and sold quantity strictly grouped by offerId
   const aggregates = await db.OrderItem.findAll({
     attributes: [
       "offerId",
@@ -392,7 +378,6 @@ export const getSellerTopProducts = async (userId, days = 30) => {
 
   if (!aggregates.length) return [];
 
-  // Step 2: Fetch product details corresponding to those offers
   const offerIds = aggregates.map((a) => a.offerId);
   const offers = await db.Offer.findAll({
     where: { id: offerIds },
@@ -409,7 +394,6 @@ export const getSellerTopProducts = async (userId, days = 30) => {
     return acc;
   }, {});
 
-  // Step 3: Combine and return
   return aggregates.map((agg) => {
     const offer = offerMap[agg.offerId];
     return {
@@ -426,7 +410,6 @@ export const getSellerCategoryPerformance = async (userId, days = 30) => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  // Step 1: Aggregate revenue by offerId
   const aggregates = await db.OrderItem.findAll({
     attributes: [
       "offerId",
@@ -445,7 +428,6 @@ export const getSellerCategoryPerformance = async (userId, days = 30) => {
 
   if (!aggregates.length) return { labels: [], datasets: [] };
 
-  // Step 2: Fetch offers with deep category inclusion
   const offerIds = aggregates.map((a) => a.offerId);
   const offers = await db.Offer.findAll({
     where: { id: offerIds },
@@ -462,7 +444,6 @@ export const getSellerCategoryPerformance = async (userId, days = 30) => {
     return acc;
   }, {});
 
-  // Step 3: Manually group by category name
   const categoryData = {};
   aggregates.forEach(agg => {
     const offer = offerMap[agg.offerId];
@@ -473,7 +454,6 @@ export const getSellerCategoryPerformance = async (userId, days = 30) => {
     categoryData[catName] += parseFloat(agg.totalRevenue) || 0;
   });
 
-  // Sort and extract labels/data
   const sortedCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
   const labels = sortedCategories.map(c => c[0]);
   const data = sortedCategories.map(c => c[1]);

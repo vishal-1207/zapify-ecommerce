@@ -8,12 +8,10 @@ export default (sequelize, DataTypes) => {
     message: { type: DataTypes.STRING, allowNull: false },
     type: {
       type: DataTypes.ENUM(
-        // Types for Sellers
         "new_order",
         "product_suggestion_approved",
         "product_suggestion_rejected",
 
-        // Types for Customers
         "order_placed",
         "order_status_update",
         "review_approved",
@@ -23,7 +21,6 @@ export default (sequelize, DataTypes) => {
         "order_suggestion",
         "low_stock_wishlist",
 
-        // Types for Admins
         "new_product_suggestion",
         "new_review_for_moderation",
       ),

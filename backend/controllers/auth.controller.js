@@ -19,7 +19,6 @@ const getCookieOptions = () => {
   };
 };
 
-//Register Controller
 export const registerController = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
   const { user, tokens } = await authServices.registerService({
@@ -44,7 +43,6 @@ export const registerController = asyncHandler(async (req, res) => {
   );
 });
 
-//Login Controller
 export const loginController = asyncHandler(async (req, res) => {
   const { userId, password } = req.body;
   const { user, tokens } = await authServices.loginService({
@@ -67,9 +65,7 @@ export const loginController = asyncHandler(async (req, res) => {
   );
 });
 
-//Social Callback Handler Controller
 
-//Social Callback Handler Controller
 export const socialCallbackHandler = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -79,20 +75,16 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
 
   const tokens = await generateTokens(user);
 
-  // Generate a unique ticket
   const ticket = crypto.randomUUID();
 
-  // Store tokens in Redis with a short expiration (e.g., 10 seconds)
   await redisClient.set(`ticket:${ticket}`, JSON.stringify(tokens), {
     EX: 10, // Expires in 10 seconds
   });
 
-  // Redirect to frontend with the ticket
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   return res.redirect(`${frontendUrl}/?ticket=${ticket}`);
 });
 
-// Exchange Ticket Controller
 export const exchangeTicket = asyncHandler(async (req, res) => {
   const { ticket } = req.body;
 
@@ -100,7 +92,6 @@ export const exchangeTicket = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Ticket is required.");
   }
 
-  // Retrieve tokens from Redis
   const tokensData = await redisClient.get(`ticket:${ticket}`);
 
   if (!tokensData) {
@@ -109,16 +100,11 @@ export const exchangeTicket = asyncHandler(async (req, res) => {
 
   const tokens = JSON.parse(tokensData);
 
-  // Delete the ticket immediately after use (One-time use)
   await redisClient.del(`ticket:${ticket}`);
 
   const options = getCookieOptions();
   setTokensInCookies(res, tokens, options);
 
-  // Fetch user to return with tokens
-  // We need to decode the access token to get the user ID, or we could have stored the user ID in redis too.
-  // But generateTokens returns { accessToken, refreshToken }.
-  // Let's decode the accessToken to find the user.
   const decoded = jwt.verify(tokens.accessToken, process.env.JWT_SECRET);
   const user = await db.User.findByPk(decoded.id);
 
@@ -134,7 +120,6 @@ export const exchangeTicket = asyncHandler(async (req, res) => {
   );
 });
 
-// Token Handler Controller
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingToken = req.cookies?.refreshToken || req.body.refreshToken;
   if (!incomingToken) throw new ApiError(401, "Refresh token missing.");
@@ -144,12 +129,9 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
   const options = getCookieOptions();
 
-  // Compute remaining TTL of the stored refresh token so the cookie
-  // doesn't silently reset to the full duration on every access-token refresh.
   const remainingRefreshMs =
     new Date(storedToken.expiresAt).getTime() - Date.now();
 
-  // Re-set both cookies: new access token + same refresh token with exact remaining time.
   setTokensInCookies(
     res,
     { accessToken, refreshToken: incomingToken },
@@ -157,7 +139,6 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     remainingRefreshMs,
   );
 
-  // Only return the new access token — refresh token is unchanged.
   return res
     .status(200)
     .json(
@@ -165,7 +146,6 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-// Forgot Password Controller
 export const forgotPasswordController = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -178,7 +158,6 @@ export const forgotPasswordController = asyncHandler(async (req, res) => {
     );
 });
 
-// Reset Password Controller
 export const resetPasswordController = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -189,7 +168,6 @@ export const resetPasswordController = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Password reset successful."));
 });
 
-//Logout Controller
 export const logoutController = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 

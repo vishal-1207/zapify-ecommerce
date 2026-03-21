@@ -5,7 +5,6 @@ import db from "../models/index.js";
 import { generateUniqueName } from "../utils/passport.util.js";
 
 const initializePassport = () => {
-//Google Passport Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -16,7 +15,6 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const generatedUsername = await generateUniqueName(profile.displayName);
-        // Check if user exists by email
         const existingUser = await db.User.findOne({
           where: { email: profile.emails[0].value },
         });
@@ -27,7 +25,6 @@ passport.use(
               message: `Account already exists with ${existingUser.provider}. Please login with ${existingUser.provider}.`,
             });
           }
-          // Same provider, log them in
           return done(null, existingUser);
         }
 
@@ -48,7 +45,6 @@ passport.use(
   )
 );
 
-//Github Passport Strategy
 passport.use(
   new GitHubStrategy(
     {
@@ -66,7 +62,6 @@ passport.use(
             ? profile.emails[0].value
             : `${generatedUsername}@github.placeholder.com`;
 
-        // Check if user exists by email
         const existingUser = await db.User.findOne({ where: { email } });
         if (existingUser) {
           if (existingUser.provider !== "github") {

@@ -25,14 +25,12 @@ export default (sequelize, DataTypes) => {
       ),
       allowNull: false,
     },
-    // Optional extra detail from the reporter
     description: { type: DataTypes.TEXT, allowNull: true },
     status: {
       type: DataTypes.ENUM("open", "resolved", "dismissed"),
       defaultValue: "open",
       allowNull: false,
     },
-    // Admin who resolved or dismissed the report
     resolvedBy: { type: DataTypes.UUID, allowNull: true },
     resolvedAt: { type: DataTypes.DATE, allowNull: true },
   });
@@ -53,7 +51,6 @@ export default (sequelize, DataTypes) => {
     });
   };
 
-  // Prevent the same user from reporting the same review twice
   ReviewReport.addHook("beforeCreate", async (report) => {
     const existing = await ReviewReport.findOne({
       where: { reviewId: report.reviewId, reporterId: report.reporterId },

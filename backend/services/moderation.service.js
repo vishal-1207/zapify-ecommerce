@@ -25,8 +25,6 @@ import Sentiment from "sentiment";
 const require = createRequire(import.meta.url);
 const sentimentAnalyzer = new Sentiment();
 
-// ─── Model Singletons ──────────────────────────────────────────────────────────
-// Models are loaded once on first pipeline run and cached in memory.
 let _nsfwModel = null;
 
 async function getNsfwModel() {
@@ -34,14 +32,12 @@ async function getNsfwModel() {
     await import("@tensorflow/tfjs-node");
     const nsfwjs = require("nsfwjs");
 
-    // Use the bundled MobileNet model — no external server required after first download
     _nsfwModel = await nsfwjs.load();
     console.log("[Moderation] NSFW model loaded.");
   }
   return _nsfwModel;
 }
 
-// ─── Step 1: Profanity ─────────────────────────────────────────────────────────
 /**
  * Checks comment for profanity using the leo-profanity dictionary.
  * @returns {{ found: boolean, words: string[] }}
@@ -57,14 +53,12 @@ async function checkProfanity(comment) {
   return { found: hasProfanity, words };
 }
 
-// ─── Step 2: Spam Heuristics ───────────────────────────────────────────────────
 /**
  * Rule-based spam detection on comment text.
  * @returns {{ isSpam: boolean, reasons: string[] }}
  */
 function checkSpam(comment) {
   if (!comment || comment.trim().length === 0) {
-    // Empty comments are not spam; they just have no text to flag
     return { isSpam: false, reasons: [] };
   }
 
@@ -75,22 +69,17 @@ function checkSpam(comment) {
     reasons.push("too_short");
   }
 
-  // Excessive uppercase (> 70% of alphabetical chars)
   const alphChars = comment.replace(/[^a-zA-Z]/g, "");
   if (alphChars.length > 5) {
     const upperRatio = comment.replace(/[^A-Z]/g, "").length / alphChars.length;
     if (upperRatio > 0.7) reasons.push("excessive_caps");
   }
 
-  // Repeated characters (e.g. "aaaaaaa", "!!!!!")
-  // Only flag if the word itself is long (to avoid flagging "Hehe" or short acronyms, though 5+ chars of same letter is rare)
   if (/(.)\1{5,}/.test(comment)) reasons.push("repeated_chars");
 
-  // Excessive URLs (more than 2)
   const urlMatches = comment.match(/https?:\/\/[^\s]+/g) || [];
   if (urlMatches.length > 2) reasons.push("excessive_urls");
 
-  // Same word repeated more than 5 times
   const wordFreq = {};
   words.forEach((w) => {
     const lower = w.toLowerCase().replace(/[^a-z]/g, "");
@@ -102,7 +91,6 @@ function checkSpam(comment) {
   return { isSpam: reasons.length > 0, reasons };
 }
 
-// ─── Step 3: Velocity Check (Redis) ───────────────────────────────────────────
 /**
  * Checks how many reviews a user has submitted recently.
  * Uses Redis INCR + EXPIRE to implement sliding windows.
@@ -118,7 +106,6 @@ async function checkVelocity(userId) {
       redisClient.incr(dayKey),
     ]);
 
-    // Set expiry only when key is first created (count === 1)
     if (hourCount === 1) await redisClient.expire(hourKey, 3600);
     if (dayCount === 1) await redisClient.expire(dayKey, 86400);
 
@@ -130,7 +117,6 @@ async function checkVelocity(userId) {
   }
 }
 
-// ─── Step 4: Duplicate Comment Check ──────────────────────────────────────────
 /**
  * Detects if the same user has submitted the exact same comment
  * across 2 or more different products (copy-paste spamming).
@@ -149,7 +135,6 @@ async function checkDuplicateComment(comment, userId) {
   }
 }
 
-// ─── Step 5: Toxicity Check ───────────────────────────────────────────────────
 /**
  * Runs a dictionary-based AFINN Sentiment Analysis on the comment text.
  * Extracts highly negative sentiment elements as "toxic" categories.
@@ -162,10 +147,8 @@ async function checkTextToxicity(comment) {
   try {
     const result = sentimentAnalyzer.analyze(comment);
 
-    // A significantly negative sentiment score (<= -3) flags as toxic
     const isToxic = result.score <= -3;
 
-    // Normalize absolute score to a 0-1 scale ceiling at 1.0 (e.g. -5 -> 0.5)
     const normalizedScore = isToxic
       ? Math.min(Math.abs(result.score) / 10, 1.0)
       : 0;
@@ -181,7 +164,6 @@ async function checkTextToxicity(comment) {
   }
 }
 
-// ─── Step 6: NSFW Image Check ─────────────────────────────────────────────────
 /**
  * Downloads each review image from its Cloudinary URL and runs the nsfwjs
  * classifier on it. Returns true if ANY image scores above the NSFW threshold.
@@ -203,13 +185,11 @@ async function checkNsfwMedia(mediaUrls) {
     const scores = [];
     for (const url of mediaUrls) {
       try {
-        // Fetch the image as a buffer (already uploaded to Cloudinary)
         const response = await fetch(url);
         if (!response.ok) continue;
         const arrayBuffer = await response.arrayBuffer();
         const rawBuffer = Buffer.from(arrayBuffer);
 
-        // Resize to 224×224 (nsfwjs requirement) and convert to PNG
         const processedBuffer = await sharp
           .default(rawBuffer)
           .resize(224, 224)
@@ -271,7 +251,6 @@ export async function checkLocalNsfwMedia(files) {
       try {
         const rawBuffer = await fs.readFile(file.path);
 
-        // Resize to 224×224 (nsfwjs requirement) and convert to PNG
         const processedBuffer = await sharp
           .default(rawBuffer)
           .resize(224, 224)
@@ -307,7 +286,6 @@ export async function checkLocalNsfwMedia(files) {
   }
 }
 
-// ─── Step 7: Scoring Engine ────────────────────────────────────────────────────
 /**
  * Computes a composite autoModScore (0–1) from all check results
  * and decides the final automated status.
@@ -339,7 +317,6 @@ function computeDecision(flags) {
   return { score: parseFloat(score.toFixed(2)), status };
 }
 
-// ─── Main Pipeline ─────────────────────────────────────────────────────────────
 /**
  * Runs the full moderation pipeline for a review.
  * Safe to call fire-and-forget (errors are caught internally).
@@ -362,7 +339,6 @@ export async function runModerationPipeline(reviewId) {
       .filter((m) => m.fileType === "image")
       .map((m) => m.url);
 
-    // Run all checks concurrently where possible
     const [
       profanityResult,
       toxicityResult,
@@ -379,7 +355,6 @@ export async function runModerationPipeline(reviewId) {
 
     const spamResult = checkSpam(comment);
 
-    // Combine: suspicious if velocity OR duplicate comment found
     const suspicious =
       velocityResult.suspicious ||
       dupResult.isDuplicate ||
@@ -397,7 +372,6 @@ export async function runModerationPipeline(reviewId) {
 
     const { score, status } = computeDecision(autoModFlags);
 
-    // Build a human-readable moderation reason for rejected/flagged reviews
     const reasons = [];
     if (autoModFlags.profanity) reasons.push("profanity detected");
     if (autoModFlags.nsfw) reasons.push("inappropriate image content");
@@ -419,12 +393,10 @@ export async function runModerationPipeline(reviewId) {
       moderationReason,
     });
 
-    // Update product & seller rating if auto-approved
     if (status === "approved") {
       const { updateProductAverageRating, updateSellerAverageRating } =
         await import("./reviews.service.js");
       updateProductAverageRating(review.productId).catch(() => {});
-      // Seller ID is fetched via reviews service helper
       const orderItem = await db.OrderItem.findByPk(review.orderItemId, {
         include: [{ model: db.Offer, attributes: ["sellerProfileId"] }],
       });

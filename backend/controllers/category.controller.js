@@ -8,7 +8,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
  * Fetches all categories availabe.
  */
 export const getCategories = asyncHandler(async (req, res) => {
-  // Check if admin to decide whether to include inactive categories
   const isAdmin = req.user?.roles?.includes("admin");
   
   const categories = await categoryService.getAllCategories({

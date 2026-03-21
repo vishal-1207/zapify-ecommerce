@@ -7,10 +7,6 @@ import authorizeRoles from "../middleware/authorizeRoles.middleware.js";
 
 const router = express.Router();
 
-// ─── PUBLIC: Stripe webhook ───────────────────────────────────────────────────
-// Must be BEFORE router.use(authenticate) and must NOT have csrfProtection.
-// Stripe sends unauthenticated POST requests — any auth/csrf middleware will 401/403 them.
-// express.raw() must come before the handler so Stripe signature verification gets the raw body.
 router
   .route("/webhook")
   .post(
@@ -18,20 +14,16 @@ router
     paymentControllers.stripeWebhookHandler,
   );
 
-// ─── PROTECTED: all routes below require a valid JWT ────────────────────────
 router.use(authenticate);
 
 router
   .route("/create-intent")
   .post(csrfProtection, isVerified, paymentControllers.createPaymentIntent);
 
-// User: get their own transaction history
 router.route("/my-transactions").get(paymentControllers.getMyTransactions);
 
-// User: verify payment status directly with Stripe (fallback for when webhooks aren't delivered, e.g. local dev)
 router.route("/verify").post(paymentControllers.verifyPayment);
 
-// Admin: issue a full or partial refund for an order
 router
   .route("/:orderId/refund")
   .post(

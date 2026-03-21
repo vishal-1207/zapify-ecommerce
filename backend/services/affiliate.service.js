@@ -1,25 +1,23 @@
 import db from "../models/index.js";
 import { v4 as uuidv4 } from "uuid";
 
-const { AffiliateProfile, Order, OrderItem, Product, User } = db;
+const { AffiliateProfile, Order, OrderItem, Product, User, Offer } = db;
 
 /**
  * Creates an affiliate profile for a user
  */
 export const applyForAffiliate = async (userId) => {
-  // Check if they already have one
   const existing = await AffiliateProfile.findOne({ where: { userId } });
   if (existing) {
     throw new Error("You are already registered as an affiliate.");
   }
 
-  // Generate a unique code like ZAP-XXXX
   const referralCode = `ZAP-${uuidv4().substring(0, 8).toUpperCase()}`;
 
   const profile = await AffiliateProfile.create({
     userId,
     referralCode,
-    status: "active", // Active by default for immediate earnings
+    status: "active",
     commissionRate: 10.0,
   });
 
@@ -36,7 +34,6 @@ export const getAffiliateDashboardStats = async (userId) => {
     throw new Error("Affiliate profile not found.");
   }
 
-  // Count total referred orders
   const totalReferredOrders = await Order.count({
     where: { affiliateId: profile.id, status: ["processed", "shipped", "delivered"] },
   });
@@ -69,11 +66,6 @@ export const getAffiliateRecentOrders = async (userId) => {
         model: User,
         as: "user",
         attributes: ["fullname"]
-      },
-      {
-        model: OrderItem,
-        as: "orderItems",
-        include: [{ model: Product, as: "product", attributes: ["name", "images"] }]
       }
     ],
     order: [["createdAt", "DESC"]],

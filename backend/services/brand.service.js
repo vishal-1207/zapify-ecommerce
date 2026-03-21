@@ -28,7 +28,6 @@ export const getAllBrands = async ({ includeInactive = false } = {}) => {
     ],
   });
 
-  // Self-healing: Check for missing slugs and update them
   for (const brand of brands) {
     if (!brand.slug) {
         const newSlug = `${slugify(brand.name, { lower: true, strict: true })}-${nanoid(6)}`;
@@ -50,7 +49,6 @@ export const addBrandService = async (data, file) => {
 
   let uploadResult = null;
 
-  // 1. Upload to Cloudinary first (outside transaction)
   if (file) {
     try {
       uploadResult = await uploadToCloudinary(
@@ -62,7 +60,6 @@ export const addBrandService = async (data, file) => {
     }
   }
 
-  // 2. Start Transaction
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -93,7 +90,6 @@ export const addBrandService = async (data, file) => {
     return { brand, media };
   } catch (dbError) {
     await transaction.rollback();
-    // 3. Rollback Cloudinary if DB fails
     if (uploadResult && uploadResult.public_id) {
       await cloudinary.uploader.destroy(uploadResult.public_id);
     }

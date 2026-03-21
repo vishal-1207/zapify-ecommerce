@@ -10,13 +10,10 @@ const run = async () => {
     console.log("DB Connected");
 
     console.log(`Clearing Algolia Index '${INDEX_NAME}'...`);
-    // Attempt to clear objects. If using v5 lite client, this might vary.
-    // Based on deleteObject usage, we assume clearObjects exists or we use browse/delete.
     try {
         await client.clearObjects({ indexName: INDEX_NAME });
     } catch (e) {
         console.warn("clearObjects failed, checking if clearIndex works or index doesn't exist...", e.message);
-        // Fallback or ignore if index doesn't exist
     }
 
     const products = await db.Product.findAll({

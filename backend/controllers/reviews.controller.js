@@ -103,7 +103,6 @@ export const toggleReviewVoteController = asyncHandler(async (req, res) => {
   });
 });
 
-// ── Seller Controllers ──────────────────────────────────────────────────────────
 
 /**
  * Seller: get all reviews for their products (with filters + pagination).
@@ -170,7 +169,6 @@ export const reportReviewController = asyncHandler(async (req, res) => {
     .json({ message: "Report submitted successfully.", report });
 });
 
-// ── Admin Controllers ───────────────────────────────────────────────────────────
 
 /**
  * Admin: get paginated review queue filterable by status.

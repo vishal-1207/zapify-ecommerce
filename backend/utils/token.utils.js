@@ -45,5 +45,4 @@ export const generateFullSession = async (user, transaction = null) => {
   return { accessToken, refreshToken };
 };
 
-// Keep default export for backward-compatibility with socialCallbackHandler
 export default generateFullSession;

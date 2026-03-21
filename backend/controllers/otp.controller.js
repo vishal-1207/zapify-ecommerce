@@ -2,7 +2,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import * as otpServices from "../services/otp.service.js";
 import db from "../models/index.js";
 
-// To send the code to the user's phone
 export const sendPhoneVerificationController = asyncHandler(
   async (req, res) => {
     const result = await otpServices.sendVerificationCode(req.user.id, "sms");
@@ -10,7 +9,6 @@ export const sendPhoneVerificationController = asyncHandler(
   }
 );
 
-// To verify the code and update the phone status
 export const verifyPhoneController = asyncHandler(async (req, res) => {
   const { code } = req.body;
   await otpServices.verifyCode(req.user.id, code, "sms");
@@ -25,7 +23,6 @@ export const verifyPhoneController = asyncHandler(async (req, res) => {
     .json({ message: "Phone number verified successfully." });
 });
 
-// To send the code to the user's email
 export const sendEmailVerificationController = asyncHandler(
   async (req, res) => {
     const result = await otpServices.sendVerificationCode(req.user.id, "email");
@@ -33,7 +30,6 @@ export const sendEmailVerificationController = asyncHandler(
   }
 );
 
-// To verify the code and update the email status
 export const verifyEmailController = asyncHandler(async (req, res) => {
   const { code } = req.body;
   await otpServices.verifyCode(req.user.id, code, "email");

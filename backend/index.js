@@ -35,7 +35,6 @@ import cors from "cors";
 import initializePassport from "./config/passport.js";
 
 const app = express();
-// Trigger restart
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
@@ -66,7 +65,6 @@ app.use(
   }),
 );
 app.use(cookieParser());
-// Stripe webhook MUST receive the raw body — skip JSON parsing for that route
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/payment/webhook") return next();
   express.json()(req, res, next);

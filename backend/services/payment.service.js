@@ -65,7 +65,6 @@ const notifySellersOfNewOrder = async (order) => {
 
   const itemsBySeller = {};
 
-  // Group order items by seller
   for (const item of order.OrderItems) {
     const sellerId = item.Offer.SellerProfile.id;
     if (!itemsBySeller[sellerId]) {
@@ -77,7 +76,6 @@ const notifySellersOfNewOrder = async (order) => {
     itemsBySeller[sellerId].items.push(item);
   }
 
-  // Send a separate email to each seller
   for (const sellerId in itemsBySeller) {
     const { seller, items } = itemsBySeller[sellerId];
     const sellerUser = await seller.getUser();
@@ -106,7 +104,6 @@ const notifySellersOfNewOrder = async (order) => {
 
     await enqueueMail(sellerUser.email, subject, html);
 
-    // --- Send In-App Notification ---
     const message = `New Sale! You have ${
       items.length
     } new item(s) to fulfill for Order #${order.id.slice(0, 8)}.`;
@@ -178,7 +175,6 @@ export const handleStripeWebhook = async (event) => {
     });
 
     if (payment && payment.status === "pending") {
-      // Retrieve expanded PaymentIntent from Stripe for full method details
       let paymentMethodType = paymentIntent.payment_method_types?.[0] || "card";
       let paymentMethodDetails = null;
       try {
@@ -237,7 +233,6 @@ export const handleStripeWebhook = async (event) => {
         order.status = "processed";
         await order.save();
 
-        // In-app payment confirmation notification
         const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
         createNotification(
           order.userId,
@@ -339,7 +334,6 @@ export const initiateRefund = async (
     reason,
   };
 
-  // Partial refund: Stripe expects amount in paise (smallest currency unit)
   if (amount !== null) {
     if (amount <= 0 || amount > parseFloat(payment.amount)) {
       throw new ApiError(
@@ -367,7 +361,6 @@ export const initiateRefund = async (
   };
   await payment.save();
 
-  // Cascade order status to cancelled on full refund
   if (isFullRefund) {
     await db.Order.update({ status: "cancelled" }, { where: { id: orderId } });
     await db.OrderItem.update({ status: "cancelled" }, { where: { orderId } });
@@ -396,12 +389,10 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
     throw new ApiError(404, "Payment record not found for this PaymentIntent.");
   }
 
-  // Already in a terminal state — nothing to do
   if (payment.status !== "pending") {
     return payment;
   }
 
-  // Retrieve the PaymentIntent from Stripe to get authoritative status
   let fullIntent;
   try {
     fullIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
@@ -415,11 +406,9 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
   }
 
   if (fullIntent.status !== "succeeded") {
-    // Payment not confirmed yet on Stripe's side — return as-is
     return payment;
   }
 
-  // Update payment record
   const paymentMethodType =
     fullIntent.payment_method?.type ||
     fullIntent.payment_method_types?.[0] ||
@@ -439,7 +428,6 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
   };
   await payment.save();
 
-  // Fetch the order with all associations needed for notifications
   const orderId = fullIntent.metadata?.orderId || payment.orderId;
   const order = await db.Order.findByPk(orderId, {
     include: [
@@ -471,7 +459,6 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
     order.status = "processed";
     await order.save();
 
-    // In-app payment confirmation notification
     const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
     createNotification(
       order.userId,

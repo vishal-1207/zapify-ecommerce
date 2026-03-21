@@ -57,14 +57,12 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
         item.quantity;
     }
 
-    // Generate a unique order ID
     const orderId = `ORD-${Date.now().toString().slice(-6)}${Math.floor(
       Math.random() * 1000,
     )
       .toString()
       .padStart(3, "0")}`;
 
-    // Process Affiliate Commission
     let affiliateId = null;
     let affiliateCommission = 0;
 
@@ -74,7 +72,6 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
         transaction,
       });
 
-      // Cannot refer yourself, and affiliate must be active
       if (
         affiliate &&
         affiliate.userId !== userId &&
@@ -88,7 +85,6 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
       }
     }
 
-    // Create the main order record.
     const newOrder = await db.Order.create(
       {
         orderId,
@@ -126,7 +122,6 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
     }));
     await db.OrderItem.bulkCreate(orderItemsData, { transaction });
 
-    // Decrement stock for each offer
     await Promise.all(
       cartItems.map((item) =>
         db.Offer.update(
@@ -140,21 +135,11 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
       ),
     );
 
-    // Update Affiliate Pending Earnings if applicable
-    if (affiliateId && affiliateCommission > 0) {
-      await db.AffiliateProfile.update(
-        {
-          pendingEarnings: Sequelize.literal(`pendingEarnings + ${affiliateCommission}`),
-        },
-        { where: { id: affiliateId }, transaction }
-      );
-    }
 
     await transaction.commit();
 
     await clearCart(userId);
 
-    // ── 1. Notify the buyer: order placed ────────────────────────────────────
     const shortId = newOrder.orderId;
     createNotification(
       userId,
@@ -163,8 +148,6 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
       `/account/orders/${newOrder.id}`,
     );
 
-    // ── 2. Low-stock wishlist alerts ──────────────────────────────────────────
-    // Fire-and-forget: don't let this block or break the order creation response
     notifyLowStockWishlisters(cartItems).catch((err) =>
       console.error("Low-stock wishlist notification failed:", err),
     );
@@ -188,7 +171,6 @@ const LOW_STOCK_THRESHOLD = 5;
 const notifyLowStockWishlisters = async (cartItems) => {
   const offerIds = cartItems.map((i) => i.offerId);
 
-  // Fetch fresh stock levels for all purchased offers along with their product id
   const offers = await db.Offer.findAll({
     where: { id: { [Op.in]: offerIds } },
     attributes: ["id", "stockQuantity", "productId"],
@@ -197,7 +179,6 @@ const notifyLowStockWishlisters = async (cartItems) => {
   for (const offer of offers) {
     if (offer.stockQuantity > LOW_STOCK_THRESHOLD) continue;
 
-    // Find all users who wishlisted this product (excluding the buyer)
     const wishlistEntries = await db.Wishlist.findAll({
       where: { productId: offer.productId },
       attributes: ["userId"],
@@ -309,14 +290,12 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
     const offset = (page - 1) * limit;
 
     const whereClause = {
-      // Basic filter for order items if needed directly on OrderItem
     };
 
     if (status) {
       whereClause.status = status;
     }
 
-    // Search
     let productWhere = {};
     let orderWhere = {};
 
@@ -453,12 +432,10 @@ export const updateOrderItemStatus = async (
 
   const transaction = await db.sequelize.transaction();
   try {
-    // Normalize to lowercase so DB ENUM validation always passes
     const normalizedStatus = status.toLowerCase();
     item.status = normalizedStatus;
     await item.save({ transaction });
 
-    // Sync status with parent Order
     await syncOrderStatus(item.orderId, transaction);
 
     if (normalizedStatus === "shipped") {
@@ -564,6 +541,10 @@ const syncOrderStatus = async (orderId, transaction) => {
 
   if (!items || items.length === 0) return;
 
+  const currentOrder = await db.Order.findByPk(orderId, { transaction });
+  if (!currentOrder) return;
+  const oldStatus = currentOrder.status;
+
   const statuses = items.map((i) => i.status);
   let newStatus = "pending";
 
@@ -581,7 +562,6 @@ const syncOrderStatus = async (orderId, transaction) => {
   } else if (isDelivered) {
     newStatus = "delivered";
   } else if (isShipped) {
-    // If all are processed (shipped/delivered/cancelled) but not all delivered/cancelled
     newStatus = "shipped";
   } else if (isProcessing) {
     newStatus = "processed";
@@ -589,10 +569,21 @@ const syncOrderStatus = async (orderId, transaction) => {
     newStatus = "pending";
   }
 
-  await db.Order.update(
-    { status: newStatus },
-    { where: { id: orderId }, transaction },
-  );
+  if (oldStatus !== newStatus) {
+    await db.Order.update(
+      { status: newStatus },
+      { where: { id: orderId }, transaction },
+    );
+    
+    if (newStatus === "delivered" && currentOrder.affiliateId && currentOrder.affiliateCommission > 0) {
+      await db.AffiliateProfile.update(
+        {
+          totalEarnings: Sequelize.literal(`totalEarnings + ${currentOrder.affiliateCommission}`),
+        },
+        { where: { id: currentOrder.affiliateId }, transaction }
+      );
+    }
+  }
 };
 
 /**
@@ -618,22 +609,18 @@ export const cancelOrderService = async (orderId, userId, reason) => {
     );
   }
 
-  // Cancel the order + items
   await db.Order.update(
     { status: "cancelled", cancellationReason: reason },
     { where: { id: orderId } },
   );
   await db.OrderItem.update({ status: "cancelled" }, { where: { orderId } });
 
-  // Auto-refund if a succeeded payment exists
-  // order.payments is a single object (hasOne), not an array
   const payment = order.payments;
   if (payment?.status === "succeeded") {
     try {
       const { initiateRefund } = await import("./payment.service.js");
       await initiateRefund(orderId, null, "requested_by_customer");
     } catch (refundErr) {
-      // Refund failure should not block the cancellation — log and continue
       console.error(
         "Auto-refund failed for cancelled order:",
         refundErr.message,
@@ -675,7 +662,6 @@ export const requestReturnService = async (orderId, userId, reason) => {
     );
   }
 
-  // 7-day return window check
   const deliveredAt = new Date(order.updatedAt);
   const daysSinceDelivery =
     (Date.now() - deliveredAt.getTime()) / (1000 * 60 * 60 * 24);
@@ -686,7 +672,6 @@ export const requestReturnService = async (orderId, userId, reason) => {
     );
   }
 
-  // Mark order as return-requested
   await db.Order.update(
     { status: "return_requested", cancellationReason: reason },
     { where: { id: orderId } },
@@ -696,15 +681,12 @@ export const requestReturnService = async (orderId, userId, reason) => {
     { where: { orderId } },
   );
 
-  // Trigger refund via Stripe
-  // order.payments is a single object (hasOne), not an array
   const payment = order.payments;
   if (payment?.status === "succeeded") {
     try {
       const { initiateRefund } = await import("./payment.service.js");
       await initiateRefund(orderId, null, "requested_by_customer");
     } catch (refundErr) {
-      // Refund failure should not block the return — log and continue
       console.error(
         "Auto-refund failed for return request:",
         refundErr.message,

@@ -383,8 +383,6 @@ export const reviewProductSuggestion = async (productId, decision) => {
     throw error;
   }
 
-  // Initial sync to Algolia is handled by hook, but aggregate update might be needed
-  // if stock > 0. The hook on Offer update will trigger aggregate update.
 
   const sellerProfile = product.offers?.[0]?.sellerProfile;
   const sellerUser = await db.User.findByPk(sellerProfile?.userId); // Need to fetch user
@@ -554,7 +552,6 @@ export const toggleProductStatus = async (productId) => {
     await invalidateCache(`product:${product.slug}`);
   }
 
-  // Sync changes to Algolia (remove if inactive, update if active)
   if (!product.isActive) {
     const { deleteProductFromAlgolia } = await import("./algolia.service.js");
     deleteProductFromAlgolia(product.id).catch((e) => console.error(e));

@@ -39,7 +39,6 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
     }
   }
 
-  //Check usage per user
   if (discount.usagePerUser != null) {
     const userUsage = await db.OrderDiscounts.count({
       where: { discountId: discount.id },
@@ -61,7 +60,6 @@ export const validateAndCalculateDiscount = async (code, subtotal, userId) => {
     throw new ApiError(400, "You have already used this discount code.");
   }
 
-  // Check minimum order value
   if (
     discount.minOrderAmount !== null &&
     subtotal < parseFloat(discount.minOrderAmount)
@@ -194,7 +192,6 @@ export const updateDiscount = async (id, updateData) => {
   const discount = await db.Discount.findByPk(id);
   if (!discount) throw new ApiError(404, "Discount not found.");
 
-  // If code is being updated, check for uniqueness
   if (updateData.code && updateData.code.toUpperCase() !== discount.code) {
     const existing = await db.Discount.findOne({
       where: { code: updateData.code.toUpperCase() },
@@ -236,7 +233,6 @@ import { getSellerProfile } from "./seller.service.js";
 
 import { invalidateCache } from "../utils/cache.js";
 
-// ... existing imports
 
 /**
  * Service for a seller to create/update a Lightning Deal on their offer.
@@ -276,7 +272,6 @@ export const createSellerDeal = async (userId, offerId, dealData) => {
 
   await offer.save();
 
-  // Invalidate Product Cache so the deal shows up immediately on PDP
   if (offer.product && offer.product.slug) {
     await invalidateCache(`product:${offer.product.slug}`);
   }
