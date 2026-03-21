@@ -665,7 +665,7 @@ export const getSimilarProducts = async (slug) => {
       },
     ],
     order: [
-      [db.sequelize.literal(`brandId = ${currentProduct.brandId || -1}`), 'DESC'],
+      [db.sequelize.literal(`brandId = '${currentProduct.brandId || -1}'`), 'DESC'],
       [db.sequelize.literal(`ABS(price - ${currentProduct.price})`), 'ASC'],
       ['averageRating', 'DESC']
     ],

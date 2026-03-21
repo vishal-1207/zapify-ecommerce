@@ -57,7 +57,7 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
         item.quantity;
     }
 
-    const orderId = `ORD-${Date.now().toString().slice(-6)}${Math.floor(
+    const uniqueOrderId = `ORD-${Date.now().toString().slice(-6)}${Math.floor(
       Math.random() * 1000,
     )
       .toString()
@@ -87,7 +87,7 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
 
     const newOrder = await db.Order.create(
       {
-        orderId,
+        uniqueOrderId,
         userId,
         mrp: mrpTotal,
         subtotalAmount: subtotal,
@@ -140,7 +140,7 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
 
     await clearCart(userId);
 
-    const shortId = newOrder.orderId;
+    const shortId = newOrder.uniqueOrderId;
     createNotification(
       userId,
       "order_placed",
@@ -221,7 +221,7 @@ export const getOrdersForCustomer = async (userId) => {
   const result = await db.Order.findAll({
     where: { userId },
     order: [["createdAt", "DESC"]],
-    attributes: ["id", "orderId", "totalAmount", "status", "createdAt"],
+    attributes: ["id", "uniqueOrderId", "totalAmount", "status", "createdAt"],
   });
 
   return result;
@@ -337,7 +337,7 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
           model: db.Order,
           attributes: [
             "id",
-            "orderId",
+            "uniqueOrderId",
             "createdAt",
             "totalAmount",
             "status",
@@ -388,7 +388,7 @@ export const getOrdersForFulfillment = async (sellerId) => {
       {
         model: db.Order,
         as: "order",
-        attributes: ["id", "orderId", "shippingAddress", "createdAt"],
+        attributes: ["id", "uniqueOrderId", "shippingAddress", "createdAt"],
       },
     ],
     where: { status: { [Op.in]: ["Pending", "Processing"] } },

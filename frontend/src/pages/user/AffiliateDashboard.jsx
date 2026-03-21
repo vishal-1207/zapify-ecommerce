@@ -180,7 +180,7 @@ const AffiliateDashboard = () => {
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
-                        {order.orderId}
+                        {order.uniqueOrderId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {formatCurrency(order.subtotalAmount)}

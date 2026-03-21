@@ -5,7 +5,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    orderId: {
+    uniqueOrderId: {
       type: DataTypes.STRING,
       allowNull: true, // Allow null for existing records, but new ones should have it
       unique: true,
@@ -64,11 +64,11 @@ export default (sequelize, DataTypes) => {
   Order.associate = (models) => {
     Order.belongsTo(models.User, { as: "user", foreignKey: "userId" });
 
-    Order.belongsTo(models.Discount, {
+    Order.belongsToMany(models.Discount, {
       through: models.OrderDiscounts,
       foreignKey: "orderId",
       otherKey: "discountId",
-      as: "appliedDiscount",
+      as: "discounts",
     });
     Order.hasMany(models.OrderItem, {
       as: "orderItems",
@@ -86,7 +86,7 @@ export default (sequelize, DataTypes) => {
     });
     Order.belongsTo(models.AffiliateProfile, {
       as: "affiliate",
-      foreignKey: "affiliateId"
+      foreignKey: "affiliateId",
     });
   };
 

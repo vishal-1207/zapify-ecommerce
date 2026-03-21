@@ -644,7 +644,7 @@ const Dashboard = () => {
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="py-3 pr-3 font-mono text-xs font-semibold text-indigo-600">
-                        #{order.orderId}
+                        #{order.uniqueOrderId}
                       </td>
                       <td className="py-3 pr-3">
                         <div>

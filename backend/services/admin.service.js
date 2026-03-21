@@ -494,7 +494,7 @@ export const updateOrderStatusService = async (orderId, status) => {
 
   const statusLabel =
     status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
-  const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+  const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
   const message = `Your order #${shortId} status has been updated to: ${statusLabel}.`;
   const linkUrl = `/account/orders/${orderId}`;
   createNotification(order.userId, "order_status_update", message, linkUrl);

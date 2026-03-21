@@ -40,7 +40,7 @@ const SellerPayments = () => {
   const filteredTransactions = transactions.filter(
     (txn) =>
       txn.Offer?.product?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      txn.Order?.orderId?.toLowerCase().includes(search.toLowerCase()),
+      txn.Order?.uniqueOrderId?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
@@ -75,10 +75,10 @@ const SellerPayments = () => {
       header: "Order Info",
       render: (txn) => (
         <Link
-          to={`/seller/orders?search=${txn.Order?.orderId || txn.Order?.id}`}
+          to={`/seller/orders?search=${txn.Order?.uniqueOrderId || txn.Order?.id}`}
           className="text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2"
         >
-          #{txn.Order?.orderId || txn.Order?.id?.slice(0, 8)}
+          #{txn.Order?.uniqueOrderId || txn.Order?.id?.slice(0, 8)}
         </Link>
       ),
     },

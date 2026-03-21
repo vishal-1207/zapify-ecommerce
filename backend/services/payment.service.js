@@ -233,7 +233,7 @@ export const handleStripeWebhook = async (event) => {
         order.status = "processed";
         await order.save();
 
-        const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+        const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
         createNotification(
           order.userId,
           "order_status_update",
@@ -288,7 +288,7 @@ export const getSellerTransactions = async (userId, page = 1, limit = 10) => {
           attributes: [],
           include: [{ model: db.Product, as: "product", attributes: ["name"] }],
         },
-        { model: db.Order, attributes: ["id", "orderId"] },
+        { model: db.Order, attributes: ["id", "uniqueOrderId"] },
       ],
       order: [["updatedAt", "DESC"]],
       raw: true,
@@ -459,7 +459,7 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
     order.status = "processed";
     await order.save();
 
-    const shortId = order.orderId || orderId.slice(0, 8).toUpperCase();
+    const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
     createNotification(
       order.userId,
       "order_status_update",

@@ -216,7 +216,7 @@ const OrderDetail = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              Order #{order.orderId || order.id.slice(0, 8).toUpperCase()}
+              Order #{order.uniqueOrderId || order.id.slice(0, 8).toUpperCase()}
             </h1>
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
               <span className="flex items-center gap-1.5">

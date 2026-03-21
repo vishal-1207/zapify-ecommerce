@@ -530,7 +530,7 @@ const SellerDashboard = () => {
                     >
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900">
-                          {(o.Order?.orderId || o.id).substring(0, 8)}
+                          {(o.Order?.uniqueOrderId || o.id).substring(0, 8)}
                         </div>
                         <div className="text-xs text-gray-400 mt-0.5">
                           {new Date(o.createdAt).toLocaleDateString()}

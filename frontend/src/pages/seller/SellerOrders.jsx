@@ -147,7 +147,7 @@ const SellerOrders = () => {
       render: (item) => (
         <div>
           <p className="text-sm font-medium text-gray-900">
-            {item.Order?.orderId || "N/A"}
+            {item.Order?.uniqueOrderId || "N/A"}
           </p>
           <p className="text-xs text-indigo-600 mb-1">
             {item.Order?.user?.name || "Guest"}
@@ -197,7 +197,7 @@ const SellerOrders = () => {
   const filteredOrders = orders.filter(
     (item) =>
       item.Offer?.product?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.Order?.orderId?.toLowerCase().includes(search.toLowerCase()),
+      item.Order?.uniqueOrderId?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
