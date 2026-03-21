@@ -15,7 +15,7 @@ import { formatCurrency } from "../../utils/currency";
 import { toast } from "react-hot-toast";
 import { ShieldCheck, CreditCard, Lock, Truck, MapPin } from "lucide-react";
 
-const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripeKey = import.meta.env.STRIPE_PUBLISHABLE_KEY;
 
 if (!stripeKey) {
   console.error("Stripe publishable key is missing in environment variables.");

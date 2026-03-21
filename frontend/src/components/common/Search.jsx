@@ -13,8 +13,8 @@ import { Search as SearchIcon, X, ChevronDown } from "lucide-react";
 import { debounce } from "lodash";
 
 const searchClient = algoliasearch(
-  import.meta.env.VITE_ALGOLIA_APP_ID,
-  import.meta.env.VITE_ALGOLIA_SEARCH_KEY,
+  import.meta.env.ALGOLIA_APP_ID,
+  import.meta.env.ALGOLIA_SEARCH_KEY,
 );
 
 const Hit = ({ hit, onClick }) => {
@@ -81,20 +81,21 @@ const CustomSearchBox = ({
   }, [searchParams, refine]);
 
   const updateUrl = useMemo(
-    () => debounce((newQuery) => {
-      setSearchParams(
-        (prev) => {
-          const newParams = new URLSearchParams(prev);
-          if (newQuery) {
-            newParams.set("search", newQuery);
-          } else {
-            newParams.delete("search");
-          }
-          return newParams;
-        },
-        { replace: true },
-      );
-    }, 500),
+    () =>
+      debounce((newQuery) => {
+        setSearchParams(
+          (prev) => {
+            const newParams = new URLSearchParams(prev);
+            if (newQuery) {
+              newParams.set("search", newQuery);
+            } else {
+              newParams.delete("search");
+            }
+            return newParams;
+          },
+          { replace: true },
+        );
+      }, 500),
     [setSearchParams],
   );
 
