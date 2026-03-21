@@ -6,7 +6,6 @@ import {
   resendEmailVerification,
 } from "../../api/auth";
 
-// Thunks
 export const loadUser = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
@@ -134,7 +133,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Load User
       .addCase(loadUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -150,7 +148,6 @@ const authSlice = createSlice({
         state.role = "guest";
         state.error = action.payload;
       })
-      // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -164,7 +161,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      // Login With Ticket
       .addCase(loginWithTicket.pending, (state) => {
         state.isLoading = true;
         state.error = null;

@@ -27,13 +27,11 @@ const AffiliateDashboard = () => {
         setProfile(data.profile);
         setStats(data.stats);
         
-        // Fetch recent orders if profile exists
         const ordersData = await getAffiliateOrders();
         setOrders(ordersData);
       }
     } catch (error) {
       if (error?.response?.status === 404 || error?.response?.data?.message?.includes("not found")) {
-        // No profile found, user needs to apply
         setProfile(null);
       } else {
         toast.error("Failed to load dashboard data");
@@ -72,7 +70,6 @@ const AffiliateDashboard = () => {
     );
   }
 
-  // Not an affiliate yet
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 py-20 px-4">
@@ -96,7 +93,6 @@ const AffiliateDashboard = () => {
     );
   }
 
-  // Affiliate Dashboard
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -120,7 +116,6 @@ const AffiliateDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-5 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -z-10 opacity-50"></div>
@@ -156,7 +151,6 @@ const AffiliateDashboard = () => {
           </div>
         </div>
 
-        {/* Transactions Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900">Recent Conversions</h3>

@@ -15,7 +15,6 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // New Address Form State
   const [newAddress, setNewAddress] = useState({
     street: "",
     city: "",
@@ -62,7 +61,7 @@ const Checkout = () => {
         isDefault: false,
       });
       toast.success("Address added successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to add address");
     }
   };

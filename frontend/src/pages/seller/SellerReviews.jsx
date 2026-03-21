@@ -40,13 +40,11 @@ const SellerReviews = () => {
   });
   const [searchInput, setSearchInput] = useState("");
 
-  // Inline reply state per review
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [replyError, setReplyError] = useState(null);
 
-  // Report modal state
   const [reportTarget, setReportTarget] = useState(null);
 
   const handleReportSuccess = () => {
@@ -60,7 +58,6 @@ const SellerReviews = () => {
     setReportTarget(null);
   };
 
-  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       if (filters.search !== searchInput) {
@@ -76,7 +73,6 @@ const SellerReviews = () => {
     setPage(1);
   };
 
-  // Reset page when limit changes
   useEffect(() => {
     setPage(1);
   }, [limit]);

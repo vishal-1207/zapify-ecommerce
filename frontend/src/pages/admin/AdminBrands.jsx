@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import DataTable from "../../components/common/DataTable";
 import Modal from "../../components/common/Modal";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,7 +32,6 @@ const AdminBrands = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -42,7 +41,7 @@ const AdminBrands = () => {
 
   useEffect(() => {
     fetchBrands();
-  }, []);
+  }, [fetchBrands]);
 
   useEffect(() => {
     if (reduxError) {
@@ -51,9 +50,9 @@ const AdminBrands = () => {
     }
   }, [reduxError]);
 
-  const fetchBrands = () => {
+  const fetchBrands = useCallback(() => {
     dispatch(fetchAdminBrands());
-  };
+  }, [dispatch]);
 
   const handleToggleStatus = async (id) => {
     const resultAction = await dispatch(toggleBrandStatusAction(id));

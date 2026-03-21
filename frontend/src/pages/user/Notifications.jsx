@@ -17,7 +17,6 @@ import {
 import { useNotifications } from "../../context/NotificationContext";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 
-// ── Icon/color per type (same as panel) ────────────────────────────────────
 const TYPE_META = {
   order_placed: {
     icon: CheckCircle,
@@ -106,7 +105,6 @@ const getTypeMeta = (type) =>
     label: "Info",
   };
 
-// ── Date group label ────────────────────────────────────────────────────────
 const getDateLabel = (dateStr) => {
   const d = new Date(dateStr);
   if (isToday(d)) return "Today";
@@ -114,7 +112,6 @@ const getDateLabel = (dateStr) => {
   return format(d, "MMMM d, yyyy");
 };
 
-// ── Group notifications by date ─────────────────────────────────────────────
 const groupByDate = (notifications) => {
   const groups = {};
   notifications.forEach((n) => {

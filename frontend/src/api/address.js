@@ -1,7 +1,5 @@
 import api from "./axios";
 
-// Assuming strict role-based routes, we use /address/customer for users.
-// If seller, we might need /address/seller. But for now, user checkout flow is priority.
 
 export const getUserAddresses = async () => {
   const response = await api.get("/address/customer");

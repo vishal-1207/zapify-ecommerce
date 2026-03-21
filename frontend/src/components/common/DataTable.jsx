@@ -23,15 +23,12 @@ const DataTable = ({
   searchValue, // Optional: Controlled value for search input
   clientPagination = false, // If true, table paginates locally over the data array
 }) => {
-  // Client-side pagination state
   const [clientPage, setClientPage] = useState(1);
   const [clientItemsPerPage, setClientItemsPerPage] = useState(10);
 
-  // Compute final data for rendering
   const processedData = useMemo(() => {
     if (!clientPagination) return data;
 
-    // For client pagination, we just slice the data
     const startIndex = (clientPage - 1) * clientItemsPerPage;
     return data.slice(startIndex, startIndex + clientItemsPerPage);
   }, [data, clientPagination, clientPage, clientItemsPerPage]);
@@ -65,7 +62,6 @@ const DataTable = ({
     }
   };
 
-  // Ensure clientPage is valid when data length changes
   if (clientPagination && clientPage > totalPages && totalPages > 0) {
     setClientPage(totalPages);
   }

@@ -17,7 +17,6 @@ const SellerRegister = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch CSRF token on mount
   useEffect(() => {
     const fetchCsrf = async () => {
       try {
@@ -42,13 +41,10 @@ const SellerRegister = () => {
     setLoading(true);
 
     try {
-      // 1. Create seller profile
       await api.post("/seller/profile/register", formData);
 
-      // 2. Refresh user context to pick up the new 'seller' role
       await refreshUser();
 
-      // 3. Redirect to seller dashboard
       navigate("/seller/dashboard");
     } catch (err) {
         console.error("Seller registration failed", err);

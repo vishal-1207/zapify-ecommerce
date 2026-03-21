@@ -22,7 +22,6 @@ const Login = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // CSRF Handshake
   useEffect(() => {
     const fetchCsrf = async () => {
       try {
@@ -37,16 +36,13 @@ const Login = () => {
     fetchCsrf();
   }, []);
 
-  // Message handling
   useEffect(() => {
-    // Check for error in URL (e.g. from Social Login failure)
     const errorMsg = searchParams.get("error");
     if (errorMsg) {
       setError(decodeURIComponent(errorMsg));
     }
 
     if (location.state?.message) {
-      // Show success message from registration
       alert(location.state.message);
     }
   }, [location.state, searchParams]);
@@ -84,7 +80,6 @@ const Login = () => {
   };
 
   const handleSocialLogin = (provider) => {
-    // Redirect to backend endpoint which handles the OAuth redirection
     window.location.href = `http://localhost:3000/api/auth/${provider}`;
   };
 

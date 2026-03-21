@@ -104,7 +104,6 @@ const sellerSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Offers
       .addCase(fetchSellerOffers.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -118,7 +117,6 @@ const sellerSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Toggle Status
       .addCase(toggleOfferStatusAction.fulfilled, (state, action) => {
         const { offerId, newStatus } = action.payload;
         const offer = state.offers.find((o) => o.id === offerId);
@@ -126,11 +124,9 @@ const sellerSlice = createSlice({
           offer.status = newStatus;
         }
       })
-      // Delete Offer
       .addCase(deleteOfferAction.fulfilled, (state, action) => {
         state.offers = state.offers.filter((o) => o.id !== action.payload);
       })
-      // Fetch Orders
       .addCase(fetchSellerOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -144,7 +140,6 @@ const sellerSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Update Order Status
       .addCase(updateOrderStatusAction.fulfilled, (state, action) => {
         const { orderId, newStatus } = action.payload;
         const order = state.orders.find((o) => o.id === orderId);
@@ -152,7 +147,6 @@ const sellerSlice = createSlice({
           order.status = newStatus;
         }
       })
-      // Fetch Transactions
       .addCase(fetchSellerTransactions.pending, (state) => {
         state.loading = true;
         state.error = null;

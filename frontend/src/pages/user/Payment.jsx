@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -15,7 +15,6 @@ import { formatCurrency } from "../../utils/currency";
 import { toast } from "react-hot-toast";
 import { ShieldCheck, CreditCard, Lock, Truck, MapPin } from "lucide-react";
 
-// Replace with your actual publishable key or env var
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 if (!stripeKey) {
@@ -61,8 +60,6 @@ const CheckoutForm = ({ order, clientSecret }) => {
       setProcessing(false);
     } else {
       if (result.paymentIntent.status === "succeeded") {
-        // Notify the backend to sync payment status from Stripe.
-        // This is the reliable fallback for when webhooks aren't delivered (e.g. local dev).
         try {
           await verifyPayment(result.paymentIntent.id);
         } catch (err) {
@@ -144,25 +141,13 @@ const Payment = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!addressId) {
-      // If direct access or missing state, redirect
-      navigate("/checkout");
-      return;
-    }
-    initializePayment();
-  }, [addressId]);
-
-  const initializePayment = async () => {
+  const initializePayment = useCallback(async () => {
     try {
-      // 1. Create Order
       const newOrder = await createOrder(addressId);
 
-      // 2. Fetch Full Order Details (to display summary)
       const orderDetails = await getOrderDetails(newOrder.id);
       setOrder(orderDetails);
 
-      // 3. Create Payment Intent
       const paymentData = await createPaymentIntent(newOrder.id);
       setClientSecret(paymentData.clientSecret);
     } catch (error) {
@@ -172,7 +157,15 @@ const Payment = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addressId, navigate]);
+
+  useEffect(() => {
+    if (!addressId) {
+      navigate("/checkout");
+      return;
+    }
+    initializePayment();
+  }, [addressId, navigate, initializePayment]);
 
   if (loading)
     return (

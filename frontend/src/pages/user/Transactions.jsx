@@ -15,7 +15,6 @@ import {
 import { getMyTransactions } from "../../api/payments";
 import { formatCurrency } from "../../utils/currency";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
   succeeded: {
@@ -65,7 +64,6 @@ const methodLabel = (method, details) => {
   return method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-// ─── Transaction Row ──────────────────────────────────────────────────────────
 
 const TransactionRow = ({ payment }) => {
   const [expanded, setExpanded] = useState(false);
@@ -271,7 +269,6 @@ const TransactionRow = ({ payment }) => {
   );
 };
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);

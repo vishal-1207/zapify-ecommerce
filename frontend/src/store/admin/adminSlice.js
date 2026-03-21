@@ -5,12 +5,8 @@ import {
   toggleProductStatus,
   deleteProduct,
 } from "../../api/products";
-import {
-  getAllCategories,
-  toggleCategoryStatus,
-  deleteCategory,
-} from "../../api/categories";
-import { getAllBrands, toggleBrandStatus, deleteBrand } from "../../api/brands";
+import { getAllCategories, toggleCategoryStatus } from "../../api/categories";
+import { getAllBrands, toggleBrandStatus } from "../../api/brands";
 import api from "../../api/axios";
 
 export const fetchAdminProducts = createAsyncThunk(
@@ -32,7 +28,7 @@ export const fetchAdminProducts = createAsyncThunk(
 
 export const approveProductAction = createAsyncThunk(
   "admin/approveProduct",
-  async (productId, { dispatch, rejectWithValue }) => {
+  async (productId, { rejectWithValue }) => {
     try {
       await api.patch(`/product/review/${productId}`, {
         status: "active",
@@ -47,7 +43,7 @@ export const approveProductAction = createAsyncThunk(
 
 export const rejectProductAction = createAsyncThunk(
   "admin/rejectProduct",
-  async (productId, { dispatch, rejectWithValue }) => {
+  async (productId, { rejectWithValue }) => {
     try {
       await api.patch(`/product/review/${productId}`, {
         status: "rejected",
@@ -86,7 +82,6 @@ export const deleteProductAction = createAsyncThunk(
   },
 );
 
-// --- Categories ---
 export const fetchAdminCategories = createAsyncThunk(
   "admin/fetchCategories",
   async (_, { rejectWithValue }) => {
@@ -115,7 +110,7 @@ export const deleteCategoryAction = createAsyncThunk(
   "admin/deleteCategory",
   async (categoryId, { rejectWithValue }) => {
     try {
-      await delCat(categoryId);
+      await api.delete(`/category/${categoryId}`);
       return categoryId;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to delete category");
@@ -123,7 +118,6 @@ export const deleteCategoryAction = createAsyncThunk(
   },
 );
 
-// --- Brands ---
 export const fetchAdminBrands = createAsyncThunk(
   "admin/fetchBrands",
   async (_, { rejectWithValue }) => {
@@ -152,7 +146,7 @@ export const deleteBrandAction = createAsyncThunk(
   "admin/deleteBrand",
   async (brandId, { rejectWithValue }) => {
     try {
-      await delBrand(brandId);
+      await api.delete(`/brand/${brandId}`);
       return brandId;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to delete brand");
@@ -160,7 +154,6 @@ export const deleteBrandAction = createAsyncThunk(
   },
 );
 
-// --- Orders ---
 export const fetchAdminOrders = createAsyncThunk(
   "admin/fetchOrders",
   async ({ page, limit }, { rejectWithValue }) => {
@@ -223,7 +216,6 @@ export const refundOrderAction = createAsyncThunk(
   },
 );
 
-// --- Users ---
 export const fetchAdminUsers = createAsyncThunk(
   "admin/fetchUsers",
   async ({ roleFilter, page, limit }, { rejectWithValue }) => {
@@ -290,7 +282,6 @@ export const updateUserWithOtpAction = createAsyncThunk(
   },
 );
 
-// --- Reviews ---
 export const fetchPendingReviews = createAsyncThunk(
   "admin/fetchPendingReviews",
   async (_, { rejectWithValue }) => {
@@ -329,7 +320,6 @@ const initialState = {
   users: [],
   usersTotalPages: 1,
   pendingReviews: [],
-  // Per-feature loading flags so one page's abort doesn't freeze others
   productsLoading: false,
   ordersLoading: false,
   usersLoading: false,
@@ -344,7 +334,6 @@ const adminSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Products
       .addCase(fetchAdminProducts.pending, (state) => {
         state.productsLoading = true;
         state.error = null;
@@ -363,7 +352,6 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Toggle Product Status
       .addCase(toggleProductStatusAction.fulfilled, (state, action) => {
         const { productId, isActive } = action.payload;
         const product = state.products.find((p) => p.id === productId);
@@ -371,15 +359,11 @@ const adminSlice = createSlice({
           product.isActive = isActive;
         }
       })
-      // Approve Product
-      .addCase(approveProductAction.fulfilled, (state, action) => {}) // Refetch is handled by UI Component
-      // Reject Product
-      .addCase(rejectProductAction.fulfilled, (state, action) => {}) // Refetch is handled by UI Component
-      // Delete Product
+      .addCase(approveProductAction.fulfilled, () => {}) // Refetch is handled by UI Component
+      .addCase(rejectProductAction.fulfilled, () => {}) // Refetch is handled by UI Component
       .addCase(deleteProductAction.fulfilled, (state, action) => {
         state.products = state.products.filter((p) => p.id !== action.payload);
       })
-      // Fetch Categories
       .addCase(fetchAdminCategories.pending, (state) => {
         state.productsLoading = true;
         state.error = null;
@@ -398,7 +382,6 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Toggle Category Status
       .addCase(toggleCategoryStatusAction.fulfilled, (state, action) => {
         const { categoryId, isActive } = action.payload;
         const category = state.categories.find((c) => c.id === categoryId);
@@ -406,13 +389,11 @@ const adminSlice = createSlice({
           category.isActive = isActive;
         }
       })
-      // Delete Category
       .addCase(deleteCategoryAction.fulfilled, (state, action) => {
         state.categories = state.categories.filter(
           (c) => c.id !== action.payload,
         );
       })
-      // Fetch Brands
       .addCase(fetchAdminBrands.pending, (state) => {
         state.productsLoading = true;
         state.error = null;
@@ -431,7 +412,6 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Toggle Brand Status
       .addCase(toggleBrandStatusAction.fulfilled, (state, action) => {
         const { brandId, isActive } = action.payload;
         const brand = state.brands.find((b) => b.id === brandId);
@@ -439,11 +419,9 @@ const adminSlice = createSlice({
           brand.isActive = isActive;
         }
       })
-      // Delete Brand
       .addCase(deleteBrandAction.fulfilled, (state, action) => {
         state.brands = state.brands.filter((b) => b.id !== action.payload);
       })
-      // Fetch Orders
       .addCase(fetchAdminOrders.pending, (state) => {
         state.ordersLoading = true;
         state.error = null;
@@ -463,7 +441,6 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Fetch Order Details
       .addCase(fetchOrderDetails.pending, (state) => {
         state.loading = true;
       })
@@ -475,7 +452,6 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Update Order Status
       .addCase(updateOrderStatusAction.fulfilled, (state, action) => {
         const updated = action.payload;
         const idx = state.orders.findIndex((o) => o.id === updated.id);
@@ -484,7 +460,6 @@ const adminSlice = createSlice({
           state.selectedOrder = updated;
         }
       })
-      // Fetch Users
       .addCase(fetchAdminUsers.pending, (state) => {
         state.usersLoading = true;
         state.error = null;
@@ -504,7 +479,6 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Toggle User Block Status
       .addCase(toggleUserBlockStatusAction.fulfilled, (state, action) => {
         const { userId, isBlocked } = action.payload;
         const user = state.users.find((u) => u.id === userId);
@@ -512,11 +486,9 @@ const adminSlice = createSlice({
           user.isBlocked = isBlocked;
         }
       })
-      // Delete User
       .addCase(deleteUserAction.fulfilled, (state, action) => {
         state.users = state.users.filter((u) => u.id !== action.payload);
       })
-      // Update User With OTP
       .addCase(updateUserWithOtpAction.fulfilled, (state, action) => {
         const updatedUser = action.payload;
         const index = state.users.findIndex((u) => u.id === updatedUser.id);
@@ -524,7 +496,6 @@ const adminSlice = createSlice({
           state.users[index] = updatedUser;
         }
       })
-      // Fetch Pending Reviews
       .addCase(fetchPendingReviews.pending, (state) => {
         state.reviewsLoading = true;
         state.error = null;
@@ -545,9 +516,8 @@ const adminSlice = createSlice({
           return;
         state.error = action.payload;
       })
-      // Moderate Review
       .addCase(moderateReviewAction.fulfilled, (state, action) => {
-        const { reviewId, status } = action.payload;
+        const { reviewId } = action.payload;
         state.pendingReviews = state.pendingReviews.filter(
           (r) => r.id !== reviewId,
         );

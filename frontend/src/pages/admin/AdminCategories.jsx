@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Modal from "../../components/common/Modal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import DataTable from "../../components/common/DataTable";
@@ -32,7 +32,6 @@ const AdminCategories = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteCategoryId, setDeleteCategoryId] = useState(null);
@@ -41,7 +40,6 @@ const AdminCategories = () => {
   const [submissionLoading, setSubmissionLoading] = useState(false);
   const [deletionLoading, setDeletionLoading] = useState(false);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     image: null,
@@ -50,7 +48,7 @@ const AdminCategories = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   useEffect(() => {
     if (reduxError) {
@@ -59,9 +57,9 @@ const AdminCategories = () => {
     }
   }, [reduxError]);
 
-  const fetchCategories = () => {
+  const fetchCategories = useCallback(() => {
     dispatch(fetchAdminCategories());
-  };
+  }, [dispatch]);
 
   const handleToggleStatus = async (id) => {
     const resultAction = await dispatch(toggleCategoryStatusAction(id));

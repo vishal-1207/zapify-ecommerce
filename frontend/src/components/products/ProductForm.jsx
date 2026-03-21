@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Upload,
   X,
@@ -9,7 +9,6 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
 import { CURRENCY_SYMBOL } from "../../utils/currency";
 
 const FieldError = ({ message }) =>
@@ -48,7 +47,6 @@ const ProductForm = ({
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [galleryPreview, setGalleryPreview] = useState([]);
 
-  // Initialize form data when initialData changes
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -65,11 +63,9 @@ const ProductForm = ({
         mediaToDelete: [],
       });
 
-      // Handle Thumbnail Preview
       const thumb = initialData.media?.find((m) => m.tag === "thumbnail");
       setThumbnailPreview(thumb ? thumb.url : null);
 
-      // Handle Gallery Preview
       const existingGallery =
         initialData.media
           ?.filter((m) => m.tag === "gallery")
@@ -81,7 +77,6 @@ const ProductForm = ({
       setGalleryPreview(existingGallery);
       setCurrentStep(1);
     } else {
-      // Reset logic for creating new product
       setFormData({
         name: "",
         model: "",

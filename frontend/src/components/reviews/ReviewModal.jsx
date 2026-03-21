@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Star, Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { useCallback } from "react";
 
 const ReviewModal = ({
   isOpen,
@@ -17,7 +18,6 @@ const ReviewModal = ({
   const [previews, setPreviews] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Reset state when modal opens or index changes
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(
@@ -25,9 +25,9 @@ const ReviewModal = ({
       );
       resetForm();
     }
-  }, [isOpen, startingIndex, itemsToReview.length]);
+  }, [isOpen, startingIndex, itemsToReview.length, resetForm]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     const current =
       itemsToReview[
         Math.min(startingIndex, Math.max(0, itemsToReview.length - 1))
@@ -39,12 +39,11 @@ const ReviewModal = ({
     setComment(existing?.comment || "");
     setFiles([]);
 
-    // Show existing media as previews if editing
     const existingMedia = existing?.media?.map((m) => m.url) || [];
     setPreviews(existingMedia);
 
     setShowSuccess(false);
-  };
+  }, [itemsToReview, startingIndex]);
 
   if (!isOpen || itemsToReview.length === 0) return null;
 
@@ -80,15 +79,11 @@ const ReviewModal = ({
       formData.append("comment", comment.trim());
     }
 
-    // Pass existing media to keep, filtering out ones removed by the user
-    // Since we initialized previews with existing media URLs, any URL starting with "http" is existing
     const existingMediaToKeepIds =
       currentItem?.existingReview?.media
         ?.filter((m) => previews.includes(m.url))
         ?.map((m) => m.id) || [];
 
-    // The API expects 'mediaToDelete' to flag removed items, but in this frontend design
-    // it's easier to find the difference between what was there and what remains.
     const originalMediaIds =
       currentItem?.existingReview?.media?.map((m) => m.id) || [];
     const mediaToDelete = originalMediaIds.filter(
@@ -99,7 +94,6 @@ const ReviewModal = ({
       formData.append("mediaToDelete", JSON.stringify(mediaToDelete));
     }
 
-    // Filter `files` only to true File objects (not URLs)
     files.forEach((file) => {
       if (file instanceof File) {
         formData.append("gallery", file);
@@ -109,7 +103,6 @@ const ReviewModal = ({
     try {
       await onSubmit(currentItem, formData);
 
-      // If there are more items, show success briefly then move to next
       if (currentIndex < itemsToReview.length - 1) {
         setShowSuccess(true);
         setTimeout(() => {
@@ -117,11 +110,9 @@ const ReviewModal = ({
           resetForm();
         }, 1500);
       } else {
-        // Last item, form will be closed by the parent via onClose
         onClose();
       }
     } catch (err) {
-      // Error handled by parent
       console.error(err);
     }
   };

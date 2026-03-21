@@ -37,12 +37,9 @@ const Profile = () => {
     setError("");
 
     try {
-      // Endpoint to update profile
-      const response = await api.patch("/user/profile/edit", {
+      await api.patch("/user/profile/edit", {
         fullname: formData.fullname,
         phoneNumber: formData.phoneNumber,
-        // Username and Email might be restricted or require specific flow,
-        // but passing them if allowed by backend
         username: formData.username,
       });
       

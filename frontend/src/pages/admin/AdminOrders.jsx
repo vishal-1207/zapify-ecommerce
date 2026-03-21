@@ -29,7 +29,6 @@ const statusColors = {
   refunded: "bg-purple-100 text-purple-700",
 };
 
-// Formats a raw status string like "return_requested" → "Return Requested"
 const formatStatus = (s) =>
   s?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? "—";
 

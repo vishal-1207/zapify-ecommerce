@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
@@ -32,10 +32,7 @@ const Navbar = () => {
       );
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    navigate("/shop");
-  };
+
 
   return (
     <>
@@ -78,9 +75,6 @@ const Navbar = () => {
                       switchRole("seller");
                       navigate("/seller/dashboard");
                     } else {
-                      // Not a seller yet, maybe go to register?
-                      // For now keep switchRole to let them see the 'Become a Seller' view if it existed,
-                      // or redirect to seller register.
                       navigate("/seller/register");
                     }
                   }}

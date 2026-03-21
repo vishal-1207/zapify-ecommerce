@@ -25,8 +25,6 @@ const Shop = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
 
-  // Initialize filters from URL or defaults
-  // URL contains SLUGS now
   const selectedCategorySlugs = useMemo(
     () => searchParams.getAll("category").filter(Boolean) || [],
     [searchParams],
@@ -47,7 +45,6 @@ const Shop = () => {
     return searchParams.get("sort") || "featured";
   });
 
-  // Fetch Data (Once on Mount)
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchData = async () => {
@@ -69,11 +66,7 @@ const Shop = () => {
     fetchData();
   }, []); // Run once
 
-  // No longer deriving brands from products, using full list from API
-  // This fixes the "brands disappeared" issue when products list is computed or empty
-  // and allows "unidentified filter" lookup to work even if no products match.
 
-  // Sync Filters to URL
   const updateFilters = (
     newCategorySlugs,
     newBrandSlugs,
@@ -106,12 +99,6 @@ const Shop = () => {
     setSearchParams(newParams, { replace: true });
   };
 
-  // Handlers wrapper to update URL directly
-  // We no longer use local state for selections, we drive from URL.
-  // Wait, local state for slider/rating?
-  // We can drive everything from URL or keep local sync.
-  // Previous implement used local state 'selectedCategories' then sync effect.
-  // Direct URL update is cleaner for "update as I type/click".
 
   const toggleCategory = (slug) => {
     const current = selectedCategorySlugs;
@@ -129,30 +116,15 @@ const Shop = () => {
     updateFilters(null, newSlugs, null, undefined, null);
   };
 
-  const handlePriceChange = (newRange) => {
-    setPriceRange(newRange); // Optimistic UI
-    // Debounce this? Or just update. Slider usually needs debounce.
-    // For now, let's update URL on mouseUp or just let it update.
-    // If we update URL on every slide it might be laggy.
-    // We will update URL only when interaction ends ideally,
-    // but standard input onChange is continuous.
-  };
 
-  // Effect to update URL for price/rating/sort when state changes
-  useEffect(() => {
-    // Prevent infinite loop by checking if values actually changed?
-    // The 'updateFilters' recreates params.
-    // We should only trigger this if we want to sync these specific states.
-    // Simplified: We can just use updateFilters in the setters.
-  }, []);
 
-  // Filtering Logic
+
+
   const filteredProducts = useMemo(() => {
     const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
     return products
       .filter((product) => {
-        // Search Filter
         if (searchQuery) {
           const matchesName = product.name?.toLowerCase().includes(searchQuery);
           const matchesModel = product.model
@@ -177,24 +149,19 @@ const Shop = () => {
           }
         }
 
-        // Category Filter (Using Slugs)
         if (selectedCategorySlugs.length > 0) {
           const productCatSlug =
             typeof product.category === "object"
               ? product.category?.slug
               : null;
-          // Also verify ID fallback if slug missing?
-          // If backend works, slug should be there.
           if (
             !productCatSlug ||
             !selectedCategorySlugs.includes(productCatSlug)
           ) {
-            // Fallback: Check if we have ID in url (legacy support?) No, user asked for slug.
             return false;
           }
         }
 
-        // Brand Filter (Using Slugs)
         if (selectedBrandSlugs.length > 0) {
           const productBrandSlug =
             typeof product.brand === "object" ? product.brand?.slug : null;
@@ -206,14 +173,12 @@ const Shop = () => {
           }
         }
 
-        // Price Filter
         const min = priceRange.min;
         const max = priceRange.max;
         const price =
           Number(product.minOfferPrice) || Number(product.price) || 0;
         if (price < min || price > max) return false;
 
-        // Rating Filter
         if ((product.averageRating || 0) < minRating) return false;
 
         return true;
@@ -229,14 +194,11 @@ const Shop = () => {
             return priceB - priceA;
           case "rating":
             return (b.averageRating || 0) - (a.averageRating || 0);
-          default:
-            // Default "Featured" Sort:
-            // "Ascending order as per number of orders and rating"
-            // Interpreted as: Higher ReviewCount/Rating comes first (Descending popularity)
-            // Combined Score = (Rating * 20) + ReviewCount
+          default: {
             const scoreA = (a.averageRating || 0) * 20 + (a.reviewCount || 0);
             const scoreB = (b.averageRating || 0) * 20 + (b.reviewCount || 0);
             return scoreB - scoreA;
+          }
         }
       });
   }, [
@@ -249,6 +211,8 @@ const Shop = () => {
     searchParams,
   ]);
 
+  const currentSearchQuery = searchParams.get("search");
+
   useEffect(() => {
     setPage(1);
   }, [
@@ -257,7 +221,7 @@ const Shop = () => {
     priceRange,
     minRating,
     sortBy,
-    searchParams.get("search"),
+    currentSearchQuery,
   ]);
 
   const paginatedProducts = useMemo(() => {
@@ -274,7 +238,6 @@ const Shop = () => {
     setSortBy("featured");
   };
 
-  // Price Slider Helpers
   const MIN_PRICE_LIMIT = 0;
   const MAX_PRICE_LIMIT = 3000;
   const PRICE_GAP = 100;
@@ -304,7 +267,6 @@ const Shop = () => {
       ((value - MIN_PRICE_LIMIT) / (MAX_PRICE_LIMIT - MIN_PRICE_LIMIT)) * 100,
     );
 
-  // Prevent body scroll when mobile filter is open
   useEffect(() => {
     if (isMobileFilterOpen) {
       document.body.style.overflow = "hidden";

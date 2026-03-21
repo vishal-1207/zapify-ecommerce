@@ -4,10 +4,8 @@ import { useLocation } from "react-router-dom";
 const DashboardHeader = ({ title, links, user, actions, theme = "indigo" }) => {
     const location = useLocation();
     
-    // Determine current page title if not explicitly provided
     const currentTitle = title || links.find((l) => location.pathname.startsWith(l.path))?.name || "Dashboard";
 
-    // Theme specific user avatar colors
     const avatarSettings = theme === 'slate' ? {
         bg: "bg-orange-100",
         text: "text-orange-600",

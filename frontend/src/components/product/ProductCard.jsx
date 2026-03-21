@@ -8,7 +8,6 @@ import WishlistButton from "./WishlistButton";
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
 
-  // Find best active deal
   const activeDeal = (product.offers || product.Offers)?.find((offer) => {
     if (!offer.dealPrice || !offer.dealStartDate || !offer.dealEndDate)
       return false;
@@ -18,7 +17,6 @@ const ProductCard = ({ product }) => {
     return now >= start && now <= end;
   });
 
-  // Price Priority: Active Deal > Min Offer Price > Product Base Price
   const effectivePrice = activeDeal
     ? Number(activeDeal.dealPrice)
     : Number(product.minOfferPrice) || Number(product.price);
@@ -26,7 +24,6 @@ const ProductCard = ({ product }) => {
   const originalPrice = Number(product.price);
   const showDeal = !!activeDeal;
 
-  // Savings can be from Deal OR from regular Offer
   const hasDiscount = effectivePrice < originalPrice;
   const savingsPercent =
     hasDiscount && originalPrice > 0

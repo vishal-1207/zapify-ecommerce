@@ -1,26 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { CheckCircle, Package, Home } from "lucide-react";
-import { getOrderDetails } from "../../api/orders"; // Assumption: API exists
+
 
 const OrderSuccess = () => {
     const { orderId } = useParams();
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchOrder = async () => {
-            try {
-                // Fetch order details if needed, or just display success
-                // const data = await getOrderDetails(orderId);
-                // setOrder(data);
-                setLoading(false);
-            } catch (error) {
-                console.error(error);
-                setLoading(false);
-            }
-        };
-        fetchOrder();
     }, [orderId]);
 
     return (

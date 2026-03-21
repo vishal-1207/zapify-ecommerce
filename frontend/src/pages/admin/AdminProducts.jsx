@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { formatCurrency } from "../../utils/currency";
 import Modal from "../../components/common/Modal";
 import DataTable from "../../components/common/DataTable";
@@ -8,16 +8,10 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  Eye,
   ToggleLeft,
   ToggleRight,
   Plus,
-  Search,
-  X,
   Upload,
-  ArrowRight,
-  ArrowLeft,
-  MinusCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -27,8 +21,11 @@ import {
   toggleProductStatusAction,
   deleteProductAction,
 } from "../../store/admin/adminSlice";
-import api from "../../api/axios";
-import { updateProduct, getAdminProductDetails } from "../../api/products";
+import {
+  createProduct,
+  updateProduct,
+  getAdminProductDetails,
+} from "../../api/products";
 import { getAllCategories } from "../../api/categories";
 import { getAllBrands } from "../../api/brands";
 import { toast } from "react-hot-toast";
@@ -53,7 +50,7 @@ const AdminProducts = () => {
   useEffect(() => {
     fetchProducts();
     fetchCategoriesAndBrands();
-  }, [activeTab]);
+  }, [fetchProducts, fetchCategoriesAndBrands]);
 
   useEffect(() => {
     if (reduxError) {
@@ -62,11 +59,11 @@ const AdminProducts = () => {
     }
   }, [reduxError]);
 
-  const fetchProducts = () => {
+  const fetchProducts = useCallback(() => {
     dispatch(fetchAdminProducts(activeTab));
-  };
+  }, [dispatch, activeTab]);
 
-  const fetchCategoriesAndBrands = async () => {
+  const fetchCategoriesAndBrands = useCallback(async () => {
     try {
       const [cats, brnds] = await Promise.all([
         getAllCategories(),
@@ -77,7 +74,7 @@ const AdminProducts = () => {
     } catch (error) {
       handleApiError(error, "Failed to fetch categories/brands");
     }
-  };
+  }, []);
 
   const handleApprove = async (productId) => {
     const resultAction = await dispatch(approveProductAction(productId));
@@ -119,7 +116,6 @@ const AdminProducts = () => {
   const handleOpenModal = async (product = null) => {
     if (product) {
       try {
-        // Fetch full details
         const fullProduct = await getAdminProductDetails(product.id);
         setEditingProduct(fullProduct);
         setIsModalOpen(true);

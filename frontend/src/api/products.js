@@ -10,16 +10,13 @@ export const getPendingProducts = async (params = {}) => {
   return response.data.data?.result || response.data.data || [];
 };
 
-// Fetch single product by ID
 export const getProductById = async (id, signal) => {
   const response = await api.get(`/product/${id}`, { signal });
   return response.data.data?.product || response.data.data || response.data;
 };
 
-// Helpers for Home Page (Filtering client-side or via specific API params)
 export const getFeaturedProducts = async () => {
   const products = await getAllProducts({ limit: 4, sort: "-rating" }); // Mocking params
-  // getAllProducts now returns Array from .products
   return products.slice(0, 4);
 };
 
@@ -38,8 +35,6 @@ export const getRecommendations = async (signal) => {
   return products.slice(0, 4); // Just random for now
 };
 
-// Search (Algolia/Backend powered)
-// Search (Algolia/Backend powered)
 export const searchProducts = async (query) => {
   const response = await api.get(`/search/q?q=${query}`);
   return response.data.data || [];

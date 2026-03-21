@@ -15,7 +15,6 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const { resendVerification, user, refreshUser } = useAuth(); // Assume user is logged in after register
   
-  // CSRF Handshake
   React.useEffect(() => {
     const fetchCsrf = async () => {
       try {
@@ -30,7 +29,6 @@ const VerifyEmail = () => {
     fetchCsrf();
   }, []);
 
-  // Email might come from location state (from Register page) or from current user context
   const email = location.state?.email || user?.email;
 
   const handleSubmit = async (e) => {
@@ -42,7 +40,6 @@ const VerifyEmail = () => {
       await verifyEmail(code);
       setMsg("Email verified successfully! Redirecting...");
       
-      // Update user context to reflect verification status
       await refreshUser();
       
       setTimeout(() => {

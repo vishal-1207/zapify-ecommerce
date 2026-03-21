@@ -34,7 +34,6 @@ export const fetchMyReviews = async (params = {}) => {
   return response.data;
 };
 
-// ── Seller ─────────────────────────────────────────────────────────────────────
 export const getSellerReviews = async (params = {}) => {
   const response = await api.get("/review/seller/my-reviews", { params });
   return response.data;
@@ -47,7 +46,6 @@ export const addSellerResponse = async (reviewId, responseText) => {
   return response.data;
 };
 
-// ── Admin ──────────────────────────────────────────────────────────────────────
 export const getAdminReviewQueue = async (params = {}) => {
   const response = await api.get("/review/admin/queue", { params });
   return response.data;

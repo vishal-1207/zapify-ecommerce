@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { fetchMyReviews } from "../../api/reviews";
 import ReviewModerationBadge from "../../components/reviews/ReviewModerationBadge";
 import { format } from "date-fns";
@@ -13,25 +13,18 @@ const MyReviews = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    loadReviews();
-  }, [page]);
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetchMyReviews({ page, limit: 10 });
@@ -42,10 +35,13 @@ const MyReviews = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
 
   const handleEditClick = (review) => {
-    // We map the review to look like an order item for the ReviewModal
     const itemToReview = {
       ...review.OrderItem,
       product: review.product,

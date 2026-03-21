@@ -2,8 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as cartApi from "../../api/cart";
 import { toast } from "react-hot-toast";
 
-// Thunks
-// Assuming we pass user authentication state from component or access it via getState
 export const syncGuestCart = createAsyncThunk(
   "cart/syncGuestCart",
   async (_, { rejectWithValue }) => {
@@ -122,7 +120,7 @@ const getInitialGuestCart = () => {
   try {
     const saved = localStorage.getItem("cart");
     return saved ? JSON.parse(saved) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -137,9 +135,9 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // Guest cart reducers
     addToCartGuest: (state, action) => {
-      const product = action.payload;
+      const payloadOptions = action.payload.product ? action.payload : { product: action.payload, qty: 1 };
+      const { product, qty } = payloadOptions;
       const uniqueId = product.offerId || product.id;
       const existing = state.cart.find(
         (item) => (item.offerId || item.id) === uniqueId,
@@ -147,21 +145,21 @@ const cartSlice = createSlice({
 
       if (existing) {
         if (
-          existing.qty + 1 >
+          existing.qty + qty >
           (product.stockQuantity || product.totalOfferStock || Infinity)
         ) {
           toast.error("Cannot add more. Exceeds available stock.");
           return;
         }
-        existing.qty += 1;
+        existing.qty += qty;
       } else {
         if (
-          1 > (product.stockQuantity || product.totalOfferStock || Infinity)
+          qty > (product.stockQuantity || product.totalOfferStock || Infinity)
         ) {
           toast.error("Cannot add. Out of stock.");
           return;
         }
-        state.cart.push({ ...product, qty: 1 });
+        state.cart.push({ ...product, qty });
       }
       localStorage.setItem("cart", JSON.stringify(state.cart));
       toast.success("Added to cart");
@@ -185,7 +183,6 @@ const cartSlice = createSlice({
           if ((item.offerId || item.id) === uniqueId) {
             const newQty = item.qty + delta;
 
-            // Allow decreasing, but check limits when increasing for guests
             if (delta > 0 && newQty > (item.stockQuantity || Infinity)) {
               toast.error("Cannot add more. Exceeds available stock.");
               return item;
@@ -213,7 +210,6 @@ const cartSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Cart
       .addCase(fetchCartFromBackend.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -226,7 +222,6 @@ const cartSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Add to Cart Backend
       .addCase(addToCartBackend.pending, (state) => {
         state.loading = true;
       })
@@ -236,7 +231,6 @@ const cartSlice = createSlice({
       .addCase(addToCartBackend.rejected, (state) => {
         state.loading = false;
       })
-      // Remove from Cart Backend
       .addCase(removeFromCartBackend.pending, (state) => {
         state.loading = true;
       })
@@ -246,7 +240,6 @@ const cartSlice = createSlice({
       .addCase(removeFromCartBackend.rejected, (state) => {
         state.loading = false;
       })
-      // Update Qty Backend
       .addCase(updateQtyBackend.pending, (state) => {
         state.loading = true;
       })

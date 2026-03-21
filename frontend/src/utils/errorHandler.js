@@ -7,12 +7,9 @@
 export const getErrorMessage = (error, defaultMessage = "Something went wrong") => {
   if (!error) return defaultMessage;
 
-  // Axios error with response
   if (error.response) {
-    // Server responded with a status code outside of 2xx
     const data = error.response.data;
 
-    // Handle Token Expiration specifically
     if (error.response.status === 401) {
       if (data?.message === "jwt expired" || data?.error === "jwt expired") {
         return "Session expired. Please log in again.";
@@ -29,12 +26,10 @@ export const getErrorMessage = (error, defaultMessage = "Something went wrong") 
     return `Server Error: ${error.response.statusText || defaultMessage}`;
   }
 
-  // Axios error without response (e.g., network error)
   if (error.request) {
     return "Network error. Please check your internet connection.";
   }
 
-  // Standard JS Error object
   if (error.message) {
     return error.message;
   }

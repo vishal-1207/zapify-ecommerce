@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { formatCurrency } from "../../utils/currency";
 import {
   Chart as ChartJS,
@@ -51,7 +51,6 @@ ChartJS.register(
   Filler,
 );
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   pending: { bg: "bg-amber-100", text: "text-amber-700", label: "Pending" },
   processed: { bg: "bg-blue-100", text: "text-blue-700", label: "Processing" },
@@ -75,7 +74,6 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ─── Trend Chip ──────────────────────────────────────────────────────────────
 const TrendChip = ({ value }) => {
   if (value === null || value === undefined) return null;
   const isPositive = value >= 0;
@@ -96,7 +94,7 @@ const TrendChip = ({ value }) => {
   );
 };
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 const StatCard = ({ title, value, icon: Icon, gradient, trend, sub }) => (
   <div className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col gap-3">
     <div className="flex items-start justify-between">
@@ -119,7 +117,7 @@ const StatCard = ({ title, value, icon: Icon, gradient, trend, sub }) => (
   </div>
 );
 
-// ─── Section Header ──────────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 const SectionHeader = ({ icon: Icon, title, sub }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
@@ -132,7 +130,6 @@ const SectionHeader = ({ icon: Icon, title, sub }) => (
   </div>
 );
 
-// ─── Chart wrapper ───────────────────────────────────────────────────────────
 const ChartCard = ({ title, sub, icon: Icon, children, className = "" }) => (
   <div
     className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-6 ${className}`}
@@ -142,7 +139,6 @@ const ChartCard = ({ title, sub, icon: Icon, children, className = "" }) => (
   </div>
 );
 
-// ─── Period Selector ─────────────────────────────────────────────────────────
 const PeriodSelector = ({ value, onChange }) => (
   <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
     {[7, 30, 90].map((d) => (
@@ -161,12 +157,10 @@ const PeriodSelector = ({ value, onChange }) => (
   </div>
 );
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
 const Skeleton = ({ className }) => (
   <div className={`bg-gray-100 animate-pulse rounded-xl ${className}`} />
 );
 
-// ─── Shared chart options helpers ─────────────────────────────────────────────
 const lineChartOptions = (yLabel = "₹") => ({
   responsive: true,
   maintainAspectRatio: false,
@@ -210,7 +204,6 @@ const doughnutOptions = {
   cutout: "65%",
 };
 
-// ─── Dashboard Component ──────────────────────────────────────────────────────
 const SellerDashboard = () => {
   const [stats, setStats] = useState(null);
   const [salesData, setSalesData] = useState(null);
@@ -234,7 +227,6 @@ const SellerDashboard = () => {
 
       setStats(statsRes);
 
-      // Setup Area filled line chart for sales
       if (salesRes && salesRes.labels) {
         setSalesData({
           labels: salesRes.labels,

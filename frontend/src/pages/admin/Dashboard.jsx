@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { formatCurrency } from "../../utils/currency";
 import {
   Chart as ChartJS,
@@ -21,7 +21,6 @@ import {
   ShoppingBag,
   IndianRupee,
   TrendingUp,
-  TrendingDown,
   ShoppingCart,
   ArrowUpRight,
   ArrowDownRight,
@@ -47,25 +46,29 @@ ChartJS.register(
   Filler,
 );
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  pending:   { bg: "bg-amber-100",   text: "text-amber-700",  label: "Pending" },
-  processed: { bg: "bg-blue-100",    text: "text-blue-700",   label: "Processing" },
-  shipped:   { bg: "bg-indigo-100",  text: "text-indigo-700", label: "Shipped" },
-  delivered: { bg: "bg-emerald-100", text: "text-emerald-700",label: "Delivered" },
-  cancelled: { bg: "bg-red-100",     text: "text-red-700",    label: "Cancelled" },
+  pending: { bg: "bg-amber-100", text: "text-amber-700", label: "Pending" },
+  processed: { bg: "bg-blue-100", text: "text-blue-700", label: "Processing" },
+  shipped: { bg: "bg-indigo-100", text: "text-indigo-700", label: "Shipped" },
+  delivered: {
+    bg: "bg-emerald-100",
+    text: "text-emerald-700",
+    label: "Delivered",
+  },
+  cancelled: { bg: "bg-red-100", text: "text-red-700", label: "Cancelled" },
 };
 
 const StatusBadge = ({ status }) => {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}
+    >
       {cfg.label}
     </span>
   );
 };
 
-// ─── Trend Chip ──────────────────────────────────────────────────────────────
 const TrendChip = ({ value }) => {
   if (value === null || value === undefined) return null;
   const isPositive = value >= 0;
@@ -77,18 +80,22 @@ const TrendChip = ({ value }) => {
       </span>
     );
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-emerald-600" : "text-red-500"}`}
+    >
       {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
       {Math.abs(value)}%
     </span>
   );
 };
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 const StatCard = ({ title, value, icon: Icon, gradient, trend, sub }) => (
   <div className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col gap-3">
     <div className="flex items-start justify-between">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${gradient}`}>
+      <div
+        className={`w-12 h-12 rounded-xl flex items-center justify-center ${gradient}`}
+      >
         <Icon size={22} className="text-white" />
       </div>
       {trend !== undefined && <TrendChip value={trend} />}
@@ -99,11 +106,13 @@ const StatCard = ({ title, value, icon: Icon, gradient, trend, sub }) => (
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
     {/* decorative corner blob */}
-    <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full opacity-10 ${gradient}`} />
+    <div
+      className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full opacity-10 ${gradient}`}
+    />
   </div>
 );
 
-// ─── Section Header ──────────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 const SectionHeader = ({ icon: Icon, title, sub }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
@@ -116,15 +125,15 @@ const SectionHeader = ({ icon: Icon, title, sub }) => (
   </div>
 );
 
-// ─── Chart wrapper ───────────────────────────────────────────────────────────
 const ChartCard = ({ title, sub, icon: Icon, children, className = "" }) => (
-  <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-6 ${className}`}>
+  <div
+    className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-6 ${className}`}
+  >
     <SectionHeader icon={Icon} title={title} sub={sub} />
     <div className="relative">{children}</div>
   </div>
 );
 
-// ─── Period Selector ─────────────────────────────────────────────────────────
 const PeriodSelector = ({ value, onChange }) => (
   <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
     {[7, 30, 90].map((d) => (
@@ -143,18 +152,20 @@ const PeriodSelector = ({ value, onChange }) => (
   </div>
 );
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
 const Skeleton = ({ className }) => (
   <div className={`bg-gray-100 animate-pulse rounded-xl ${className}`} />
 );
 
-// ─── Shared chart options helpers ─────────────────────────────────────────────
 const lineChartOptions = (yLabel = "₹") => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: { mode: "index", intersect: false },
   plugins: {
-    legend: { display: true, position: "top", labels: { boxWidth: 10, font: { size: 11 } } },
+    legend: {
+      display: true,
+      position: "top",
+      labels: { boxWidth: 10, font: { size: 11 } },
+    },
     tooltip: {
       callbacks: {
         label: (ctx) =>
@@ -180,33 +191,40 @@ const doughnutOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { position: "right", labels: { boxWidth: 10, font: { size: 11 }, padding: 10 } },
+    legend: {
+      position: "right",
+      labels: { boxWidth: 10, font: { size: 11 }, padding: 10 },
+    },
   },
   cutout: "65%",
 };
 
-// ─── Dashboard Component ──────────────────────────────────────────────────────
 const Dashboard = () => {
-  const [stats, setStats]             = useState(null);
-  const [salesData, setSalesData]     = useState(null);
+  const [stats, setStats] = useState(null);
+  const [salesData, setSalesData] = useState(null);
   const [categoryData, setCategoryData] = useState(null);
-  const [signupData, setSignupData]   = useState(null);
-  const [orderData, setOrderData]     = useState(null);
+  const [signupData, setSignupData] = useState(null);
+  const [orderData, setOrderData] = useState(null);
   const [topProducts, setTopProducts] = useState([]);
-  const [topSellers, setTopSellers]   = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
-  const [days, setDays]               = useState(30);
-  const [loading, setLoading]         = useState(true);
-  const [refreshing, setRefreshing]   = useState(false);
+  const [days, setDays] = useState(30);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchAll = useCallback(
     async (isRefresh = false) => {
       isRefresh ? setRefreshing(true) : setLoading(true);
       try {
         const [
-          statsRes, salesRes, categoryRes,
-          signupRes, orderRes,
-          topProdRes, topSelRes, recentRes,
+          statsRes,
+          salesRes,
+          categoryRes,
+          signupRes,
+          orderRes,
+          topProdRes,
+          topSelRes,
+          recentRes,
         ] = await Promise.all([
           api.get("/admin/stats"),
           api.get(`/admin/stats/sales-over-time?days=${days}`),
@@ -220,7 +238,6 @@ const Dashboard = () => {
 
         setStats(statsRes.data.stats);
 
-        // Style chart data with gradient-friendly config
         const rawSales = salesRes.data.salesData;
         setSalesData({
           ...rawSales,
@@ -241,8 +258,16 @@ const Dashboard = () => {
           datasets: catRaw.datasets.map((ds) => ({
             ...ds,
             backgroundColor: [
-              "#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6",
-              "#8b5cf6","#f43f5e","#14b8a6","#f97316","#a78bfa",
+              "#6366f1",
+              "#ec4899",
+              "#f59e0b",
+              "#10b981",
+              "#3b82f6",
+              "#8b5cf6",
+              "#f43f5e",
+              "#14b8a6",
+              "#f97316",
+              "#a78bfa",
             ],
             borderWidth: 0,
           })),
@@ -254,7 +279,8 @@ const Dashboard = () => {
           datasets: sigRaw.datasets.map((ds, i) => ({
             ...ds,
             borderColor: i === 0 ? "#3b82f6" : "#f59e0b",
-            backgroundColor: i === 0 ? "rgba(59,130,246,0.08)" : "rgba(245,158,11,0.08)",
+            backgroundColor:
+              i === 0 ? "rgba(59,130,246,0.08)" : "rgba(245,158,11,0.08)",
             borderWidth: 2,
             pointRadius: 3,
             fill: true,
@@ -267,7 +293,8 @@ const Dashboard = () => {
           ...ordRaw,
           datasets: ordRaw.datasets.map((ds, i) => ({
             ...ds,
-            backgroundColor: i === 0 ? "#10b981" : i === 1 ? "#6366f1" : "#ef4444",
+            backgroundColor:
+              i === 0 ? "#10b981" : i === 1 ? "#6366f1" : "#ef4444",
             borderRadius: 4,
             borderSkipped: false,
           })),
@@ -286,14 +313,17 @@ const Dashboard = () => {
     [days],
   );
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
-  // ─── Loading skeleton ────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-32" />)}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Skeleton className="lg:col-span-2 h-72" />
@@ -307,12 +337,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Platform Overview</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Live stats & analytics across Zapify</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Live stats & analytics across Zapify
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <PeriodSelector value={days} onChange={setDays} />
@@ -374,8 +405,8 @@ const Dashboard = () => {
         <StatCard
           title="GMV (30d)"
           value={formatCurrency(
-            (s.revenueGrowth !== undefined && s.totalRevenue)
-              ? (s.totalRevenue * (1 / (1 + (s.revenueGrowth || 0) / 100)))
+            s.revenueGrowth !== undefined && s.totalRevenue
+              ? s.totalRevenue * (1 / (1 + (s.revenueGrowth || 0) / 100))
               : 0,
           )}
           icon={TrendingUp}
@@ -400,15 +431,27 @@ const Dashboard = () => {
           className="lg:col-span-2"
         >
           {salesData ? (
-            <Line data={salesData} options={lineChartOptions("₹")} height={280} />
+            <Line
+              data={salesData}
+              options={lineChartOptions("₹")}
+              height={280}
+            />
           ) : (
             <Skeleton className="h-64" />
           )}
         </ChartCard>
 
-        <ChartCard title="Sales by Category" sub="All-time, delivered" icon={ShoppingBag}>
+        <ChartCard
+          title="Sales by Category"
+          sub="All-time, delivered"
+          icon={ShoppingBag}
+        >
           {categoryData && categoryData.labels.length > 0 ? (
-            <Doughnut data={categoryData} options={doughnutOptions} height={280} />
+            <Doughnut
+              data={categoryData}
+              options={doughnutOptions}
+              height={280}
+            />
           ) : (
             <div className="flex items-center justify-center h-64 text-sm text-gray-400">
               No category data yet
@@ -425,7 +468,11 @@ const Dashboard = () => {
           icon={Users}
         >
           {signupData ? (
-            <Line data={signupData} options={lineChartOptions("count")} height={240} />
+            <Line
+              data={signupData}
+              options={lineChartOptions("count")}
+              height={240}
+            />
           ) : (
             <Skeleton className="h-56" />
           )}
@@ -443,7 +490,11 @@ const Dashboard = () => {
                 ...lineChartOptions("count"),
                 plugins: {
                   ...lineChartOptions("count").plugins,
-                  legend: { display: true, position: "top", labels: { boxWidth: 10, font: { size: 11 } } },
+                  legend: {
+                    display: true,
+                    position: "top",
+                    labels: { boxWidth: 10, font: { size: 11 } },
+                  },
                 },
               }}
               height={240}
@@ -456,29 +507,47 @@ const Dashboard = () => {
 
       {/* ── Tables Row: Top Products + Top Sellers ──────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* Top Products */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <SectionHeader icon={Award} title="Top Products" sub="By revenue · delivered only" />
+          <SectionHeader
+            icon={Award}
+            title="Top Products"
+            sub="By revenue · delivered only"
+          />
           {topProducts.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center">No sales data yet</p>
+            <p className="text-sm text-gray-400 py-8 text-center">
+              No sales data yet
+            </p>
           ) : (
             <div className="space-y-3">
               {topProducts.map((p, i) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-xl hover:bg-gray-50 transition-colors px-2 py-1.5">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl hover:bg-gray-50 transition-colors px-2 py-1.5"
+                >
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}
+                  >
                     {i + 1}
                   </span>
                   {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.name} className="w-9 h-9 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      className="w-9 h-9 rounded-lg object-cover bg-gray-100 flex-shrink-0"
+                    />
                   ) : (
                     <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
                       <Package size={16} className="text-indigo-400" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
-                    <p className="text-xs text-gray-400">{p.unitsSold} units sold</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {p.name}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {p.unitsSold} units sold
+                    </p>
                   </div>
                   <span className="text-sm font-bold text-indigo-600 flex-shrink-0">
                     {formatCurrency(p.revenue)}
@@ -491,24 +560,40 @@ const Dashboard = () => {
 
         {/* Top Sellers */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <SectionHeader icon={Store} title="Top Sellers" sub="By revenue · delivered only" />
+          <SectionHeader
+            icon={Store}
+            title="Top Sellers"
+            sub="By revenue · delivered only"
+          />
           {topSellers.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center">No sales data yet</p>
+            <p className="text-sm text-gray-400 py-8 text-center">
+              No sales data yet
+            </p>
           ) : (
             <div className="space-y-3">
               {topSellers.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-3 rounded-xl hover:bg-gray-50 transition-colors px-2 py-1.5">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                <div
+                  key={s.id}
+                  className="flex items-center gap-3 rounded-xl hover:bg-gray-50 transition-colors px-2 py-1.5"
+                >
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}
+                  >
                     {i + 1}
                   </span>
                   <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
                     <Store size={16} className="text-violet-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{s.storeName}</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {s.storeName}
+                    </p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <span className="text-xs text-amber-500">★</span>
-                      <p className="text-xs text-gray-400">{Number(s.averageRating).toFixed(1)} · {s.unitsSold} units</p>
+                      <p className="text-xs text-gray-400">
+                        {Number(s.averageRating).toFixed(1)} · {s.unitsSold}{" "}
+                        units
+                      </p>
                     </div>
                   </div>
                   <span className="text-sm font-bold text-violet-600 flex-shrink-0">
@@ -523,9 +608,15 @@ const Dashboard = () => {
 
       {/* ── Recent Orders Feed ───────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <SectionHeader icon={Clock} title="Recent Orders" sub="Latest 8 orders across the platform" />
+        <SectionHeader
+          icon={Clock}
+          title="Recent Orders"
+          sub="Latest 8 orders across the platform"
+        />
         {recentOrders.length === 0 ? (
-          <p className="text-sm text-gray-400 py-8 text-center">No orders placed yet</p>
+          <p className="text-sm text-gray-400 py-8 text-center">
+            No orders placed yet
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -533,10 +624,14 @@ const Dashboard = () => {
                 <tr className="text-xs text-gray-400 border-b border-gray-100">
                   <th className="text-left pb-2 font-semibold">Order ID</th>
                   <th className="text-left pb-2 font-semibold">Customer</th>
-                  <th className="text-left pb-2 font-semibold hidden md:table-cell">Item</th>
+                  <th className="text-left pb-2 font-semibold hidden md:table-cell">
+                    Item
+                  </th>
                   <th className="text-left pb-2 font-semibold">Amount</th>
                   <th className="text-left pb-2 font-semibold">Status</th>
-                  <th className="text-left pb-2 font-semibold hidden lg:table-cell">Date</th>
+                  <th className="text-left pb-2 font-semibold hidden lg:table-cell">
+                    Date
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -544,7 +639,10 @@ const Dashboard = () => {
                   const firstItem = order.orderItems?.[0];
                   const productName = firstItem?.Offer?.product?.name || "—";
                   return (
-                    <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={order.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="py-3 pr-3 font-mono text-xs font-semibold text-indigo-600">
                         #{order.orderId}
                       </td>
@@ -582,7 +680,6 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

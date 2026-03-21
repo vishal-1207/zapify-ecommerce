@@ -21,7 +21,6 @@ import ReviewModal from "../../components/reviews/ReviewModal";
 import { formatCurrency } from "../../utils/currency";
 import { toast } from "react-hot-toast";
 
-// Status badge colours including the new states
 const statusColors = {
   delivered: "bg-green-100 text-green-800",
   pending: "bg-yellow-100 text-yellow-800",
@@ -31,7 +30,6 @@ const statusColors = {
   return_requested: "bg-orange-100 text-orange-800",
 };
 
-// CANCEL reasons — pre-populated for UX
 const CANCEL_REASONS = [
   "Changed my mind",
   "Ordered by mistake",
@@ -40,7 +38,6 @@ const CANCEL_REASONS = [
   "Other",
 ];
 
-// RETURN reasons
 const RETURN_REASONS = [
   "Item is damaged or defective",
   "Item does not match description",
@@ -55,19 +52,16 @@ const OrderDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cancel modal state
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelReasonOther, setCancelReasonOther] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Return modal state
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnReason, setReturnReason] = useState("");
   const [returnReasonOther, setReturnReasonOther] = useState("");
   const [isReturning, setIsReturning] = useState(false);
 
-  // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [startingReviewIndex, setStartingReviewIndex] = useState(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -112,7 +106,6 @@ const OrderDetail = () => {
         "Order cancelled. Refund will be processed in 5–7 business days.",
       );
       setShowCancelModal(false);
-      // Refresh order data
       const updated = await getOrderDetails(orderId);
       setOrder(updated);
     } catch (err) {
@@ -154,8 +147,6 @@ const OrderDetail = () => {
     try {
       await createReview(item.id, formData);
       toast.success("Review submitted successfully!");
-      // Don't close modal here, let ReviewModal handle advancement
-      // Refresh order data in background so items show as reviewed
       const updated = await getOrderDetails(orderId);
       setOrder(updated);
     } catch (err) {

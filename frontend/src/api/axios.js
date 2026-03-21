@@ -12,9 +12,6 @@ const getCookie = (name) => {
   return null;
 };
 
-// ─── Silent Refresh State ────────────────────────────────────────────────────
-// Tracks whether a refresh is already in-flight so concurrent expired requests
-// don't each trigger their own /auth/refresh-token call.
 let isRefreshing = false;
 let refreshQueue = []; // callbacks waiting for the new access token
 
@@ -32,7 +29,6 @@ const redirectToLogin = () => {
     window.location.href = "/login";
   }
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
 api.interceptors.request.use(
   (config) => {
@@ -59,9 +55,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // ── Silent Access Token Refresh ─────────────────────────────────────────
-    // Trigger when the server tells us the access token has expired,
-    // but only once per request (guard with _retry flag).
     const isAccessTokenExpired =
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -74,7 +67,6 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Another refresh is already in flight — queue this request.
         return new Promise((resolve, reject) => {
           refreshQueue.push({
             resolve: (accessToken) => {
@@ -104,7 +96,6 @@ api.interceptors.response.use(
         processQueue(null, newAccessToken);
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh token is expired or invalid — require fresh login.
         processQueue(refreshError, null);
         redirectToLogin();
         return Promise.reject(refreshError);
@@ -112,9 +103,7 @@ api.interceptors.response.use(
         isRefreshing = false;
       }
     }
-    // ────────────────────────────────────────────────────────────────────────
 
-    // ── CSRF Token Auto-Retry ────────────────────────────────────────────────
     if (
       error.response?.status === 403 &&
       (error.response.data?.message === "Invalid CSRF token" ||
@@ -130,7 +119,6 @@ api.interceptors.response.use(
         }
       }
     }
-    // ────────────────────────────────────────────────────────────────────────
 
     return Promise.reject(error);
   },

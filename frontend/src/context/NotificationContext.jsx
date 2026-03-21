@@ -29,14 +29,11 @@ export const NotificationProvider = ({ children }) => {
     if (!user) return;
     try {
       const data = await getMyNotifications();
-      // data is { count, rows } from findAndCountAll
       setNotifications(data?.rows ?? data ?? []);
     } catch {
-      // Silently fail — don't disrupt the UI for a polling error
     }
   }, [user]);
 
-  // Fetch on mount + whenever user changes
   useEffect(() => {
     if (!user) {
       setNotifications([]);
@@ -46,7 +43,6 @@ export const NotificationProvider = ({ children }) => {
     setLoading(true);
     refresh().finally(() => setLoading(false));
 
-    // Start polling
     intervalRef.current = setInterval(refresh, POLL_INTERVAL_MS);
     return () => clearInterval(intervalRef.current);
   }, [user, refresh]);
@@ -54,14 +50,12 @@ export const NotificationProvider = ({ children }) => {
   const markAsRead = useCallback(
     async (ids) => {
       if (!ids || ids.length === 0) return;
-      // Optimistic update
       setNotifications((prev) =>
         prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: true } : n)),
       );
       try {
         await apiMarkAsRead(ids);
       } catch {
-        // Revert on failure
         await refresh();
       }
     },
@@ -100,6 +94,7 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => {
   const ctx = useContext(NotificationContext);
   if (!ctx)

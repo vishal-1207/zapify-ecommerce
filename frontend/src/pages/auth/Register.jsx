@@ -30,7 +30,6 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // CSRF Handshake
   useEffect(() => {
     const fetchCsrf = async () => {
       try {
@@ -61,7 +60,6 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Call Register API (fullname, username, email, password)
       const res = await registerUser({
         fullname: formData.fullname,
         username: formData.username,
@@ -69,13 +67,10 @@ const Register = () => {
         password: formData.password,
       });
 
-      // 2. Auto Login if successful (using username/email as userId)
       if (res.accessToken || res.user) {
-        // Pass the newly created credentials to the context login
         await login(formData.email, formData.password);
         navigate("/verify-email", { state: { email: formData.email } });
       } else {
-        // If API requires email verification before login:
         navigate("/login", { state: { message: res.message } });
       }
     } catch (err) {

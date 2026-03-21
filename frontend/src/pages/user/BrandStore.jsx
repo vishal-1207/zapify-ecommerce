@@ -12,7 +12,6 @@ const BrandStore = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // Local State for Search/Sort/Pagination within the Brand Store
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState("newest");
     const [selectedCategory, setSelectedCategory] = useState("all");
@@ -23,12 +22,10 @@ const BrandStore = () => {
         const fetchBrandData = async () => {
             setLoading(true);
             try {
-                // Fetch Brand Details by Slug
                 const brandRes = await axios.get(`/brand/${slug}`);
                 const brandData = brandRes.data.data;
                 setBrand(brandData);
                 
-                // Fetch Brand Products
                 if (brandData?.id) {
                      const productsData = await getAllProducts({ brandId: brandData.id, limit: 1000 }); // Fetch all to paginate locally
                      setProducts(productsData || []); // Fix: Use returned array directly
@@ -45,22 +42,18 @@ const BrandStore = () => {
         }
     }, [slug]);
 
-    // Derived State: Filter & Sort & Paginate
     const processedProducts = useMemo(() => {
         let result = [...products];
 
-        // 0. Category Filter
         if (selectedCategory !== "all") {
             result = result.filter(p => p.category?.name === selectedCategory);
         }
 
-        // 1. Search
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             result = result.filter(p => p.name.toLowerCase().includes(q) || p.model?.toLowerCase().includes(q));
         }
 
-        // 2. Sort
         switch (sortOption) {
             case "price-asc":
                 result.sort((a, b) => (Number(a.minOfferPrice) || Number(a.price)) - (Number(b.minOfferPrice) || Number(b.price)));
@@ -78,7 +71,7 @@ const BrandStore = () => {
         }
 
         return result;
-    }, [products, searchQuery, sortOption]);
+    }, [products, searchQuery, sortOption, selectedCategory]);
 
     const paginatedProducts = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -90,7 +83,6 @@ const BrandStore = () => {
         return Array.from(cats);
     }, [products]);
 
-    // Reset page on filter change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, sortOption, selectedCategory]);

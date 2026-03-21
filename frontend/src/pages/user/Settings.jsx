@@ -10,19 +10,16 @@ const Settings = () => {
       smsNotifications: false,
       theme: "light"
   });
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState("");
+
 
   const handleToggle = async (key) => {
     const newVal = !settings[key];
     setSettings({ ...settings, [key]: newVal });
     
-    // Optimistic UI, attempt save
     try {
         await api.patch(`/settings/user/${user.username}`, { [key]: newVal });
     } catch(err) {
         console.error("Failed to update setting", err);
-        // Revert (optional)
         setSettings({ ...settings, [key]: !newVal });
     }
   };

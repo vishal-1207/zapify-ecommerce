@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { getMyOffers, updateOffer } from "../../api/offers";
+import { useState, useEffect } from "react";
+import { getMyOffers } from "../../api/offers";
 import { createSellerDeal } from "../../api/discounts";
 import { formatCurrency } from "../../utils/currency";
-import { Edit, Trash2, Tag, X, Check, AlertCircle } from "lucide-react";
+import { Edit, Tag } from "lucide-react";
 import toast from "react-hot-toast";
 import DataTable from "../../components/common/DataTable";
 
@@ -37,7 +37,6 @@ const Offers = () => {
   const handleOpenDealModal = (offer) => {
     setSelectedOffer(offer);
 
-    // Format dates for datetime-local input (YYYY-MM-DDThh:mm)
     const formatDate = (dateString) => {
       if (!dateString) return "";
       const date = new Date(dateString);
@@ -76,7 +75,6 @@ const Offers = () => {
 
       await createSellerDeal(selectedOffer.id, updatedData);
 
-      // Update local state
       setOffers(
         offers.map((o) =>
           o.id === selectedOffer.id ? { ...o, ...updatedData } : o,

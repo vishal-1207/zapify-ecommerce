@@ -17,14 +17,12 @@ import ProductCarousel from "../../components/product/ProductCarousel";
 import { getAllCategories } from "../../api/categories";
 import { getAllBrands } from "../../api/brands";
 import {
-  getFeaturedProducts,
   getNewArrivals,
   getPopularProducts,
   getRecommendations,
 } from "../../api/products";
 
 const Home = () => {
-  const [featured, setFeatured] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [popular, setPopular] = useState([]);
   const [recommended, setRecommended] = useState([]);
@@ -35,15 +33,13 @@ const Home = () => {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [feat, newItems, pop, rec, cats, brnds] = await Promise.all([
-          getFeaturedProducts(),
+        const [newItems, pop, rec, cats, brnds] = await Promise.all([
           getNewArrivals(),
           getPopularProducts(),
           getRecommendations(),
           getAllCategories(),
           getAllBrands(),
         ]);
-        setFeatured(feat);
         setNewArrivals(newItems);
         setPopular(pop);
         setRecommended(rec);

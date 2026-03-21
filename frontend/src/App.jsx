@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { loadUser } from "./store/auth/authSlice";
 import { fetchWishlist } from "./store/wishlist/wishlistSlice";
 import {
@@ -12,13 +12,11 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { useCart } from "./context/CartContext";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import VerificationBanner from "./components/layout/VerificationBanner";
 import { Toaster } from "react-hot-toast";
 
-// Pages
 import Cart from "./pages/user/Cart";
 import Home from "./pages/user/Home";
 import Shop from "./pages/user/Shop";
@@ -42,9 +40,9 @@ import Wishlist from "./pages/user/Wishlist";
 import Transactions from "./pages/user/Transactions";
 import Notifications from "./pages/user/Notifications";
 import MyReviews from "./pages/user/MyReviews";
+import AffiliateDashboard from "./pages/user/AffiliateDashboard";
 import { NotificationProvider } from "./context/NotificationContext";
 
-// Admin Pages
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -53,7 +51,6 @@ import AdminBrands from "./pages/admin/AdminBrands";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReviews from "./pages/admin/AdminReviews";
-// Seller Pages
 import SellerLayout from "./pages/seller/SellerLayout";
 import SellerDashboard from "./pages/seller/SellerDashboard";
 import SellerProducts from "./pages/seller/SellerProducts";
@@ -64,7 +61,6 @@ import AddProduct from "./pages/seller/AddProduct";
 import SellerReviews from "./pages/seller/SellerReviews";
 import BrandStore from "./pages/user/BrandStore";
 
-// Info Pages
 import About from "./pages/info/About";
 import FAQ from "./pages/info/FAQ";
 import Terms from "./pages/info/Terms";
@@ -72,7 +68,6 @@ import Privacy from "./pages/info/Privacy";
 import Help from "./pages/info/Help";
 import SellOnZapify from "./pages/info/SellOnZapify";
 import Affiliate from "./pages/info/Affiliate";
-import AffiliateDashboard from "./pages/user/AffiliateDashboard";
 
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center min-h-[50vh] text-2xl font-bold text-gray-400">
@@ -83,8 +78,6 @@ const Placeholder = ({ title }) => (
 const SellerRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div>Loading...</div>;
-  // Reverted to allow access if user has seller role, regardless of current active role
-  // This fixes the issue where refreshing or direct access would block the user
   if (!user || (!user.roles?.includes("seller") && user.role !== "seller")) {
     return <Navigate to="/" replace />;
   }
@@ -100,7 +93,6 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// Social Login Handler Component
 const ProtectedRoute = ({ children, redirectTo }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
@@ -108,8 +100,6 @@ const ProtectedRoute = ({ children, redirectTo }) => {
   if (isLoading) return <div>Loading...</div>;
 
   if (!user) {
-    // If redirectTo is provided (e.g. "/cart"), send them there after login.
-    // Otherwise, send them back to where they were trying to go.
     const from = redirectTo ? { pathname: redirectTo } : location;
     return <Navigate to="/login" state={{ from }} replace />;
   }
@@ -127,7 +117,6 @@ const SocialLoginHandler = () => {
     if (ticket) {
       loginWithTicket(ticket)
         .then(() => {
-          // Clear query params
           setSearchParams({});
           navigate("/", { replace: true });
         })
@@ -184,13 +173,11 @@ function App() {
     });
   }, [dispatch]);
 
-  // Handle Affiliate referrals globally
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) {
       localStorage.setItem("affiliateRef", ref);
-      // Clean up the URL to prevent sharing the link with the ref forever
       const url = new URL(window.location);
       url.searchParams.delete("ref");
       window.history.replaceState({}, "", url);
@@ -272,7 +259,6 @@ function App() {
                   }
                 />
 
-                {/* Account Routes */}
                 <Route
                   path="/account"
                   element={
@@ -291,6 +277,15 @@ function App() {
                   <Route path="transactions" element={<Transactions />} />
                   <Route path="notifications" element={<Notifications />} />
                 </Route>
+
+                <Route
+                  path="/affiliate/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <AffiliateDashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Seller Routes */}
                 <Route

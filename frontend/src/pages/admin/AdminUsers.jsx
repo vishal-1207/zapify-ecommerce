@@ -29,7 +29,6 @@ const AdminUsers = () => {
     usersTotalPages: totalPages,
   } = useSelector((state) => state.admin);
 
-  // Default to "user" tab so data loads immediately
   const [roleFilter, setRoleFilter] = useState("user");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -37,7 +36,6 @@ const AdminUsers = () => {
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [blockConfirmUser, setBlockConfirmUser] = useState(null);
 
-  // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({});
@@ -64,9 +62,6 @@ const AdminUsers = () => {
     await dispatch(deleteUserAction(userId));
     setDeleteConfirmUser(null);
 
-    // After deletion, re-fetch the current page so the gap is filled
-    // from the next page automatically. If this page is now empty
-    // (we deleted the only record on the last page), step back one page.
     const newUsers = users.filter((u) => u.id !== userId);
     const targetPage = newUsers.length === 0 && page > 1 ? page - 1 : page;
     if (targetPage !== page) {

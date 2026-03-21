@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 
-// Theme configurations
 const themes = {
   indigo: {
     sidebarBg: "bg-indigo-900",

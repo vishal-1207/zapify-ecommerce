@@ -278,7 +278,6 @@ const Address = () => {
                 className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.zipCode ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
                 value={formData.zipCode}
                 onChange={(e) =>
-                  // Only allow numbers
                   {
                     const val = e.target.value;
                     if (val === "" || /^\d+$/.test(val)) {

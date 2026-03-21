@@ -17,7 +17,6 @@ import {
 import { useNotifications } from "../../context/NotificationContext";
 import { formatDistanceToNow } from "date-fns";
 
-// ── Icon per notification type ─────────────────────────────────────────────
 const TYPE_META = {
   order_placed: {
     icon: CheckCircle,
@@ -73,7 +72,6 @@ const TYPE_META = {
 const getTypeMeta = (type) =>
   TYPE_META[type] ?? { icon: Info, color: "text-gray-400", bg: "bg-gray-50" };
 
-// ── Individual notification item ───────────────────────────────────────────
 const NotificationItem = ({ notification, onClose }) => {
   const { markAsRead } = useNotifications();
   const navigate = useNavigate();
@@ -118,13 +116,11 @@ const NotificationItem = ({ notification, onClose }) => {
   );
 };
 
-// ── Main dropdown panel ────────────────────────────────────────────────────
 const NotificationsPanel = ({ isOpen, onClose }) => {
   const { notifications, unreadCount, markAllAsRead, clearAll, loading } =
     useNotifications();
   const panelRef = useRef(null);
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {

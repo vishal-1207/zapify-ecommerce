@@ -86,7 +86,6 @@ const ProductDetail = () => {
         const foundProduct = await getProductById(slug, signal);
         setProduct(foundProduct);
 
-        // Find best offer logic based on priority: Deal > Offer > MRP
         if (foundProduct?.offers?.length > 0) {
           const isOfferActiveDeal = (offer) => {
             if (!offer.dealPrice || !offer.dealStartDate || !offer.dealEndDate)
@@ -103,31 +102,23 @@ const ProductDetail = () => {
           const dealOffers = offers.filter(isOfferActiveDeal);
 
           if (dealOffers.length > 0) {
-            // Priority 1: Active Deal
-            // Sort by deal price (asc)
             dealOffers.sort(
               (a, b) => parseFloat(a.dealPrice) - parseFloat(b.dealPrice),
             );
-            // Try to find one in stock with the best price, otherwise take the absolute best price
             const inStockDeal = dealOffers.find((o) => o.stockQuantity > 0);
             setSelectedOffer(inStockDeal || dealOffers[0]);
           } else {
-            // Priority 2: Regular Offer
-            // Sort by regular price (asc)
             offers.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-            // Try to find one in stock with the best price, otherwise take the absolute best price
             const inStockOffer = offers.find((o) => o.stockQuantity > 0);
             setSelectedOffer(inStockOffer || offers[0]);
           }
         } else {
-          // Priority 3: MRP (Implicit fallback when selectedOffer is null)
           setSelectedOffer(null);
         }
 
         const recs = await getRecommendations(signal);
         setSimilarProducts(recs.filter((p) => p.slug !== slug));
       } catch (error) {
-        // Ignore intentional request cancellations (e.g., navigating away)
         if (
           error?.code === "ERR_CANCELED" ||
           error?.name === "AbortError" ||
@@ -143,20 +134,7 @@ const ProductDetail = () => {
     return () => controller.abort();
   }, [slug]);
 
-  const handleAddToCart = () => {
-    if (!selectedOffer) return;
 
-    // Normalize product data for cart with selected offer details
-    const cartProduct = {
-      ...product,
-      id: product.id,
-      offerId: selectedOffer.id,
-      price: selectedOffer.price,
-      sellerName: selectedOffer.sellerProfile?.storeName,
-    };
-
-    for (let i = 0; i < qty; i++) addToCart(cartProduct);
-  };
 
   if (loading)
     return (
@@ -507,7 +485,6 @@ const ProductDetail = () => {
                       ) : (
                         <button
                           onClick={() => {
-                            // Handle Add to Cart with Deal Price
                             const isDeal =
                               selectedOffer.dealPrice &&
                               new Date() >=
@@ -525,8 +502,7 @@ const ProductDetail = () => {
                               sellerName:
                                 selectedOffer.sellerProfile?.storeName,
                             };
-                            for (let i = 0; i < qty; i++)
-                              addToCart(cartProduct);
+                            addToCart(cartProduct, qty);
                           }}
                           className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                         >

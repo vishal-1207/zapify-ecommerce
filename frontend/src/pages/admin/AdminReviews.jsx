@@ -27,7 +27,6 @@ const TABS = [
   { key: "reports", label: "Reports" },
 ];
 
-// Pill component for autoModFlags breakdown
 const FlagPill = ({ active, label }) =>
   active ? (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
@@ -36,7 +35,6 @@ const FlagPill = ({ active, label }) =>
     </span>
   ) : null;
 
-// Moderate action dialog (inline)
 const ModerateDialog = ({ reviewId, onDone }) => {
   const [decision, setDecision] = useState("approved");
   const [reason, setReason] = useState("");
@@ -103,7 +101,6 @@ const ModerateDialog = ({ reviewId, onDone }) => {
   );
 };
 
-// ── Reviews Tab ────────────────────────────────────────────────────────────────
 const ReviewsQueue = ({ statusFilter }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -129,25 +126,22 @@ const ReviewsQueue = ({ statusFilter }) => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, page]);
+  }, [statusFilter, page, limit]);
 
   useEffect(() => {
     fetch();
     setActingOn(null);
   }, [fetch]);
 
-  // Reset page when limit changes
   useEffect(() => {
     setPage(1);
   }, [limit]);
 
   const handleDone = (reviewId, decision) => {
     setActingOn(null);
-    // Remove from list if moving out of current filter context
     if (statusFilter !== "all" && statusFilter !== decision) {
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
     } else {
-      // Refresh to get updated record
       fetch();
     }
   };
@@ -352,7 +346,6 @@ const ReviewsQueue = ({ statusFilter }) => {
   );
 };
 
-// ── Reports Tab ────────────────────────────────────────────────────────────────
 const ReportsQueue = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -362,7 +355,6 @@ const ReportsQueue = () => {
   const [statusFilter, setStatusFilter] = useState("open");
   const [resolving, setResolving] = useState({});
 
-  // Reset page when limit changes
   useEffect(() => {
     setPage(1);
   }, [limit]);
@@ -382,7 +374,7 @@ const ReportsQueue = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, page]);
+  }, [statusFilter, page, limit]);
 
   useEffect(() => {
     fetch();
@@ -594,7 +586,6 @@ const ReportsQueue = () => {
   );
 };
 
-// ── Main AdminReviews Page ─────────────────────────────────────────────────────
 const AdminReviews = () => {
   const [activeTab, setActiveTab] = useState("pending");
 

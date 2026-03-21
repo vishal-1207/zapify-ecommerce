@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "../../utils/currency";
 import { liteClient as algoliasearch } from "algoliasearch/lite";
 import {
@@ -12,7 +12,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search as SearchIcon, X, ChevronDown } from "lucide-react";
 import { debounce } from "lodash";
 
-// Initialize Algolia client
 const searchClient = algoliasearch(
   import.meta.env.VITE_ALGOLIA_APP_ID,
   import.meta.env.VITE_ALGOLIA_SEARCH_KEY,
@@ -52,7 +51,6 @@ const Hit = ({ hit, onClick }) => {
 };
 
 const CustomSearchBox = ({
-  isActive,
   setIsActive,
   onClose,
   selectedCategorySlug,
@@ -74,7 +72,6 @@ const CustomSearchBox = ({
       );
   }, []);
 
-  // Sync internal state with URL on mount
   useEffect(() => {
     const urlQuery = searchParams.get("search");
     if (urlQuery) {
@@ -83,9 +80,8 @@ const CustomSearchBox = ({
     }
   }, [searchParams, refine]);
 
-  // Debounced URL update
-  const updateUrl = useCallback(
-    debounce((newQuery) => {
+  const updateUrl = useMemo(
+    () => debounce((newQuery) => {
       setSearchParams(
         (prev) => {
           const newParams = new URLSearchParams(prev);
@@ -99,7 +95,7 @@ const CustomSearchBox = ({
         { replace: true },
       );
     }, 500),
-    [],
+    [setSearchParams],
   );
 
   const handleSearch = (e) => {
@@ -234,7 +230,6 @@ const SearchComponent = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Don't close if clicking inside the search component
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsActive(false);
       }

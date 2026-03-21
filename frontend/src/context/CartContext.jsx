@@ -10,7 +10,6 @@ import {
   addToCartGuest,
   removeFromCartGuest,
   updateQtyGuest,
-  clearGuestCart,
 } from "../store/cart/cartSlice";
 
 export const useCart = () => {
@@ -18,29 +17,25 @@ export const useCart = () => {
   const { cart, loading } = useSelector((state) => state.cart);
   const { user } = useAuth();
 
-  // Fetch cart from backend when user logs in
   useEffect(() => {
     const initializeCart = async () => {
       if (user) {
         await dispatch(syncGuestCart());
         await dispatch(fetchCartFromBackend());
-      } else {
-        dispatch(clearGuestCart());
       }
     };
 
-    // Added check for token directly incase useAuth takes time to update state
     const token = localStorage.getItem("token");
     if (user || token) {
       initializeCart();
     }
   }, [user, dispatch]);
 
-  const addToCart = async (product) => {
+  const addToCart = async (product, quantity = 1) => {
     if (user) {
-      dispatch(addToCartBackend({ product, qty: 1 }));
+      dispatch(addToCartBackend({ product, qty: quantity }));
     } else {
-      dispatch(addToCartGuest(product));
+      dispatch(addToCartGuest({ product, qty: quantity }));
     }
   };
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { DollarSign, Share2, Award } from "lucide-react";
 
 const Affiliate = () => {
@@ -13,9 +14,9 @@ const Affiliate = () => {
           <p className="text-xl md:text-2xl text-teal-100 max-w-3xl mx-auto mb-10">
             Earn up to 10% commission on every qualifying purchase you refer to Zapify.
           </p>
-          <button className="bg-white text-teal-700 font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:bg-gray-50 hover:scale-105 transition-all">
+          <Link to="/affiliate/dashboard" className="inline-block bg-white text-teal-700 font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:bg-gray-50 hover:scale-105 transition-all">
             Join the Program
-          </button>
+          </Link>
         </div>
       </div>
 

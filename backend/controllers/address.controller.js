@@ -92,13 +92,11 @@ const deleteAddressFactory = (addressableType) =>
       .json(new ApiResponse(200, result, result.message));
   });
 
-// --- Customer Address Controllers ---
 export const addCustomerAddress = addAddressFactory("User");
 export const getCustomerAddresses = getAddressesFactory("User");
 export const updateCustomerAddress = updateAddressFactory("User");
 export const deleteCustomerAddress = deleteAddressFactory("User");
 
-// --- Seller Address Controllers ---
 export const addSellerAddress = addAddressFactory("SellerProfile");
 export const getSellerAddresses = getAddressesFactory("SellerProfile");
 export const updateSellerAddress = updateAddressFactory("SellerProfile");

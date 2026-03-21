@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -6,7 +6,6 @@ import {
   Star,
   ThumbsUp,
   ThumbsDown,
-  MessageSquare,
   PlayCircle,
   X,
   ChevronLeft,
@@ -182,11 +181,9 @@ const ProductReviews = ({ product }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Lightbox State
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
-  // Reviews Modal State
   const [isAllReviewsModalOpen, setIsAllReviewsModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
 
@@ -208,7 +205,7 @@ const ProductReviews = ({ product }) => {
           setLoading(false);
         });
     }
-  }, [product?.id]);
+  }, [product]);
 
   const handleVote = async (reviewId, voteType, reviewUserId) => {
     if (!isAuthenticated) {
@@ -220,7 +217,6 @@ const ProductReviews = ({ product }) => {
       return;
     }
 
-    // Optimistic Update
     const originalReviews = [...reviews];
     setReviews((prevReviews) =>
       prevReviews.map((review) => {
@@ -276,12 +272,10 @@ const ProductReviews = ({ product }) => {
       await toggleReviewVote(reviewId, voteType);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to submit vote.");
-      // Revert on failure
       setReviews(originalReviews);
     }
   };
 
-  // Flatten all media into a single array for the gallery
   const allMedia = useMemo(() => {
     return reviews.reduce((acc, review) => {
       if (review.media && review.media.length > 0) {
@@ -298,8 +292,6 @@ const ProductReviews = ({ product }) => {
   }, [reviews]);
 
   const openLightbox = (reviewIndex, mediaIndex) => {
-    // Calculate global index based on previous reviews' media counts
-    // Note: reviewIndex must be the index from the ORIGINAL reviews array!
     let globalIndex = 0;
     for (let i = 0; i < reviewIndex; i++) {
       globalIndex += reviews[i].media?.length || 0;
@@ -316,19 +308,18 @@ const ProductReviews = ({ product }) => {
     document.body.style.overflow = "unset";
   };
 
-  const nextMedia = (e) => {
+  const nextMedia = useCallback((e) => {
     e?.stopPropagation();
     setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
-  };
+  }, [allMedia.length]);
 
-  const prevMedia = (e) => {
+  const prevMedia = useCallback((e) => {
     e?.stopPropagation();
     setCurrentMediaIndex(
       (prev) => (prev - 1 + allMedia.length) % allMedia.length,
     );
-  };
+  }, [allMedia.length]);
 
-  // Handle keyboard navigation for Lightbox
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isLightboxOpen) return;
@@ -339,7 +330,7 @@ const ProductReviews = ({ product }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLightboxOpen]);
+  }, [isLightboxOpen, nextMedia, prevMedia]);
 
   const filteredReviews = useMemo(() => {
     if (activeFilter === "all") return reviews;

@@ -17,7 +17,6 @@ const SellerLayout = () => {
   const { logout, user, switchRole, role } = useAuth();
   const navigate = useNavigate();
 
-  // Ensure user is in seller mode when accessing dashboard
   React.useEffect(() => {
     if (role !== "seller") {
       switchRole("seller");

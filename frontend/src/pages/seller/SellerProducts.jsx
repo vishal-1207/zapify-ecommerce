@@ -38,7 +38,6 @@ const SellerProducts = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
 
@@ -46,7 +45,7 @@ const SellerProducts = () => {
 
   const fetchOffers = useCallback(() => {
     dispatch(fetchSellerOffers({ page, limit, status: statusFilter }));
-  }, [dispatch, page, limit, statusFilter, refreshTrigger]);
+  }, [dispatch, page, limit, statusFilter]);
 
   useEffect(() => {
     if (reduxError) {
@@ -56,7 +55,7 @@ const SellerProducts = () => {
 
   useEffect(() => {
     fetchOffers();
-  }, [fetchOffers]);
+  }, [fetchOffers, refreshTrigger]);
 
   const handleDelete = async (offerId) => {
     if (!window.confirm("Are you sure you want to delete this offer?")) return;
@@ -88,13 +87,9 @@ const SellerProducts = () => {
   };
 
   const handleEditSave = async (offerId, data) => {
-    try {
-      await updateSellerOffer(offerId, data);
-      toast.success("Offer updated successfully");
-      setRefreshTrigger((prev) => prev + 1);
-    } catch (error) {
-      throw error; // Let modal handle error state if needed, or toast here
-    }
+    await updateSellerOffer(offerId, data);
+    toast.success("Offer updated successfully");
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const columns = [
