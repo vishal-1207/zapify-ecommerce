@@ -277,3 +277,14 @@ export const getProductSuggestions = asyncHandler(async (req, res) => {
       new ApiResponse(200, suggestions, "Product suggestions list fetched."),
     );
 });
+
+/**
+ * Controller to fetch recommended similar products for a specific product.
+ */
+export const getSimilarProducts = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+  const products = await productService.getSimilarProducts(slug);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "Similar products fetched successfully."));
+});

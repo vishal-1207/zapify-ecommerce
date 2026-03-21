@@ -36,6 +36,7 @@ router
     productController.createProduct,
   );
 
+router.route("/:slug/similar").get(productController.getSimilarProducts);
 router.route("/:slug").get(productController.getProductDetailsForCustomer);
 
 router.route("/suggest-product/:sellerId").post(

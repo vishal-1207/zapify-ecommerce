@@ -16,7 +16,7 @@ export const getProductById = async (id, signal) => {
 };
 
 export const getFeaturedProducts = async () => {
-  const products = await getAllProducts({ limit: 4, sort: "-rating" }); // Mocking params
+  const products = await getAllProducts({ limit: 4, sort: "-rating" });
   return products.slice(0, 4);
 };
 
@@ -30,9 +30,13 @@ export const getPopularProducts = async () => {
   return products.slice(0, 5);
 };
 
-export const getRecommendations = async (signal) => {
-  const products = await getAllProducts({}, signal);
-  return products.slice(0, 4); // Just random for now
+export const getRecommendations = async (slug, signal) => {
+  if (!slug) {
+    const products = await getAllProducts({}, signal);
+    return products.slice(0, 4);
+  }
+  const response = await api.get(`/product/${slug}/similar`, { signal });
+  return response.data.data || response.data || [];
 };
 
 export const searchProducts = async (query) => {

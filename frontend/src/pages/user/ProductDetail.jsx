@@ -116,8 +116,8 @@ const ProductDetail = () => {
           setSelectedOffer(null);
         }
 
-        const recs = await getRecommendations(signal);
-        setSimilarProducts(recs.filter((p) => p.slug !== slug));
+        const recs = await getRecommendations(slug, signal);
+        setSimilarProducts(recs);
       } catch (error) {
         if (
           error?.code === "ERR_CANCELED" ||

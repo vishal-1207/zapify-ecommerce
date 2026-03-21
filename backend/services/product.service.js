@@ -613,3 +613,64 @@ export const getSellerProductSuggestions = async (userId, page, limit) => {
 
   return result;
 };
+
+/**
+ * Gets similar products based on the same category, prioritizing the same brand
+ * and proximal price.
+ */
+export const getSimilarProducts = async (slug) => {
+  const currentProduct = await db.Product.findOne({
+    where: { slug },
+    attributes: ["id", "categoryId", "brandId", "price"]
+  });
+
+  if (!currentProduct) {
+    throw new ApiError(404, "Product not found");
+  }
+
+  const similarProducts = await db.Product.findAll({
+    where: {
+      categoryId: currentProduct.categoryId,
+      id: { [Op.ne]: currentProduct.id },
+      status: "approved",
+      isActive: true,
+    },
+    attributes: [
+      "id",
+      "name",
+      "price",
+      "model",
+      "slug",
+      "status",
+      "averageRating",
+      "reviewCount",
+      "minOfferPrice",
+      "totalOfferStock",
+      "createdAt",
+      "isActive",
+    ],
+    include: [
+      {
+        model: db.Media,
+        as: "media",
+        attributes: ["url", "tag"],
+        where: { tag: "thumbnail" },
+        required: false,
+        limit: 1,
+      },
+      {
+        model: db.Brand,
+        as: "brand",
+        attributes: ["id", "name", "slug"],
+      },
+    ],
+    order: [
+      [db.sequelize.literal(`brandId = ${currentProduct.brandId || -1}`), 'DESC'],
+      [db.sequelize.literal(`ABS(price - ${currentProduct.price})`), 'ASC'],
+      ['averageRating', 'DESC']
+    ],
+    limit: 15,
+  });
+
+  return similarProducts;
+};
