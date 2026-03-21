@@ -46,17 +46,21 @@ app.use(
 );
 app.use(helmet());
 app.use(
-  pino({
-    level: "info",
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-      },
-    },
-  }),
+  pino(
+    process.env.NODE_ENV === "development"
+      ? {
+          level: "info",
+          transport: {
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              translateTime: "SYS:standard",
+              ignore: "pid,hostname",
+            },
+          },
+        }
+      : {},
+  ),
 );
 app.use(
   compression({
