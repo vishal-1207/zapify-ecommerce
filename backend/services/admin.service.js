@@ -871,7 +871,7 @@ export const getTopSellers = async (limit = 5) => {
  */
 export const getRecentOrders = async (limit = 8) => {
   return db.Order.findAll({
-    attributes: ["id", "orderId", "totalAmount", "status", "createdAt"],
+    attributes: ["id", "uniqueOrderId", "totalAmount", "status", "createdAt"],
     include: [
       {
         model: db.User,
