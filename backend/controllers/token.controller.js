@@ -11,13 +11,13 @@ export const csrfToken = asyncHandler(async (req, res) => {
 
     res.cookie("csrf_secret", secret, {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
     res.cookie("XSRF-TOKEN", token, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === "production", // Secure in production
+      secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
