@@ -11,6 +11,7 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search as SearchIcon, X, ChevronDown } from "lucide-react";
 import { debounce } from "lodash";
+import { getAllCategories } from "../../api/categories";
 
 const searchClient = algoliasearch(
   import.meta.env.VITE_ALGOLIA_APP_ID,
@@ -64,8 +65,7 @@ const CustomSearchBox = ({
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    import("../../api/categories")
-      .then((module) => module.getAllCategories())
+    getAllCategories()
       .then((data) => setCategories(data))
       .catch((error) =>
         console.error("Failed to fetch categories for SearchBox", error),
