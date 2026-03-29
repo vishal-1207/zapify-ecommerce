@@ -1,3 +1,6 @@
+import slugify from "slugify";
+import { nanoid } from "nanoid";
+
 export default (sequelize, DataTypes) => {
   const Brand = sequelize.define(
     "Brand",
@@ -20,15 +23,11 @@ export default (sequelize, DataTypes) => {
       hooks: {
         beforeCreate: (brand) => {
           if (!brand.slug && brand.name) {
-             const slugify = require("slugify");
-             const { nanoid } = require("nanoid");
              brand.slug = `${slugify(brand.name, { lower: true, strict: true })}-${nanoid(6)}`;
           }
         },
         beforeUpdate: (brand) => {
              if (brand.changed("name")) {
-                const slugify = require("slugify");
-                const { nanoid } = require("nanoid");
                 brand.slug = `${slugify(brand.name, { lower: true, strict: true })}-${nanoid(6)}`;
              }
         },

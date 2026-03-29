@@ -1,3 +1,6 @@
+import slugify from "slugify";
+import { nanoid } from "nanoid";
+
 export default (sequelize, DataTypes) => {
   const Category = sequelize.define(
     "Category",
@@ -20,15 +23,11 @@ export default (sequelize, DataTypes) => {
       hooks: {
         beforeCreate: (category) => {
           if (!category.slug && category.name) {
-             const slugify = require("slugify");
-             const { nanoid } = require("nanoid");
              category.slug = `${slugify(category.name, { lower: true, strict: true })}-${nanoid(6)}`;
           }
         },
         beforeUpdate: (category) => {
              if (category.changed("name")) {
-                const slugify = require("slugify");
-                const { nanoid } = require("nanoid");
                 category.slug = `${slugify(category.name, { lower: true, strict: true })}-${nanoid(6)}`;
              }
         },
