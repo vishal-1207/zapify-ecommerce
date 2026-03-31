@@ -491,7 +491,7 @@ export const getSellerRecentOrders = async (userId, limit = 8) => {
       {
         model: db.Order,
         as: "Order",
-        attributes: ["orderId"],
+        attributes: ["id", "uniqueOrderId"],
         include: [{
           model: db.User,
           as: "user",
