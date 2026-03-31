@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import * as otpServices from "../services/otp.service.js";
 import db from "../models/index.js";
+import { invalidateCache } from "../utils/cache.js";
 
 export const sendPhoneVerificationController = asyncHandler(
   async (req, res) => {
@@ -17,6 +18,8 @@ export const verifyPhoneController = asyncHandler(async (req, res) => {
     { isPhoneVerified: true },
     { where: { id: req.user.id }, validate: false }
   );
+
+  await invalidateCache(`user_session:${req.user.id}`);
 
   return res
     .status(200)
@@ -38,6 +41,8 @@ export const verifyEmailController = asyncHandler(async (req, res) => {
     { isEmailVerified: true },
     { where: { id: req.user.id }, validate: false }
   );
+
+  await invalidateCache(`user_session:${req.user.id}`);
 
   return res.status(200).json({ message: "Email verified successfully." });
 });
