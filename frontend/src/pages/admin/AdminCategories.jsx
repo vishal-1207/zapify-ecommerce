@@ -46,6 +46,10 @@ const AdminCategories = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
 
+  const fetchCategories = useCallback(() => {
+    dispatch(fetchAdminCategories());
+  }, [dispatch]);
+
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -56,10 +60,6 @@ const AdminCategories = () => {
       setError(reduxError);
     }
   }, [reduxError]);
-
-  const fetchCategories = useCallback(() => {
-    dispatch(fetchAdminCategories());
-  }, [dispatch]);
 
   const handleToggleStatus = async (id) => {
     const resultAction = await dispatch(toggleCategoryStatusAction(id));

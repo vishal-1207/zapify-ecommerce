@@ -39,6 +39,10 @@ const AdminBrands = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
 
+  const fetchBrands = useCallback(() => {
+    dispatch(fetchAdminBrands());
+  }, [dispatch]);
+
   useEffect(() => {
     fetchBrands();
   }, [fetchBrands]);
@@ -49,10 +53,6 @@ const AdminBrands = () => {
       setError(reduxError);
     }
   }, [reduxError]);
-
-  const fetchBrands = useCallback(() => {
-    dispatch(fetchAdminBrands());
-  }, [dispatch]);
 
   const handleToggleStatus = async (id) => {
     const resultAction = await dispatch(toggleBrandStatusAction(id));

@@ -47,18 +47,6 @@ const AdminProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategoriesAndBrands();
-  }, [fetchProducts, fetchCategoriesAndBrands]);
-
-  useEffect(() => {
-    if (reduxError) {
-      toast.error(reduxError);
-      setError(reduxError);
-    }
-  }, [reduxError]);
-
   const fetchProducts = useCallback(() => {
     dispatch(fetchAdminProducts(activeTab));
   }, [dispatch, activeTab]);
@@ -75,6 +63,18 @@ const AdminProducts = () => {
       handleApiError(error, "Failed to fetch categories/brands");
     }
   }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategoriesAndBrands();
+  }, [fetchProducts, fetchCategoriesAndBrands]);
+
+  useEffect(() => {
+    if (reduxError) {
+      toast.error(reduxError);
+      setError(reduxError);
+    }
+  }, [reduxError]);
 
   const handleApprove = async (productId) => {
     const resultAction = await dispatch(approveProductAction(productId));
