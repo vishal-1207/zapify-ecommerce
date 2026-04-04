@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { formatCurrency, CURRENCY_SYMBOL } from "../../utils/currency";
-import { Loader2, CheckCircle, Tag, Package, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, Package } from "lucide-react";
 
 const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -70,13 +70,13 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
               min="0"
               value={formData.price}
               onChange={handleChange}
-              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md py-2 border"
+              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full px-4 sm:text-sm border-gray-300 rounded-md py-2 border"
               placeholder="0.00"
             />
           </div>
           {product.price > 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              Lowest Offer:{" "}
+              Lowest listed price:{" "}
               <span className="font-medium text-green-600">
                 {formatCurrency(product.price)}
               </span>

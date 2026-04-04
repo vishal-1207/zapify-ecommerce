@@ -13,15 +13,15 @@ const DataTable = ({
   data = [],
   onSearch,
   searchPlaceholder = "Search...",
-  filters, // React Node for tabs or filters
-  actions, // React Node for buttons like "Add Product"
+  filters,
+  actions,
   loading = false,
-  error = null, // Error message or object
-  onRetry, // Function to retry fetching data
+  error = null,
+  onRetry,
   emptyMessage = "No records found.",
-  pagination, // Optional map for server-pagination: { currentPage, totalPages, onPageChange, itemsPerPage, onItemsPerPageChange }
-  searchValue, // Optional: Controlled value for search input
-  clientPagination = false, // If true, table paginates locally over the data array
+  pagination,
+  searchValue,
+  clientPagination = false,
 }) => {
   const [clientPage, setClientPage] = useState(1);
   const [clientItemsPerPage, setClientItemsPerPage] = useState(10);
