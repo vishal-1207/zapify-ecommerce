@@ -6,7 +6,7 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     key: { type: DataTypes.STRING, allowNull: false },
-    value: { type: DataTypes.STRING, allowNull: false },
+    value: { type: DataTypes.TEXT, allowNull: false },
   });
 
   ProductSpec.associate = (models) => {
