@@ -17,9 +17,46 @@ import {
   ToggleRight,
   Upload,
   Loader2,
+  ImageOff,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
+
+/** Renders an image with an animated skeleton placeholder while it loads. */
+const ImageWithSkeleton = ({ src, alt }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    setError(false);
+  }, [src]);
+
+  if (!src || error) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300">
+        <ImageOff size={18} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+      {!loaded && (
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+};
 
 const AdminCategories = () => {
   const dispatch = useDispatch();
@@ -152,18 +189,9 @@ const AdminCategories = () => {
   const columns = [
     {
       header: "Image",
-      render: (cat) =>
-        cat.media?.url ? (
-          <img
-            src={cat.media.url}
-            alt={cat.name}
-            className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400">
-            <Upload size={16} />
-          </div>
-        ),
+      render: (cat) => (
+        <ImageWithSkeleton src={cat.media?.url} alt={cat.name} />
+      ),
     },
     {
       header: "Name",

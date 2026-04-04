@@ -15,9 +15,48 @@ import {
   ToggleLeft,
   ToggleRight,
   Upload,
+  ImageOff,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
+
+/** Renders an image with an animated skeleton placeholder while it loads. */
+const ImageWithSkeleton = ({ src, alt, className }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  // Reset state when src changes (e.g. after a new upload)
+  useEffect(() => {
+    setLoaded(false);
+    setError(false);
+  }, [src]);
+
+  if (!src || error) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300">
+        <ImageOff size={18} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+      {/* Shimmer skeleton shown until image finishes loading */}
+      {!loaded && (
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-contain transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        } ${className ?? ""}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+};
 
 const AdminBrands = () => {
   const dispatch = useDispatch();
@@ -134,18 +173,12 @@ const AdminBrands = () => {
   const columns = [
     {
       header: "Logo",
-      render: (brand) =>
-        brand.media?.url ? (
-          <img
-            src={brand.media.url}
-            alt={brand.name}
-            className="w-12 h-12 rounded-lg object-contain bg-gray-50 border border-gray-100"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400">
-            <Upload size={16} />
-          </div>
-        ),
+      render: (brand) => (
+        <ImageWithSkeleton
+          src={brand.media?.url}
+          alt={brand.name}
+        />
+      ),
     },
     {
       header: "Name",

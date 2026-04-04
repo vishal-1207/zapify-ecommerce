@@ -5,11 +5,19 @@ const api = axios.create({
   withCredentials: true,
 });
 
-const getCookie = (name) => {
-  if (!document.cookie) return null;
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) return decodeURIComponent(match[2]);
-  return null;
+let csrfMemoryToken = null;
+
+/**
+ * Fetches a fresh CSRF token from the backend and stores it in memory.
+ * Call this once at app startup (e.g. in main.jsx or App.jsx).
+ */
+export const initCsrf = async () => {
+  try {
+    const { data } = await api.get("/token/csrf-token");
+    csrfMemoryToken = data?.csrfToken || null;
+  } catch (err) {
+    console.error("[CSRF] Failed to initialise CSRF token:", err.message);
+  }
 };
 
 let isRefreshing = false;
@@ -37,12 +45,9 @@ api.interceptors.request.use(
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const csrfToken =
-      getCookie("XSRF-TOKEN") || getCookie("_csrf") || getCookie("csrfToken");
-
-    if (csrfToken) {
-      config.headers["X-CSRF-Token"] = csrfToken;
-      config.headers["x-csrf-token"] = csrfToken;
+    // Inject CSRF token from memory (works cross-origin unlike document.cookie)
+    if (csrfMemoryToken) {
+      config.headers["x-csrf-token"] = csrfMemoryToken;
     }
 
     return config;
@@ -50,6 +55,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// ─── Response interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -104,18 +110,24 @@ api.interceptors.response.use(
       }
     }
 
+    // CSRF token expired or invalid — fetch a fresh one and retry once
     if (
       error.response?.status === 403 &&
-      (error.response.data?.message === "Invalid CSRF token" ||
+      (error.response.data?.message === "Invalid CSRF token." ||
+        error.response.data?.message === "Invalid CSRF token" ||
         error.response.data?.code === "EBADCSRFTOKEN")
     ) {
       if (!originalRequest._csrfRetry) {
         originalRequest._csrfRetry = true;
         try {
-          await api.get("/token/csrf-token");
+          // Re-fetch and store the new token, then inject it before replaying
+          await initCsrf();
+          if (csrfMemoryToken) {
+            originalRequest.headers["x-csrf-token"] = csrfMemoryToken;
+          }
           return api(originalRequest);
         } catch (csrfError) {
-          console.error("Failed to refresh CSRF token", csrfError);
+          console.error("[CSRF] Failed to refresh CSRF token:", csrfError);
         }
       }
     }
