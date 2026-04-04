@@ -67,25 +67,17 @@ export default (sequelize, DataTypes) => {
           }
         },
         beforeUpdate: (product) => {
-          const combinedString =
-            `${product.name} ${product.model || ""}`.trim();
-          const baseSlug = slugify(combinedString, {
-            lower: true,
-            strict: true,
-          });
-          product.slug = `${baseSlug}-${nanoid(6)}`;
+          if (product.changed("name") || product.changed("model")) {
+            const combinedString =
+              `${product.name} ${product.model || ""}`.trim();
+            const baseSlug = slugify(combinedString, {
+              lower: true,
+              strict: true,
+            });
+            product.slug = `${baseSlug}-${nanoid(6)}`;
+          }
         },
 
-        afterCreate: async (product) => {
-          const { syncProductToAlgolia } =
-            await import("../services/algolia.service.js");
-          syncProductToAlgolia(product.id).catch((e) => console.error(e));
-        },
-        afterUpdate: async (product) => {
-          const { syncProductToAlgolia } =
-            await import("../services/algolia.service.js");
-          syncProductToAlgolia(product.id).catch((e) => console.error(e));
-        },
         afterDestroy: async (product) => {
           const { deleteProductFromAlgolia } =
             await import("../services/algolia.service.js");

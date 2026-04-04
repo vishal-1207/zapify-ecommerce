@@ -1,46 +1,9 @@
 import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import { getSellerProfile } from "./seller.service.js";
-
-/**
- * Helper to recalculate and update product stats (minPrice, totalStock, offerCount).
- * This updates the Product record, triggering the afterUpdate hook which syncs to Algolia.
- */
-const updateProductStats = async (productId) => {
-  const offers = await db.Offer.findAll({
-    where: { productId, status: "active" },
-    attributes: ["price", "stockQuantity"],
-  });
-
-  const offerCount = offers.length;
-  const totalOfferStock = offers.reduce((sum, o) => sum + o.stockQuantity, 0);
-
-  const inStockOffers = offers.filter((o) => o.stockQuantity > 0);
-  const candidates = inStockOffers.length > 0 ? inStockOffers : offers;
-
-  let minOfferPrice = 0;
-  if (candidates.length > 0) {
-    minOfferPrice = Math.min(...candidates.map((o) => parseFloat(o.price)));
-  } else {
-    minOfferPrice = 0;
-  }
-
-  await db.Product.update(
-    {
-      minOfferPrice: minOfferPrice > 0 ? minOfferPrice : null, // If 0, set null or let it be 0? Model allows null.
-      totalOfferStock,
-      offerCount,
-    },
-    { where: { id: productId } },
-  );
-
-  const product = await db.Product.findByPk(productId, {
-    attributes: ["slug"],
-  });
-  if (product) {
-    await invalidateCache(`product:${product.slug}`);
-  }
-};
+import { updateProductAggregates } from "./product.service.js";
+import { invalidateCache } from "../utils/cache.js";
+import { Op } from "sequelize";
 
 /**
  * Service for a seller to create an offer for an existing, approved product.
@@ -87,7 +50,7 @@ export const createOfferForProduct = async (
     throw new ApiError(500, "Something went wrong.");
   }
 
-  await updateProductStats(productId);
+  await updateProductAggregates(productId);
 
   return offer;
 };
@@ -96,7 +59,7 @@ export const createOfferForProduct = async (
  * Fetches all of a seller's active offers.
  */
 export const getActiveOffers = async (userId, status = "active") => {
-  const seller = getSellerProfile(userId);
+  const seller = await getSellerProfile(userId);
   const offers = await db.Offer.findAll({
     where: { status, sellerProfileId: seller.id },
     include: [
@@ -112,15 +75,7 @@ export const getActiveOffers = async (userId, status = "active") => {
 };
 
 /**
- * Fetches all of a seller's offers (their inventory).
- * @param {*} userId
- * @returns
- */
-import { Op } from "sequelize"; // Ensure Op is imported
-
-/**
  * Service to get all offers for a seller with pagination and filtering.
- * Replaces simple getAllOffers.
  * @param {string} userId
  * @param {object} query - { page, limit, status, search }
  */
@@ -177,9 +132,6 @@ export const getSellerOffers = async (userId, query) => {
   };
 };
 
-import { invalidateCache } from "../utils/cache.js";
-import { syncProductToAlgolia } from "./algolia.service.js";
-
 /**
  * Service for a seller to update their own offer (price, stock, condition, status).
  * @param {string} userId - The ID of the seller (user).
@@ -191,7 +143,7 @@ export const updateOfferDetails = async (userId, offerId, updateData) => {
   const profile = await getSellerProfile(userId);
   const offer = await db.Offer.findOne({
     where: { id: offerId, sellerProfileId: profile.id },
-    include: [{ model: db.Product, as: "product" }], // Include product to get slug/id
+    include: [{ model: db.Product, as: "product" }],
   });
   if (!offer) {
     throw new ApiError(
@@ -220,10 +172,9 @@ export const updateOfferDetails = async (userId, offerId, updateData) => {
 
   await offer.save();
 
-  if (offer.productId) {
-    await updateProductStats(offer.productId);
-  } else if (offer.product && offer.product.id) {
-    await updateProductStats(offer.product.id);
+  const resolvedProductId = offer.productId || offer.product?.id;
+  if (resolvedProductId) {
+    await updateProductAggregates(resolvedProductId);
   }
 
   return offer;
@@ -268,7 +219,7 @@ export const deleteProductOffer = async (userId, offerId) => {
   await offer.destroy();
 
   if (productId) {
-    await updateProductStats(productId);
+    await updateProductAggregates(productId);
   }
 
   return { message: "Offer successfully deleted." };

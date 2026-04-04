@@ -2,7 +2,7 @@ import { algoliasearch } from "algoliasearch";
 
 const APP_ID = process.env.ALGOLIA_APP_ID;
 const ADMIN_KEY = process.env.ALGOLIA_ADMIN_KEY;
-export const INDEX_NAME = process.ALGOLIA_INDEX_NAME || "products";
+export const INDEX_NAME = process.env.ALGOLIA_INDEX_NAME || "products";
 
 if (!APP_ID || !ADMIN_KEY) {
   console.warn(
@@ -23,6 +23,7 @@ export const configureAlgoliaIndex = async () => {
           "category",
           "status",
           "searchable(price)",
+          "searchable(mrpPrice)",
         ],
         customRanking: [
           "desc(averageRating)",

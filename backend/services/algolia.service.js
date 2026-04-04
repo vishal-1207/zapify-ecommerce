@@ -37,11 +37,13 @@ const formatProductForAlgolia = async (productData) => {
     rating: parseFloat(product.averageRating) || 0,
     reviewCount: parseInt(product.reviewCount) || 0,
     status: product.status,
+    mrpPrice: parseFloat(product.price) || 0,
     price: parseFloat(product.minOfferPrice) || 0,
     popularity: parseFloat(product.popularityScore) || 0,
     inStock: (parseInt(product.totalOfferStock) || 0) > 0,
     totalOfferStock: parseInt(product.totalOfferStock) || 0,
-    sellerProfileIds: product.offers?.map((o) => o?.sellerProfileId).filter(Boolean) || [],
+    sellerProfileIds:
+      product.offers?.map((o) => o?.sellerProfileId).filter(Boolean) || [],
   };
 };
 
@@ -56,12 +58,12 @@ export const syncProductToAlgolia = async (productId) => {
         { model: db.Brand, as: "brand" },
         { model: db.Category, as: "category" },
         { model: db.Media, as: "media" },
-        { 
-            model: db.Offer, 
-            as: "offers", 
-            attributes: ["price", "sellerProfileId"],
-            where: { status: "active" },
-            required: false 
+        {
+          model: db.Offer,
+          as: "offers",
+          attributes: ["price", "sellerProfileId"],
+          where: { status: "active" },
+          required: false,
         },
       ],
     });
@@ -72,7 +74,6 @@ export const syncProductToAlgolia = async (productId) => {
       );
       return;
     }
-
 
     const record = await formatProductForAlgolia(product);
     if (!record || !record.objectID) {
@@ -174,48 +175,53 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
       totalPages: nbPages,
     };
   } catch (error) {
-    console.warn("[Algolia] Search failed, falling back to Database:", error.message);
-    
+    console.warn(
+      "[Algolia] Search failed, falling back to Database:",
+      error.message,
+    );
+
     const offset = (page - 1) * limit;
     const whereClause = {
-        status: "approved",
-        [db.Sequelize.Op.or]: [
-            { name: { [db.Sequelize.Op.like]: `%${query}%` } },
-            { description: { [db.Sequelize.Op.like]: `%${query}%` } },
-        ]
+      status: "approved",
+      [db.Sequelize.Op.or]: [
+        { name: { [db.Sequelize.Op.like]: `%${query}%` } },
+        { description: { [db.Sequelize.Op.like]: `%${query}%` } },
+      ],
     };
 
     if (category) {
     }
 
     const { count, rows } = await db.Product.findAndCountAll({
-        where: whereClause,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        include: [
-            { model: db.Brand, as: "brand" },
-            { model: db.Category, as: "category" },
-            { model: db.Media, as: "media" }
-        ]
+      where: whereClause,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        { model: db.Brand, as: "brand" },
+        { model: db.Category, as: "category" },
+        { model: db.Media, as: "media" },
+      ],
     });
 
-    const formattedProducts = rows.map(p => ({
-        objectID: p.id,
-        name: p.name,
-        description: p.description,
-        brand: p.brand?.name,
-        category: p.category?.name,
-        image: p.media?.find(m => m.tag === 'thumbnail')?.url || p.media?.[0]?.url,
-        price: parseFloat(p.minOfferPrice) || 0,
-        totalOfferStock: p.totalOfferStock
+    const formattedProducts = rows.map((p) => ({
+      objectID: p.id,
+      name: p.name,
+      description: p.description,
+      brand: p.brand?.name,
+      category: p.category?.name,
+      image:
+        p.media?.find((m) => m.tag === "thumbnail")?.url || p.media?.[0]?.url,
+      mrpPrice: parseFloat(p.price) || 0,
+      price: parseFloat(p.minOfferPrice) || 0,
+      totalOfferStock: p.totalOfferStock,
     }));
 
     return {
-        products: formattedProducts,
-        total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(count / limit)
+      products: formattedProducts,
+      total: count,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(count / limit),
     };
   }
 };

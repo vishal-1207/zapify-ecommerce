@@ -91,7 +91,7 @@ export const getAllProducts = async (filters = {}) => {
         as: "brand",
         attributes: ["id", "name", "slug"],
         where: includeInactive ? {} : { isActive: true },
-        required: !includeInactive, // Inner join if filtering active, so products with inactive brand are hidden
+        required: !includeInactive,
       },
       {
         model: db.Category,
@@ -203,8 +203,8 @@ export const getCustomerProductDetails = async (slug) => {
       {
         model: db.Offer,
         as: "offers",
-        where: { status: "active" }, // Only show active offers
-        required: false, // Left join, so product shows up even if no active offers
+        where: { status: "active" },
+        required: false,
         attributes: [
           "id",
           "price",
@@ -383,7 +383,6 @@ export const reviewProductSuggestion = async (productId, decision) => {
     throw error;
   }
 
-
   const sellerProfile = product.offers?.[0]?.sellerProfile;
   const sellerUser = await db.User.findByPk(sellerProfile?.userId); // Need to fetch user
 
@@ -414,6 +413,14 @@ export const adminCreateProduct = async (productData, files) => {
       transaction,
     );
     await transaction.commit();
+
+    syncProductToAlgolia(newProduct.id).catch((err) =>
+      console.error(
+        `[Algolia] Create sync failed for ${newProduct.id}:`,
+        err.message,
+      ),
+    );
+
     return newProduct;
   } catch (error) {
     await transaction.rollback();
@@ -443,6 +450,13 @@ export const updateProduct = async (productId, data, files) => {
       await invalidateCache(`product:${product.slug}`);
     }
 
+    syncProductToAlgolia(product.id).catch((err) =>
+      console.error(
+        `[Algolia] Update sync failed for ${product.id}:`,
+        err.message,
+      ),
+    );
+
     return product;
   } catch (error) {
     console.error(error);
@@ -456,7 +470,9 @@ export const updateProduct = async (productId, data, files) => {
 
 /**
  * Recalculates and updates denormalized fields on a Product.
- * This will trigger the 'afterUpdate' hook on Product, which syncs to Algolia.
+ * Smart conditional sync: only calls syncProductToAlgolia if minOfferPrice changed.
+ * The model-level afterUpdate hook has been removed, so this is the sole Algolia
+ * sync trigger for offer-driven price/stock changes.
  */
 export const updateProductAggregates = async (productId) => {
   if (!productId) return;
@@ -464,6 +480,20 @@ export const updateProductAggregates = async (productId) => {
   const transaction = await db.sequelize.transaction();
 
   try {
+    const currentProduct = await db.Product.findByPk(productId, {
+      attributes: ["price", "minOfferPrice"],
+      transaction,
+    });
+
+    if (!currentProduct) {
+      await transaction.rollback();
+      return;
+    }
+
+    const oldMinOfferPrice = currentProduct.minOfferPrice
+      ? parseFloat(currentProduct.minOfferPrice)
+      : null;
+
     const stats = await db.Offer.findAll({
       where: { productId, status: "active" },
       attributes: [
@@ -488,20 +518,10 @@ export const updateProductAggregates = async (productId) => {
 
     const aggregateData = stats[0] || {};
 
-    const product = await db.Product.findByPk(productId, {
-      attributes: ["price"],
-      transaction,
-    });
-
-    if (!product) {
-      await transaction.rollback();
-      return;
-    }
-
     const finalMinPrice =
       aggregateData.minPrice !== null
         ? parseFloat(aggregateData.minPrice)
-        : parseFloat(product.price);
+        : parseFloat(currentProduct.price);
 
     await db.Product.update(
       {
@@ -516,6 +536,22 @@ export const updateProductAggregates = async (productId) => {
     );
 
     await transaction.commit();
+
+    const newMinOfferPrice = finalMinPrice;
+    const priceChanged = oldMinOfferPrice !== newMinOfferPrice;
+
+    if (priceChanged) {
+      syncProductToAlgolia(productId).catch((err) =>
+        console.error(
+          `[Aggregates] Algolia sync failed for ${productId}:`,
+          err.message,
+        ),
+      );
+    } else {
+      console.log(
+        `[Aggregates] Algolia sync skipped for ${productId} — price unchanged (${newMinOfferPrice}).`,
+      );
+    }
   } catch (error) {
     if (transaction) {
       try {
@@ -529,13 +565,6 @@ export const updateProductAggregates = async (productId) => {
     }
     throw error;
   }
-
-  syncProductToAlgolia(productId).catch((err) =>
-    console.error(
-      `[Aggregates] Algolia sync failed for ${productId}:`,
-      err.message,
-    ),
-  );
 };
 
 /**
@@ -621,7 +650,7 @@ export const getSellerProductSuggestions = async (userId, page, limit) => {
 export const getSimilarProducts = async (slug) => {
   const currentProduct = await db.Product.findOne({
     where: { slug },
-    attributes: ["id", "categoryId", "brandId", "price"]
+    attributes: ["id", "categoryId", "brandId", "price"],
   });
 
   if (!currentProduct) {
@@ -665,9 +694,12 @@ export const getSimilarProducts = async (slug) => {
       },
     ],
     order: [
-      [db.sequelize.literal(`brandId = '${currentProduct.brandId || -1}'`), 'DESC'],
-      [db.sequelize.literal(`ABS(price - ${currentProduct.price})`), 'ASC'],
-      ['averageRating', 'DESC']
+      [
+        db.sequelize.literal(`brandId = '${currentProduct.brandId || -1}'`),
+        "DESC",
+      ],
+      [db.sequelize.literal(`ABS(price - ${currentProduct.price})`), "ASC"],
+      ["averageRating", "DESC"],
     ],
     limit: 15,
   });
