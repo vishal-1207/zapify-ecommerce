@@ -2,21 +2,25 @@ import db from "../models/index.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 import uploadToCloudinary from "./cloudinary.util.js";
+import { processBackgroundUpload } from "../services/worker.service.js";
 
 /**
  * INTERNAL GENERIC FUNCTION to create a product entry with its media and specs.
- * This is the core reusable logic used by both Admins (for catalog) and Sellers (for suggestions).
- * * @param {object} productData - Generic product data (name, description, categoryId, brandId, specs, etc.).
+ * Manages its own DB transaction and kicks off Cloudinary uploads asynchronously
+ * after commit so the response returns immediately without waiting for uploads.
+ *
+ * @param {object} productData - Generic product data (name, description, categoryId, brandId, specs, etc.).
  * @param {object} files - Object containing 'thumbnail' (array) and 'gallery' (array) files from multer.
  * @param {string} status - The status to set for the new product ('pending', 'approved', or 'draft').
- * @param {object} transaction - The Sequelize transaction object to ensure atomicity.
+ * @param {object|null} [extraTxWork] - Optional async fn(transaction, newProduct) for callers that need
+ *   additional records in the same transaction (e.g. seller product suggestion + offer).
  * @returns {Promise<Product>} The newly created product instance.
  */
 export const _createGenericProduct = async (
   productData,
   files,
   status,
-  transaction,
+  extraTxWork = null,
 ) => {
   const {
     categoryId,
@@ -28,12 +32,15 @@ export const _createGenericProduct = async (
     specs = [],
   } = productData;
 
+  // Only include model in the uniqueness check when it is actually provided.
+  // Passing undefined to a Sequelize WHERE clause throws a runtime error.
+  const uniquenessWhere = { name };
+  if (model !== undefined && model !== null && model !== "") {
+    uniquenessWhere.model = model;
+  }
+
   const existingProduct = await db.Product.findOne({
-    where: {
-      name,
-      model,
-    },
-    transaction,
+    where: uniquenessWhere,
   });
 
   if (existingProduct) {
@@ -43,68 +50,72 @@ export const _createGenericProduct = async (
     );
   }
 
-  const newProduct = await db.Product.create(
-    {
-      name,
-      model,
-      description,
-      price,
-      status,
-      categoryId,
-      brandId,
-    },
-    { transaction },
-  );
+  const transaction = await db.sequelize.transaction();
 
-  if (files?.thumbnail && files.thumbnail.length > 0) {
-    const thumbnailFile = files.thumbnail[0];
-    const thumbnailUpload = await uploadToCloudinary(
-      thumbnailFile.path,
-      process.env.CLOUDINARY_PRODUCT_FOLDER,
-    );
-
-    await db.Media.create(
+  try {
+    const newProduct = await db.Product.create(
       {
-        publicId: thumbnailUpload.public_id,
-        url: thumbnailUpload.secure_url,
-        fileType: thumbnailUpload.resource_type,
-        tag: "thumbnail",
-        associatedType: "product",
-        associatedId: newProduct.id,
+        name,
+        model: model || null,
+        description,
+        price,
+        status,
+        categoryId,
+        brandId,
       },
       { transaction },
     );
+
+    if (specs && specs.length > 0) {
+      const specEntries = specs.map((spec) => ({
+        key: spec.key,
+        value: spec.value,
+        productId: newProduct.id,
+      }));
+      await db.ProductSpec.bulkCreate(specEntries, { transaction });
+    }
+
+    // Allow callers to piggyback additional DB writes (e.g. Offer) in the same transaction
+    if (extraTxWork) {
+      await extraTxWork(transaction, newProduct);
+    }
+
+    await transaction.commit();
+
+    // Fire uploads asynchronously after commit — response returns immediately.
+    if (files?.thumbnail && files.thumbnail.length > 0) {
+      processBackgroundUpload({
+        filePath: files.thumbnail[0].path,
+        folder: process.env.CLOUDINARY_PRODUCT_FOLDER,
+        associatedType: "product",
+        associatedId: newProduct.id,
+        tag: "thumbnail",
+      }).catch((err) =>
+        console.error(`[Upload] Thumbnail failed for product ${newProduct.id}:`, err),
+      );
+    }
+
+    if (files?.gallery && files.gallery.length > 0) {
+      files.gallery.forEach((file) => {
+        processBackgroundUpload({
+          filePath: file.path,
+          folder: process.env.CLOUDINARY_PRODUCT_FOLDER,
+          associatedType: "product",
+          associatedId: newProduct.id,
+          tag: "gallery",
+        }).catch((err) =>
+          console.error(`[Upload] Gallery failed for product ${newProduct.id}:`, err),
+        );
+      });
+    }
+
+    return newProduct;
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  if (files?.gallery && files.gallery.length > 0) {
-    const uploadPromises = files.gallery.map((file) =>
-      uploadToCloudinary(file.path, process.env.CLOUDINARY_PRODUCT_FOLDER),
-    );
-    const uploadResults = await Promise.all(uploadPromises);
-
-    const mediaEntries = uploadResults.map((upload) => ({
-      publicId: upload.public_id,
-      url: upload.secure_url,
-      fileType: upload.resource_type,
-      tag: "gallery",
-      associatedType: "product",
-      associatedId: newProduct.id,
-    }));
-
-    await db.Media.bulkCreate(mediaEntries, { transaction });
-  }
-
-  if (specs && specs.length > 0) {
-    const specEntries = specs.map((spec) => ({
-      key: spec.key,
-      value: spec.value,
-      productId: newProduct.id,
-    }));
-    await db.ProductSpec.bulkCreate(specEntries, { transaction });
-  }
-
-  return newProduct;
 };
+
 
 /**
  * INTERNAL GENERIC FUNCTION to update a product entry, including its media and specs.

@@ -265,25 +265,19 @@ export const createProductSuggestion = async (
   sellerId,
   files,
 ) => {
-  const transaction = await sequelize.transaction();
   try {
     const newProduct = await productHelpers._createGenericProduct(
       productData,
       files,
       "pending",
-      transaction,
-    );
-
-    await db.Offer.create(
-      {
-        ...offerData,
-        productId: newProduct.id,
-        sellerId,
+      // Atomically create the offer in the same transaction as the product
+      async (transaction, product) => {
+        await db.Offer.create(
+          { ...offerData, productId: product.id, sellerId },
+          { transaction },
+        );
       },
-      transaction,
     );
-
-    await transaction.commit();
 
     const admins = await db.User.findAll({
       where: { role: "admin" },
@@ -300,11 +294,9 @@ export const createProductSuggestion = async (
 
     return newProduct;
   } catch (error) {
-    await transaction.rollback();
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
     }
-
     throw new ApiError(500, "Failed to create product suggestion.", error);
   }
 };
@@ -404,15 +396,12 @@ export const reviewProductSuggestion = async (productId, decision) => {
  * Service for an admin to create a new, approved generic product in the catalog.
  */
 export const adminCreateProduct = async (productData, files) => {
-  const transaction = await sequelize.transaction();
   try {
     const newProduct = await productHelpers._createGenericProduct(
       productData,
       files,
       "approved",
-      transaction,
     );
-    await transaction.commit();
 
     syncProductToAlgolia(newProduct.id).catch((err) =>
       console.error(
@@ -423,7 +412,6 @@ export const adminCreateProduct = async (productData, files) => {
 
     return newProduct;
   } catch (error) {
-    await transaction.rollback();
     console.log(error);
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
