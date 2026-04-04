@@ -5,7 +5,7 @@ import ApiError from "../utils/ApiError.js";
 import uploadToCloudinary from "../utils/cloudinary.util.js";
 import paginate from "../utils/paginate.js";
 import { getSellerProfile } from "./seller.service.js";
-import { moderationQueue } from "../workers/moderation.worker.js";
+import { enqueueModeration } from "../workers/moderation.worker.js";
 import { checkLocalNsfwMedia } from "./moderation.service.js";
 
 /**
@@ -190,11 +190,9 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
     await transaction.commit();
 
     if (!skipUploadAndQueue) {
-      moderationQueue
-        .add("moderate-review", { reviewId: newReview.id })
-        .catch((err) =>
-          console.error("[Review] Failed to queue moderation:", err.message),
-        );
+      enqueueModeration(newReview.id).catch((err) =>
+        console.error("[Review] Failed to queue moderation:", err.message),
+      );
     }
 
     return db.Review.findByPk(newReview.id, {
@@ -391,14 +389,12 @@ export const updateUserReview = async (
     await transaction.commit();
 
     if (!skipUploadAndQueue) {
-      moderationQueue
-        .add("moderate-review", { reviewId: review.id })
-        .catch((err) =>
-          console.error(
-            "[Review] Failed to queue moderation for update:",
-            err.message,
-          ),
-        );
+      enqueueModeration(review.id).catch((err) =>
+        console.error(
+          "[Review] Failed to queue moderation for update:",
+          err.message,
+        ),
+      );
     }
 
     return db.Review.findByPk(review.id, {

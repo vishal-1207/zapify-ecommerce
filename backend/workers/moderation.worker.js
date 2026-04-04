@@ -19,9 +19,20 @@ const connection = new Redis({
 
 export const moderationQueue = new Queue("review-moderation", { connection });
 
-let worker;
+let worker = null;
+let workerActive = false;
 
-export const startModerationWorker = () => {
+/**
+ * Starts the moderation worker if it isn't already running.
+ * The worker automatically shuts itself down once the queue is drained,
+ * eliminating idle Redis polling on quiet days.
+ */
+const startWorkerIfNeeded = () => {
+  if (workerActive) return;
+  workerActive = true;
+
+  console.log("[BullMQ] Starting moderation worker on-demand...");
+
   worker = new Worker(
     "review-moderation",
     async (job) => {
@@ -34,7 +45,11 @@ export const startModerationWorker = () => {
 
       return { success: true };
     },
-    { connection },
+    {
+      connection,
+      drainDelay: 30,
+      stalledInterval: 5 * 60 * 1000,
+    },
   );
 
   worker.on("completed", (job) => {
@@ -50,11 +65,46 @@ export const startModerationWorker = () => {
     );
   });
 
-  console.log("BullMQ Moderation Worker started.");
+  worker.on("drain", async () => {
+    console.log(
+      "[BullMQ] Queue drained — shutting down worker to save Redis commands.",
+    );
+    workerActive = false;
+    await worker.close();
+    worker = null;
+  });
 };
 
+/**
+ * Enqueues a review-moderation job AND ensures the worker is running.
+ * Use this instead of moderationQueue.add() directly everywhere reviews
+ * need moderation — it applies the lazy-start logic automatically.
+ *
+ * @param {string} reviewId - The ID of the review to moderate.
+ */
+export const enqueueModeration = async (reviewId) => {
+  await moderationQueue.add("moderate-review", { reviewId });
+  startWorkerIfNeeded();
+};
+
+/**
+ * Gracefully closes the worker if it is running.
+ * Call this on process shutdown so in-flight jobs complete cleanly.
+ */
 export const closeModerationWorker = async () => {
   if (worker) {
     await worker.close();
+    worker = null;
+    workerActive = false;
   }
+};
+
+/**
+ * Kept for backwards-compatibility with the index.js import.
+ * The worker now starts lazily via enqueueModeration() — this is a no-op.
+ */
+export const startModerationWorker = () => {
+  console.log(
+    "[BullMQ] Lazy worker mode — worker starts automatically on first job.",
+  );
 };
