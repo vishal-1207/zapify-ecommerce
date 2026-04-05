@@ -127,6 +127,26 @@ const startServer = async () => {
     await db.sequelize.sync();
     console.log("Database synced...");
 
+    try {
+      const [[columnInfo]] = await db.sequelize.query(
+        `SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME   = 'ProductSpecs'
+           AND COLUMN_NAME  = 'value'`,
+      );
+      if (columnInfo && columnInfo.DATA_TYPE === "varchar") {
+        await db.sequelize.query(
+          `ALTER TABLE \`ProductSpecs\` MODIFY COLUMN \`value\` TEXT NOT NULL`,
+        );
+        console.log("✅ Migration: ProductSpecs.value widened to TEXT.");
+      }
+    } catch (migrationErr) {
+      console.warn(
+        "⚠️ Migration check failed (non-fatal):",
+        migrationErr.message,
+      );
+    }
+
     startCleanupService();
     startModerationWorker();
 
