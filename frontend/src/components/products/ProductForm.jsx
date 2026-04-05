@@ -391,8 +391,15 @@ const ProductForm = ({
                   type="file"
                   accept="image/*"
                   onChange={handleThumbnailChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={isLoading}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 />
+                {isLoading ? (
+                  <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
+                    <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
+                    <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                  </div>
+                ) : null}
                 {thumbnailPreview ? (
                   <img
                     src={thumbnailPreview}
@@ -447,10 +454,19 @@ const ProductForm = ({
                     accept="image/*"
                     multiple
                     onChange={handleGalleryChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isLoading}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
-                  <Plus size={24} className="text-gray-400 mb-2" />
-                  <span className="text-xs text-gray-500">Add Images</span>
+                  {isLoading ? (
+                    <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
+                      <Loader2 size={24} className="animate-spin text-indigo-600 mb-2" />
+                    </div>
+                  ) : (
+                    <>
+                      <Plus size={24} className="text-gray-400 mb-2" />
+                      <span className="text-xs text-gray-500">Add Images</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

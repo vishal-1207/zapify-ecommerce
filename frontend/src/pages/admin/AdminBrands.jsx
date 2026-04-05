@@ -12,10 +12,10 @@ import {
   Plus,
   Edit,
   Trash2,
-  ToggleLeft,
   ToggleRight,
   Upload,
   ImageOff,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { handleApiError } from "../../utils/errorHandler";
@@ -70,6 +70,7 @@ const AdminBrands = () => {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
+  const [submissionLoading, setSubmissionLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -127,6 +128,7 @@ const AdminBrands = () => {
   };
 
   const handleCloseModal = () => {
+    if (submissionLoading) return;
     setIsModalOpen(false);
     setEditingBrand(null);
     setFormData({ name: "", description: "", image: null });
@@ -151,6 +153,7 @@ const AdminBrands = () => {
     }
 
     try {
+      setSubmissionLoading(true);
       if (editingBrand) {
         await updateBrand(editingBrand.id, data);
         toast.success("Brand updated successfully");
@@ -159,10 +162,15 @@ const AdminBrands = () => {
         toast.success("Brand created successfully");
       }
       fetchBrands();
-      handleCloseModal();
+      setIsModalOpen(false);
+      setEditingBrand(null);
+      setFormData({ name: "", description: "", image: null });
+      setImagePreview(null);
     } catch (error) {
       const msg = handleApiError(error, "Form submission failed");
       toast.error(msg);
+    } finally {
+      setSubmissionLoading(false);
     }
   };
 
@@ -307,8 +315,15 @@ const AdminBrands = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={submissionLoading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
               />
+              {submissionLoading ? (
+                <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
+                  <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
+                  <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                </div>
+              ) : null}
               {imagePreview ? (
                 <img
                   src={imagePreview}
@@ -335,16 +350,26 @@ const AdminBrands = () => {
             <button
               type="button"
               onClick={handleCloseModal}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition cursor-pointer"
+              disabled={submissionLoading}
+              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition cursor-pointer"
+              disabled={submissionLoading}
+              className="flex-1 px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold shadow-lg shadow-indigo-200 transition cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
             >
-              {editingBrand ? "Update Brand" : "Create Brand"}
+              {submissionLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  {editingBrand ? "Saving..." : "Creating..."}
+                </>
+              ) : editingBrand ? (
+                "Update Brand"
+              ) : (
+                "Create Brand"
+              )}
             </button>
           </div>
         </form>

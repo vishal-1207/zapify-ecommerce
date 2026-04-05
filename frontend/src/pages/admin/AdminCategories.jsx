@@ -173,11 +173,14 @@ const AdminCategories = () => {
         toast.success("Category created successfully");
       }
       fetchCategories();
-      handleCloseModal();
+      setSubmissionLoading(false);
+      setIsModalOpen(false);
+      setEditingCategory(null);
+      setFormData({ name: "", image: null });
+      setImagePreview(null);
     } catch (error) {
       const msg = handleApiError(error, "Form submission failed");
       toast.error(msg);
-    } finally {
       setSubmissionLoading(false);
     }
   };
@@ -293,8 +296,15 @@ const AdminCategories = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={submissionLoading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
               />
+              {submissionLoading ? (
+                <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
+                  <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
+                  <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                </div>
+              ) : null}
               {imagePreview ? (
                 <img
                   src={imagePreview}
