@@ -40,7 +40,7 @@ const SellerLayout = () => {
         switchRole("user");
         setTimeout(() => navigate("/"), 0);
       }}
-      className="w-full flex items-center gap-3 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-700 mb-2"
+      className="w-full flex items-center gap-3 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-700 mb-2 cursor-pointer"
     >
       <Zap size={20} />
       <span className="font-medium">Switch to Buying</span>
