@@ -1,44 +1,57 @@
 import nodemailer from "nodemailer";
 
+let productionTransporter = null;
+let developmentTransporter = null;
+
 /**
- * Creates a transporter for PRODUCTION using Brevo.
+ * Gets or creates a transporter for PRODUCTION using Brevo.
  * @private
  */
-const createProductionTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587", 10),
-    secure: parseInt(process.env.EMAIL_PORT, 10) === 465,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    connectionTimeout: 10000,
-    socketTimeout: 15000,
-    tls: { rejectUnauthorized: false },
-  });
+const getProductionTransporter = () => {
+  if (!productionTransporter) {
+    productionTransporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT || "587", 10),
+      secure: parseInt(process.env.EMAIL_PORT, 10) === 465,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 100,
+      connectionTimeout: 60000,
+      socketTimeout: 60000,
+      tls: { rejectUnauthorized: false },
+    });
+  }
+  return productionTransporter;
 };
 
 /**
- * Creates a transporter for DEVELOPMENT using Ethereal.
+ * Gets or creates a transporter for DEVELOPMENT using Ethereal.
  * @private
  */
-const createDevelopmentTransporter = async () => {
-  const testAccount = await nodemailer.createTestAccount();
-  console.log(
-    "Ethereal test account created. Preview emails at:",
-    nodemailer.getTestMessageUrl(testAccount),
-  );
+const getDevelopmentTransporter = async () => {
+  if (!developmentTransporter) {
+    const testAccount = await nodemailer.createTestAccount();
+    console.log(
+      "Ethereal test account created. Preview emails at:",
+      nodemailer.getTestMessageUrl(testAccount),
+    );
 
-  return nodemailer.createTransport({
-    host: testAccount.smtp.host,
-    port: testAccount.smtp.port,
-    secure: testAccount.smtp.secure,
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    },
-  });
+    developmentTransporter = nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+      pool: true,
+    });
+  }
+  return developmentTransporter;
 };
 
 /**
@@ -58,9 +71,9 @@ const sendMail = async (to, subject, html) => {
       process.env.EMAIL_USER &&
       process.env.EMAIL_PASS
     ) {
-      transporter = createProductionTransporter();
+      transporter = getProductionTransporter();
     } else {
-      transporter = await createDevelopmentTransporter();
+      transporter = await getDevelopmentTransporter();
     }
 
     if (!transporter || typeof transporter.sendMail !== "function") {
@@ -88,6 +101,7 @@ const sendMail = async (to, subject, html) => {
     return info;
   } catch (error) {
     console.error("Error sending mail: ", error);
+    throw error;
   }
 };
 
@@ -103,6 +117,6 @@ export default sendMail;
  */
 export const enqueueMail = async (to, subject, html) => {
   sendMail(to, subject, html).catch((err) => {
-    console.error("Async background mail failed:", err);
+    console.error("Async background mail failed:", err.message);
   });
 };
