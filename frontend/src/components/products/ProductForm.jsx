@@ -396,8 +396,13 @@ const ProductForm = ({
                 />
                 {isLoading ? (
                   <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
-                    <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
-                    <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                    <Loader2
+                      size={32}
+                      className="animate-spin text-indigo-600 mb-2"
+                    />
+                    <span className="text-sm font-medium text-indigo-600">
+                      Uploading...
+                    </span>
                   </div>
                 ) : null}
                 {thumbnailPreview ? (
@@ -459,7 +464,10 @@ const ProductForm = ({
                   />
                   {isLoading ? (
                     <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
-                      <Loader2 size={24} className="animate-spin text-indigo-600 mb-2" />
+                      <Loader2
+                        size={24}
+                        className="animate-spin text-indigo-600 mb-2"
+                      />
                     </div>
                   ) : (
                     <>
@@ -569,7 +577,7 @@ const ProductForm = ({
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-lg shadow-green-200 transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-lg shadow-green-200 transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoading ? (
               <>

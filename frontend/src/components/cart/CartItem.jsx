@@ -84,7 +84,7 @@ const CartItem = ({ item }) => {
           <button
             onClick={() => updateQty(item.offerId || item.id, -1)}
             disabled={item.qty <= 1}
-            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
             aria-label="Decrease quantity"
           >
             <Minus size={14} />
@@ -95,7 +95,7 @@ const CartItem = ({ item }) => {
           <button
             onClick={() => updateQty(item.offerId || item.id, 1)}
             disabled={item.qty >= item.stockQuantity}
-            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+            className="p-2 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
             aria-label="Increase quantity"
           >
             <Plus size={14} />
@@ -112,7 +112,7 @@ const CartItem = ({ item }) => {
         {/* Remove Button */}
         <button
           onClick={() => removeFromCart(item.offerId || item.id)}
-          className="p-2 text-gray-400 hover:text-red-500 transition-colors ml-4"
+          className="p-2 text-gray-400 hover:text-red-500 transition-colors ml-4 cursor-pointer"
         >
           <Trash2 size={18} />
         </button>
