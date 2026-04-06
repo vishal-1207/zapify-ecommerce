@@ -102,15 +102,7 @@ export const updateBrandService = async (id, data, file) => {
     if (description) existingBrand.description = description;
 
     if (file && existingBrand.media) {
-      // Delete old image from Cloudinary asynchronously and remove DB record
-      if (existingBrand.media.publicId) {
-        cloudinary.uploader
-          .destroy(existingBrand.media.publicId)
-          .catch((err) =>
-            console.error("[Cloudinary] Old brand image delete failed:", err),
-          );
-      }
-      await existingBrand.media.destroy({ transaction });
+      // The background upload worker will update the brand media
     }
 
     await existingBrand.save({ transaction });

@@ -158,28 +158,37 @@ export const _updateGenericProduct = async (
   if (files?.thumbnail && files.thumbnail.length > 0) {
     const oldThumbnail = product.media.find((m) => m.tag === "thumbnail");
 
-    if (oldThumbnail) {
-      await cloudinary.uploader.destroy(oldThumbnail.publicId);
-      await oldThumbnail.destroy({ transaction });
-    }
-
     const thumbnailFile = files.thumbnail[0];
     const thumbnailUpload = await uploadToCloudinary(
       thumbnailFile.path,
       process.env.CLOUDINARY_PRODUCT_FOLDER,
     );
 
-    await db.Media.create(
-      {
-        publicId: thumbnailUpload.public_id,
-        url: thumbnailUpload.secure_url,
-        fileType: thumbnailUpload.resource_type,
-        tag: "thumbnail",
-        associatedType: "product",
-        associatedId: product.id,
-      },
-      { transaction },
-    );
+    if (oldThumbnail) {
+      if (oldThumbnail.publicId) {
+        cloudinary.uploader.destroy(oldThumbnail.publicId).catch(console.error);
+      }
+      await oldThumbnail.update(
+        {
+          publicId: thumbnailUpload.public_id,
+          url: thumbnailUpload.secure_url,
+          fileType: thumbnailUpload.resource_type,
+        },
+        { transaction },
+      );
+    } else {
+      await db.Media.create(
+        {
+          publicId: thumbnailUpload.public_id,
+          url: thumbnailUpload.secure_url,
+          fileType: thumbnailUpload.resource_type,
+          tag: "thumbnail",
+          associatedType: "product",
+          associatedId: product.id,
+        },
+        { transaction },
+      );
+    }
   }
 
   if (mediaToDelete && mediaToDelete.length > 0) {

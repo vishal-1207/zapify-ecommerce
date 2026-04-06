@@ -35,14 +35,43 @@ export const processBackgroundUpload = async ({
       return;
     }
 
-    await db.Media.create({
-      publicId: upload.public_id,
-      url: upload.secure_url,
-      fileType: upload.resource_type,
-      tag: tag,
-      associatedType: associatedType,
-      associatedId: associatedId,
-    });
+    if (tag === "thumbnail") {
+      const existingMedia = await db.Media.findOne({
+        where: { associatedType, associatedId, tag },
+      });
+
+      if (existingMedia) {
+        if (existingMedia.publicId) {
+          const cloudinary = (await import("../config/cloudinary.js")).default;
+          cloudinary.uploader.destroy(existingMedia.publicId).catch((err) =>
+            console.error("[Worker] Cloudinary old image destroy error:", err),
+          );
+        }
+        await existingMedia.update({
+          publicId: upload.public_id,
+          url: upload.secure_url,
+          fileType: upload.resource_type,
+        });
+      } else {
+        await db.Media.create({
+          publicId: upload.public_id,
+          url: upload.secure_url,
+          fileType: upload.resource_type,
+          tag: tag,
+          associatedType: associatedType,
+          associatedId: associatedId,
+        });
+      }
+    } else {
+      await db.Media.create({
+        publicId: upload.public_id,
+        url: upload.secure_url,
+        fileType: upload.resource_type,
+        tag: tag,
+        associatedType: associatedType,
+        associatedId: associatedId,
+      });
+    }
 
     console.log(
       `[Worker] Background upload successful for ${associatedType} ${associatedId}.`,

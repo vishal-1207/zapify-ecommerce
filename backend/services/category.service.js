@@ -102,15 +102,6 @@ export const updateCategory = async (data, file) => {
     }
 
     if (file) {
-      
-      
-      if (category.media) {
-        
-        await category.media.destroy({ transaction });
-        
-        // TODO: Ideally queue Cloudinary deletion for category.media.publicId
-      }
-      
       processBackgroundUpload({
         filePath: file.path,
         folder: process.env.CLOUDINARY_CATEGORY_FOLDER,
