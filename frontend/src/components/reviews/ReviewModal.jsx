@@ -167,7 +167,7 @@ const ReviewModal = ({
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="focus:outline-none transition-transform hover:scale-110"
+                      className="cursor-pointer focus:outline-none transition-transform hover:scale-110"
                     >
                       <Star
                         size={32}
@@ -240,7 +240,7 @@ const ReviewModal = ({
                         <button
                           type="button"
                           onClick={() => removeFile(index)}
-                          className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="cursor-pointer absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X size={16} className="text-white" />
                         </button>
@@ -259,7 +259,7 @@ const ReviewModal = ({
                         setCurrentIndex((prev) => prev + 1);
                         resetForm();
                       }}
-                      className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                      className="cursor-pointer flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
                     >
                       Skip
                     </button>

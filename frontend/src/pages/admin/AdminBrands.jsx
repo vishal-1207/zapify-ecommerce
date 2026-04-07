@@ -182,10 +182,7 @@ const AdminBrands = () => {
     {
       header: "Logo",
       render: (brand) => (
-        <ImageWithSkeleton
-          src={brand.media?.url}
-          alt={brand.name}
-        />
+        <ImageWithSkeleton src={brand.media?.url} alt={brand.name} />
       ),
     },
     {
@@ -320,8 +317,13 @@ const AdminBrands = () => {
               />
               {submissionLoading ? (
                 <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
-                  <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
-                  <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                  <Loader2
+                    size={32}
+                    className="animate-spin text-indigo-600 mb-2"
+                  />
+                  <span className="text-sm font-medium text-indigo-600">
+                    Uploading...
+                  </span>
                 </div>
               ) : null}
               {imagePreview ? (

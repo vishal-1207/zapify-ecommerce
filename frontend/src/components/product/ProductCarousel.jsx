@@ -25,14 +25,14 @@ const ProductCarousel = ({ title, products, link = "/shop" }) => {
           <div className="hidden md:flex items-center gap-2 mr-2">
             <button
               onClick={() => scroll("left")}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-600 transition shadow-sm"
+              className="cursor-pointer w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-600 transition shadow-sm"
               aria-label="Scroll left"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={() => scroll("right")}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-600 transition shadow-sm"
+              className="cursor-pointer w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-600 transition shadow-sm"
               aria-label="Scroll right"
             >
               <ChevronRight size={20} />

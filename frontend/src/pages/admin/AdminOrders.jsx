@@ -185,7 +185,7 @@ const AdminOrders = () => {
       render: (order) => (
         <button
           onClick={() => openOrder(order.id)}
-          className="text-indigo-600 hover:text-indigo-900 font-medium text-xs hover:underline"
+          className="cursor-pointer text-indigo-600 hover:text-indigo-900 font-medium text-xs hover:underline"
         >
           View Details
         </button>
@@ -235,7 +235,7 @@ const AdminOrders = () => {
                 {selectedOrder && selectedOrder.status !== "cancelled" && (
                   <button
                     onClick={() => setShowRefundModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-lg text-sm font-medium hover:bg-orange-100 transition-colors"
+                    className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-lg text-sm font-medium hover:bg-orange-100 transition-colors"
                   >
                     <RefreshCcw size={14} /> Refund
                   </button>
@@ -306,7 +306,7 @@ const AdminOrders = () => {
                         key={s}
                         disabled={statusUpdating}
                         onClick={() => handleStatusChange(s)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize border transition-all ${
+                        className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold capitalize border transition-all ${
                           selectedOrder.status === s
                             ? `${statusColors[s]} border-transparent ring-2 ring-offset-1 ring-indigo-400`
                             : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
@@ -484,7 +484,7 @@ const AdminOrders = () => {
                   setRefundAmount("");
                 }}
                 disabled={isRefunding}
-                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm disabled:opacity-50"
+                className="cursor-pointer flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm disabled:opacity-50"
               >
                 Cancel
               </button>

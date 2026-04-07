@@ -15,7 +15,6 @@ import {
 import { getMyTransactions } from "../../api/payments";
 import { formatCurrency } from "../../utils/currency";
 
-
 const STATUS_CONFIG = {
   succeeded: {
     label: "Paid",
@@ -64,7 +63,6 @@ const methodLabel = (method, details) => {
   return method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-
 const TransactionRow = ({ payment }) => {
   const [expanded, setExpanded] = useState(false);
   const order = payment.Order;
@@ -77,7 +75,7 @@ const TransactionRow = ({ payment }) => {
       {/* Header row */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex flex-col sm:flex-row sm:items-center gap-3 p-5 text-left hover:bg-gray-50 transition-colors"
+        className="cursor-pointer w-full flex flex-col sm:flex-row sm:items-center gap-3 p-5 text-left hover:bg-gray-50 transition-colors"
       >
         {/* Icon */}
         <div
@@ -269,7 +267,6 @@ const TransactionRow = ({ payment }) => {
   );
 };
 
-
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -339,7 +336,7 @@ const Transactions = () => {
               <button
                 key={s}
                 onClick={() => setFilter(s)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                className={`cursor-pointer px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                   filter === s
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"

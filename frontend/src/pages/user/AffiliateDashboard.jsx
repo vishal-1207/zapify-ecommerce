@@ -84,7 +84,7 @@ const AffiliateDashboard = () => {
           <button
             onClick={handleApply}
             disabled={applying}
-            className="bg-indigo-600 text-white font-bold text-xl px-12 py-5 rounded-xl shadow-lg hover:bg-indigo-700 hover:shadow-xl transition-all disabled:opacity-70"
+            className="cursor-pointer bg-indigo-600 text-white font-bold text-xl px-12 py-5 rounded-xl shadow-lg hover:bg-indigo-700 hover:shadow-xl transition-all disabled:opacity-70"
           >
             {applying ? "Setting up your account..." : "Become an Affiliate Today"}
           </button>
@@ -109,7 +109,7 @@ const AffiliateDashboard = () => {
             </div>
             <button 
               onClick={copyToClipboard}
-              className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2 font-medium px-4 transition"
+              className="cursor-pointer bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2 font-medium px-4 transition"
             >
               <Copy size={18} /> Copy Link
             </button>

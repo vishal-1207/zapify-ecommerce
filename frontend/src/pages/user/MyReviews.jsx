@@ -106,7 +106,7 @@ const MyReviews = () => {
         <p className="text-gray-600">{error}</p>
         <button
           onClick={loadReviews}
-          className="mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
+          className="cursor-pointer mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
         >
           Try Again
         </button>
@@ -245,14 +245,14 @@ const MyReviews = () => {
                         <div className="flex flex-col gap-2 w-full">
                           <button
                             onClick={() => handleEditClick(review)}
-                            className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-transparent rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                            className="cursor-pointer flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-transparent rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                           >
                             <Edit className="w-4 h-4" />
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteClick(review.id)}
-                            className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-transparent rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                            className="cursor-pointer flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-transparent rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete
@@ -274,7 +274,7 @@ const MyReviews = () => {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1 rounded text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="cursor-pointer px-3 py-1 rounded text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
             Previous
           </button>
@@ -284,7 +284,7 @@ const MyReviews = () => {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1 rounded text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="cursor-pointer px-3 py-1 rounded text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
             Next
           </button>

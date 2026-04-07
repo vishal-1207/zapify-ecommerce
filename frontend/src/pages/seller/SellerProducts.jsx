@@ -144,7 +144,7 @@ const SellerProducts = () => {
       render: (offer) => (
         <button
           onClick={() => handleStatusToggle(offer, offer.status)}
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+          className={`cursor-pointer inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
             offer.status === "active"
               ? "bg-green-100 text-green-800 hover:bg-green-200"
               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
@@ -166,14 +166,14 @@ const SellerProducts = () => {
         <div className="flex justify-end gap-2">
           <button
             onClick={() => handleEditClick(offer)}
-            className="p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
+            className="cursor-pointer p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
             title="Edit"
           >
             <Edit size={18} />
           </button>
           <button
             onClick={() => handleDelete(offer.id)}
-            className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition"
+            className="cursor-pointer p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition"
             title="Delete"
           >
             <Trash2 size={18} />
@@ -231,7 +231,7 @@ const SellerProducts = () => {
         actions={
           <button
             onClick={() => navigate("/seller/products/add")}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+            className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 cursor-pointer"
           >
             <Plus size={20} /> Add Product
           </button>

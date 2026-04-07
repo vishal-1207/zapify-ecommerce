@@ -32,8 +32,6 @@ const Navbar = () => {
       );
   }, []);
 
-
-
   return (
     <>
       <nav className="bg-indigo-700 text-white sticky top-0 z-[100] shadow-lg">
@@ -63,7 +61,7 @@ const Navbar = () => {
                       switchRole("admin");
                       navigate("/admin/dashboard");
                     }}
-                    className="hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide mr-4"
+                    className="cursor-pointer hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide mr-4"
                   >
                     <LayoutDashboard size={14} /> Admin Panel
                   </button>
@@ -196,14 +194,14 @@ const Navbar = () => {
             <Link
               to="/"
               onClick={() => setIsMenuOpen(false)}
-              className="block py-2 font-medium"
+              className="cursor-pointer block py-2 font-medium"
             >
               Home
             </Link>
             <Link
               to="/shop"
               onClick={() => setIsMenuOpen(false)}
-              className="block py-2 font-medium"
+              className="cursor-pointer block py-2 font-medium"
             >
               All Electronics
             </Link>
@@ -211,7 +209,7 @@ const Navbar = () => {
               <Link
                 to="/account/orders"
                 onClick={() => setIsMenuOpen(false)}
-                className="block py-2 font-medium"
+                className="cursor-pointer block py-2 font-medium"
               >
                 My Orders
               </Link>

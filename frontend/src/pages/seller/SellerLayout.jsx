@@ -21,8 +21,7 @@ const SellerLayout = () => {
     if (role !== "seller") {
       switchRole("seller");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount to avoid loops during exit
+  }, []);
 
   const links = [
     { name: "Dashboard", path: "/seller/dashboard", icon: LayoutDashboard },

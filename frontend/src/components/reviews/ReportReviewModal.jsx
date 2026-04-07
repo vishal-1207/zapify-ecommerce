@@ -74,7 +74,7 @@ const ReportReviewModal = ({ isOpen, onClose, reviewId, onSuccess }) => {
           </div>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X size={20} />
           </button>
@@ -156,7 +156,7 @@ const ReportReviewModal = ({ isOpen, onClose, reviewId, onSuccess }) => {
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                className="cursor-pointer flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

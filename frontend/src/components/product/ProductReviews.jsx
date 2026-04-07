@@ -143,7 +143,7 @@ const ReviewItem = ({
           }
           disabled={isOwnReview}
           title={isOwnReview ? "You cannot vote on your own review" : ""}
-          className={`flex items-center gap-1.5 transition ${
+          className={`cursor-pointer flex items-center gap-1.5 transition ${
             isOwnReview
               ? "opacity-40 cursor-not-allowed"
               : hasLiked
@@ -160,7 +160,7 @@ const ReviewItem = ({
           }
           disabled={isOwnReview}
           title={isOwnReview ? "You cannot vote on your own review" : ""}
-          className={`flex items-center gap-1.5 transition ${
+          className={`cursor-pointer flex items-center gap-1.5 transition ${
             isOwnReview
               ? "opacity-40 cursor-not-allowed"
               : hasDisliked
@@ -308,17 +308,23 @@ const ProductReviews = ({ product }) => {
     document.body.style.overflow = "unset";
   };
 
-  const nextMedia = useCallback((e) => {
-    e?.stopPropagation();
-    setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
-  }, [allMedia.length]);
+  const nextMedia = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
+    },
+    [allMedia.length],
+  );
 
-  const prevMedia = useCallback((e) => {
-    e?.stopPropagation();
-    setCurrentMediaIndex(
-      (prev) => (prev - 1 + allMedia.length) % allMedia.length,
-    );
-  }, [allMedia.length]);
+  const prevMedia = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      setCurrentMediaIndex(
+        (prev) => (prev - 1 + allMedia.length) % allMedia.length,
+      );
+    },
+    [allMedia.length],
+  );
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -478,7 +484,7 @@ const ProductReviews = ({ product }) => {
                 setActiveFilter("all");
                 setIsAllReviewsModalOpen(true);
               }}
-              className="text-indigo-600 font-bold hover:underline mt-4"
+              className="cursor-pointer text-indigo-600 font-bold hover:underline mt-4"
             >
               View all {product.reviewCount || reviews.length} reviews
             </button>
@@ -495,7 +501,7 @@ const ProductReviews = ({ product }) => {
               <h3 className="text-2xl font-bold text-gray-900">All Reviews</h3>
               <button
                 onClick={() => setIsAllReviewsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full"
+                className="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full"
               >
                 <X size={24} />
               </button>
@@ -518,7 +524,7 @@ const ProductReviews = ({ product }) => {
                 <button
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`cursor-pointer px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                     activeFilter === filter.id
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"

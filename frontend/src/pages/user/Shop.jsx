@@ -66,7 +66,6 @@ const Shop = () => {
     fetchData();
   }, []); // Run once
 
-
   const updateFilters = (
     newCategorySlugs,
     newBrandSlugs,
@@ -99,7 +98,6 @@ const Shop = () => {
     setSearchParams(newParams, { replace: true });
   };
 
-
   const toggleCategory = (slug) => {
     const current = selectedCategorySlugs;
     const newSlugs = current.includes(slug)
@@ -115,10 +113,6 @@ const Shop = () => {
       : [...current, slug];
     updateFilters(null, newSlugs, null, undefined, null);
   };
-
-
-
-
 
   const filteredProducts = useMemo(() => {
     const searchQuery = searchParams.get("search")?.toLowerCase() || "";
@@ -323,7 +317,7 @@ const Shop = () => {
             {/* Mobile Filter Toggle */}
             <button
               onClick={() => setIsMobileFilterOpen(true)}
-              className="lg:hidden flex-1 flex items-center justify-center gap-2 bg-gray-100 border border-transparent px-4 py-2 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors"
+              className="cursor-pointer lg:hidden flex-1 flex items-center justify-center gap-2 bg-gray-100 border border-transparent px-4 py-2 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors"
             >
               <Filter size={16} /> Filters
             </button>
@@ -372,7 +366,7 @@ const Shop = () => {
               <h2 className="text-xl font-bold text-gray-900">Filters</h2>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <X size={24} />
               </button>
@@ -406,11 +400,7 @@ const Shop = () => {
                           className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium"
                         >
                           {cat ? cat.name : slug}
-                          <X
-                            size={10}
-                            className="cursor-pointer"
-                            onClick={() => toggleCategory(slug)}
-                          />
+                          <X size={10} onClick={() => toggleCategory(slug)} />
                         </span>
                       );
                     })}
@@ -422,11 +412,7 @@ const Shop = () => {
                           className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium"
                         >
                           {brand ? brand.name : slug}
-                          <X
-                            size={10}
-                            className="cursor-pointer"
-                            onClick={() => toggleBrand(slug)}
-                          />
+                          <X size={10} onClick={() => toggleBrand(slug)} />
                         </span>
                       );
                     })}
@@ -436,7 +422,6 @@ const Shop = () => {
                         {formatCurrency(priceRange.max)}{" "}
                         <X
                           size={10}
-                          className="cursor-pointer"
                           onClick={() => {
                             const reset = { min: 0, max: 3000 };
                             setPriceRange(reset);
@@ -450,7 +435,6 @@ const Shop = () => {
                         {minRating}+ Stars{" "}
                         <X
                           size={10}
-                          className="cursor-pointer"
                           onClick={() => {
                             setMinRating(0);
                             updateFilters(null, null, null, 0, null);
@@ -635,7 +619,7 @@ const Shop = () => {
               </button>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="flex-1 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200"
+                className="cursor-pointer flex-1 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200"
               >
                 View Results
               </button>

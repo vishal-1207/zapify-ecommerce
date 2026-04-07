@@ -189,7 +189,7 @@ const Offers = () => {
         <>
           <button
             onClick={() => handleOpenDealModal(offer)}
-            className="text-indigo-600 hover:text-indigo-900 mr-4 flex items-center gap-1 inline-flex"
+            className="cursor-pointer text-indigo-600 hover:text-indigo-900 mr-4 flex items-center gap-1 inline-flex"
             title="Manage Deal"
           >
             <Tag size={16} /> Deal
@@ -302,7 +302,7 @@ const Offers = () => {
                 <button
                   type="button"
                   onClick={() => setIsDealModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>

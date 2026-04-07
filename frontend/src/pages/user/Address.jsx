@@ -159,7 +159,7 @@ const Address = () => {
               resetForm();
               setIsFormOpen(true);
             }}
-            className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-sm font-bold bg-indigo-50 px-3 py-2 rounded-lg transition-colors"
+            className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-sm font-bold bg-indigo-50 px-3 py-2 rounded-lg transition-colors"
           >
             <Plus size={16} /> Add New
           </button>
@@ -277,14 +277,12 @@ const Address = () => {
                 maxLength={6}
                 className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.zipCode ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
                 value={formData.zipCode}
-                onChange={(e) =>
-                  {
-                    const val = e.target.value;
-                    if (val === "" || /^\d+$/.test(val)) {
-                      setFormData({ ...formData, zipCode: val });
-                    }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || /^\d+$/.test(val)) {
+                    setFormData({ ...formData, zipCode: val });
                   }
-                }
+                }}
               />
               {errors.zipCode && (
                 <p className="text-red-500 text-xs mt-1">{errors.zipCode}</p>
@@ -321,7 +319,7 @@ const Address = () => {
             </p>
             <button
               onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
             >
               <Plus size={16} className="mr-2" /> Add Address
             </button>
@@ -368,7 +366,7 @@ const Address = () => {
                 </button>
                 <button
                   onClick={() => handleDelete(addr.id)}
-                  className="text-gray-400 hover:text-red-500 p-2 rounded-md hover:bg-red-50 transition-colors"
+                  className="cursor-pointer text-gray-400 hover:text-red-500 p-2 rounded-md hover:bg-red-50 transition-colors"
                   title="Delete Address"
                 >
                   <Trash size={18} />

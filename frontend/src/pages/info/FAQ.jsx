@@ -67,7 +67,7 @@ const FAQItem = ({ question, answer, isOpen, onToggle }) => {
   return (
     <div className="border-b border-gray-100 last:border-0">
       <button 
-        className="w-full text-left py-4 flex justify-between items-center focus:outline-none"
+        className="cursor-pointer w-full text-left py-4 flex justify-between items-center focus:outline-none"
         onClick={onToggle}
       >
         <span className="font-medium text-gray-900">{question}</span>

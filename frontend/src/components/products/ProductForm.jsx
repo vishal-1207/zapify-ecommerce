@@ -446,7 +446,7 @@ const ProductForm = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveGalleryImage(index)}
-                      className="absolute top-2 right-2 p-1 bg-white/90 text-red-600 rounded-full shadow-sm hover:bg-white transition opacity-0 group-hover:opacity-100"
+                      className="cursor-pointer absolute top-2 right-2 p-1 bg-white/90 text-red-600 rounded-full shadow-sm hover:bg-white transition opacity-0 group-hover:opacity-100"
                     >
                       <X size={16} />
                     </button>
@@ -531,7 +531,7 @@ const ProductForm = ({
                       <button
                         type="button"
                         onClick={() => handleRemoveSpec(index)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        className="cursor-pointer p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                       >
                         <Trash2 size={18} />
                       </button>

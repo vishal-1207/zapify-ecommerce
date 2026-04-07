@@ -101,7 +101,7 @@ const Wishlist = () => {
                   {/* Remove button */}
                   <button
                     onClick={() => handleRemove(product.id)}
-                    className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500 hover:shadow transition-all"
+                    className="cursor-pointer absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500 hover:shadow transition-all"
                     title="Remove from wishlist"
                   >
                     <Trash2 size={12} />
@@ -142,7 +142,7 @@ const Wishlist = () => {
                     </span>
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="flex items-center gap-1 bg-indigo-600 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                      className="cursor-pointer flex items-center gap-1 bg-indigo-600 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                     >
                       <ShoppingBag size={11} />
                       Add

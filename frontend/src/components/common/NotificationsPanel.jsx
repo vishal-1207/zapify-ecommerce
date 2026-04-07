@@ -202,7 +202,7 @@ const NotificationsPanel = ({ isOpen, onClose }) => {
           <Link
             to="/account/notifications"
             onClick={onClose}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline"
+            className="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline"
           >
             View all notifications →
           </Link>

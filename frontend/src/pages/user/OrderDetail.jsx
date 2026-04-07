@@ -247,7 +247,7 @@ const OrderDetail = () => {
               {isCancellable && (
                 <button
                   onClick={() => setShowCancelModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                 >
                   <XCircle size={15} /> Cancel Order
                 </button>
@@ -255,7 +255,7 @@ const OrderDetail = () => {
               {isReturnable && (
                 <button
                   onClick={() => setShowReturnModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
                 >
                   <RotateCcw size={15} /> Return & Refund
                 </button>
@@ -263,7 +263,7 @@ const OrderDetail = () => {
               {order.status === "delivered" && unreviewedItems.length > 0 && (
                 <button
                   onClick={() => handleReviewClick(unreviewedItems[0].id)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
                 >
                   <Star size={15} className="fill-indigo-600" /> Review Items
                 </button>
@@ -322,7 +322,7 @@ const OrderDetail = () => {
                       {order.status === "delivered" && !item.review && (
                         <button
                           onClick={() => handleReviewClick(item.id)}
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
+                          className="cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
                         >
                           Leave a rating
                         </button>
@@ -464,7 +464,7 @@ const OrderDetail = () => {
               </div>
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="cursor-pointer text-gray-400 hover:text-gray-600"
               >
                 <X size={18} />
               </button>
@@ -521,7 +521,7 @@ const OrderDetail = () => {
               <button
                 onClick={() => setShowCancelModal(false)}
                 disabled={isCancelling}
-                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
+                className="cursor-pointer flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
               >
                 Keep Order
               </button>
@@ -559,7 +559,7 @@ const OrderDetail = () => {
               </div>
               <button
                 onClick={() => setShowReturnModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="cursor-pointer text-gray-400 hover:text-gray-600"
               >
                 <X size={18} />
               </button>
@@ -615,7 +615,7 @@ const OrderDetail = () => {
               <button
                 onClick={() => setShowReturnModal(false)}
                 disabled={isReturning}
-                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
+                className="cursor-pointer flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
               >
                 Cancel
               </button>

@@ -92,7 +92,7 @@ const ModerateDialog = ({ reviewId, onDone }) => {
       <button
         onClick={submit}
         disabled={submitting}
-        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+        className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
       >
         {submitting && <Loader2 size={14} className="animate-spin" />}
         Confirm {decision}
@@ -327,7 +327,7 @@ const ReviewsQueue = ({ statusFilter }) => {
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+          className="cursor-pointer flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={14} /> Prev
         </button>
@@ -337,7 +337,7 @@ const ReviewsQueue = ({ statusFilter }) => {
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page >= totalPages}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+          className="cursor-pointer flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Next <ChevronRight size={14} />
         </button>

@@ -114,7 +114,7 @@ const AddProductValues = ({ onSellYours, onCreateNew }) => {
                   </div>
                   <button
                     onClick={() => onSellYours(product)}
-                    className="shrink-0 px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
+                    className="cursor-pointer shrink-0 px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
                   >
                     Sell this product
                   </button>

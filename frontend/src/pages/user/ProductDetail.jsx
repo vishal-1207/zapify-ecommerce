@@ -134,8 +134,6 @@ const ProductDetail = () => {
     return () => controller.abort();
   }, [slug]);
 
-
-
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-indigo-600 font-medium">
@@ -433,7 +431,7 @@ const ProductDetail = () => {
               <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-4 border border-gray-200">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600"
+                  className="cursor-pointer w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600"
                 >
                   <Minus size={14} />
                 </button>
@@ -449,7 +447,7 @@ const ProductDetail = () => {
                       ),
                     )
                   }
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="cursor-pointer w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={
                     qty >=
                     (selectedOffer?.stockQuantity ||
@@ -504,7 +502,7 @@ const ProductDetail = () => {
                             };
                             addToCart(cartProduct, qty);
                           }}
-                          className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                          className="cursor-pointer w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                         >
                           <ShoppingCart size={18} /> Add to Cart
                         </button>
@@ -538,7 +536,7 @@ const ProductDetail = () => {
                   <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
                     <button
                       onClick={() => setIsSellersModalOpen(true)}
-                      className="text-indigo-600 text-sm font-bold hover:underline transition"
+                      className="cursor-pointer text-indigo-600 text-sm font-bold hover:underline transition"
                     >
                       Compare New & Used from{" "}
                       {product.offers.filter((o) => o.stockQuantity > 0).length}{" "}
@@ -566,7 +564,7 @@ const ProductDetail = () => {
                 </h3>
                 <button
                   onClick={() => setIsSellersModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full"
+                  className="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full"
                 >
                   <X size={24} />
                 </button>
@@ -642,7 +640,7 @@ const ProductDetail = () => {
                                     behavior: "smooth",
                                   });
                                 }}
-                                className="px-5 py-2.5 bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 text-sm font-bold rounded-lg transition"
+                                className="cursor-pointer px-5 py-2.5 bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 text-sm font-bold rounded-lg transition"
                               >
                                 Select seller
                               </button>

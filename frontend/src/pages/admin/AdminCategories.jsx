@@ -256,7 +256,7 @@ const AdminCategories = () => {
         actions={
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+            className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
           >
             <Plus size={20} /> Add Category
           </button>
@@ -301,8 +301,13 @@ const AdminCategories = () => {
               />
               {submissionLoading ? (
                 <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 rounded-lg">
-                  <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
-                  <span className="text-sm font-medium text-indigo-600">Uploading...</span>
+                  <Loader2
+                    size={32}
+                    className="animate-spin text-indigo-600 mb-2"
+                  />
+                  <span className="text-sm font-medium text-indigo-600">
+                    Uploading...
+                  </span>
                 </div>
               ) : null}
               {imagePreview ? (

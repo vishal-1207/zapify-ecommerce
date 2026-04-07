@@ -95,7 +95,7 @@ const Checkout = () => {
               </h2>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="text-indigo-600 font-medium hover:underline flex items-center gap-1"
+                className="cursor-pointer text-indigo-600 font-medium hover:underline flex items-center gap-1"
               >
                 <Plus size={16} /> Add New
               </button>
@@ -152,7 +152,7 @@ const Checkout = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                    className="cursor-pointer px-4 py-2 text-gray-500 hover:text-gray-700"
                   >
                     Cancel
                   </button>
