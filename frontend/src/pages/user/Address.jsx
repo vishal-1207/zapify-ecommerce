@@ -359,7 +359,7 @@ const Address = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleEdit(addr)}
-                  className="text-gray-400 hover:text-indigo-600 p-2 rounded-md hover:bg-indigo-50 transition-colors"
+                  className="cursor-pointer text-gray-400 hover:text-indigo-600 p-2 rounded-md hover:bg-indigo-50 transition-colors"
                   title="Edit Address"
                 >
                   <Edit2 size={18} />

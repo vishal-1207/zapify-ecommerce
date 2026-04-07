@@ -58,8 +58,23 @@ const AffiliateDashboard = () => {
 
   const copyToClipboard = () => {
     const link = `${window.location.origin}/?ref=${profile.referralCode}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Affiliate link copied!");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link)
+        .then(() => toast.success("Affiliate link copied!"))
+        .catch(() => toast.error("Failed to copy link"));
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = link;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success("Affiliate link copied!");
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   if (loading) {

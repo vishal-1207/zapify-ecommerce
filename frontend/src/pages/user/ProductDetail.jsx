@@ -168,10 +168,11 @@ const ProductDetail = () => {
         <div className="flex flex-col lg:flex-row gap-12 mb-16">
           {/* 1. Image Gallery */}
           <div className="lg:w-1/2">
-            <div className="bg-gray-50 rounded-2xl p-8 mb-4 aspect-square flex items-center justify-center border border-gray-100 relative">
+              <div className="bg-gray-50 rounded-2xl p-8 mb-4 aspect-square flex items-center justify-center border border-gray-100 relative">
               <img
                 src={
-                  product.media?.[selectedImage]?.url ||
+                  product.media?.filter(m => m.tag === "gallery")?.[selectedImage]?.url ||
+                  product.media?.find(m => m.tag === "thumbnail")?.url ||
                   product.media?.[0]?.url ||
                   "https://placehold.co/600?text=No+Image"
                 }
@@ -198,9 +199,9 @@ const ProductDetail = () => {
                 </span>
               )}
             </div>
-            {product.media && product.media.length > 1 && (
+            {product.media && product.media.filter(m => m.tag === 'gallery').length > 0 && (
               <div className="grid grid-cols-4 gap-4">
-                {product.media.map((media, i) => (
+                {product.media.filter(m => m.tag === 'gallery').map((media, i) => (
                   <div
                     key={media.id || i}
                     className={`bg-gray-50 rounded-xl aspect-square border-2 cursor-pointer p-2 flex items-center justify-center ${

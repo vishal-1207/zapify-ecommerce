@@ -36,7 +36,7 @@ const Shop = () => {
 
   const [priceRange, setPriceRange] = useState(() => ({
     min: Number(searchParams.get("minPrice")) || 0,
-    max: Number(searchParams.get("maxPrice")) || 3000,
+    max: Number(searchParams.get("maxPrice")) || 300000,
   }));
   const [minRating, setMinRating] = useState(() => {
     return Number(searchParams.get("minRating")) || 0;
@@ -50,11 +50,11 @@ const Shop = () => {
     const fetchData = async () => {
       try {
         const [productsData, categoriesData, brandsData] = await Promise.all([
-          getAllProducts({ limit: 1000 }), // Fetch more products for client-side filtering
+          getAllProducts({ limit: 1000 }),
           getAllCategories(),
           getAllBrands(),
         ]);
-        setProducts(productsData || []); // getAllProducts returns the array directly
+        setProducts(productsData || []);
         setCategories(categoriesData);
         setBrands(brandsData);
       } catch (error) {
@@ -87,7 +87,7 @@ const Shop = () => {
 
     const pRange = newPrice || priceRange;
     if (pRange.min > 0) newParams.set("minPrice", pRange.min);
-    if (pRange.max < 3000) newParams.set("maxPrice", pRange.max);
+    if (pRange.max < 300000) newParams.set("maxPrice", pRange.max);
 
     const rating = newRating !== undefined ? newRating : minRating;
     if (rating > 0) newParams.set("minRating", rating);
@@ -171,7 +171,8 @@ const Shop = () => {
         const max = priceRange.max;
         const price =
           Number(product.minOfferPrice) || Number(product.price) || 0;
-        if (price < min || price > max) return false;
+        if (price < min) return false;
+        if (max < 300000 && price > max) return false;
 
         if ((product.averageRating || 0) < minRating) return false;
 
@@ -226,15 +227,15 @@ const Shop = () => {
   const totalPages = Math.ceil(filteredProducts.length / limit);
 
   const clearAllFilters = () => {
-    setSearchParams({}); // Clear all
-    setPriceRange({ min: 0, max: 3000 });
+    setSearchParams({});
+    setPriceRange({ min: 0, max: 1000000 });
     setMinRating(0);
     setSortBy("featured");
   };
 
   const MIN_PRICE_LIMIT = 0;
-  const MAX_PRICE_LIMIT = 3000;
-  const PRICE_GAP = 100;
+  const MAX_PRICE_LIMIT = 300000;
+  const PRICE_GAP = 5000;
 
   const handleMinPriceChange = (e) => {
     const value = Math.min(Number(e.target.value), priceRange.max - PRICE_GAP);
@@ -378,7 +379,7 @@ const Shop = () => {
                 selectedBrandSlugs.length > 0 ||
                 minRating > 0 ||
                 priceRange.min > 0 ||
-                priceRange.max < 3000) && (
+                priceRange.max < 300000) && (
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-bold text-gray-900 uppercase">
@@ -416,14 +417,16 @@ const Shop = () => {
                         </span>
                       );
                     })}
-                    {(priceRange.min > 0 || priceRange.max < 3000) && (
+                    {(priceRange.min > 0 || priceRange.max < 300000) && (
                       <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium">
                         {formatCurrency(priceRange.min)} -{" "}
-                        {formatCurrency(priceRange.max)}{" "}
+                        {priceRange.max >= 300000
+                          ? `${formatCurrency(300000)}+`
+                          : formatCurrency(priceRange.max)}{" "}
                         <X
                           size={10}
                           onClick={() => {
-                            const reset = { min: 0, max: 3000 };
+                            const reset = { min: 0, max: 300000 };
                             setPriceRange(reset);
                             updateFilters(null, null, reset, undefined, null);
                           }}

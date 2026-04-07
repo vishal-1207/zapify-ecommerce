@@ -217,7 +217,7 @@ const AdminUsers = () => {
           <button
             onClick={() => openEditModal(user)}
             title="Edit Profile"
-            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+            className="cursor-pointer p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
           >
             <Edit2 size={17} />
           </button>
@@ -226,7 +226,7 @@ const AdminUsers = () => {
           <button
             onClick={() => setDeleteConfirmUser(user)}
             title="Delete"
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
           >
             <Trash2 size={17} />
           </button>

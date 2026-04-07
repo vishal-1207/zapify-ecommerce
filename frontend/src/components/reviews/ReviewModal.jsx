@@ -18,15 +18,6 @@ const ReviewModal = ({
   const [previews, setPreviews] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(
-        Math.min(startingIndex, Math.max(0, itemsToReview.length - 1)),
-      );
-      resetForm();
-    }
-  }, [isOpen, startingIndex, itemsToReview.length, resetForm]);
-
   const resetForm = useCallback(() => {
     const current =
       itemsToReview[
@@ -44,6 +35,15 @@ const ReviewModal = ({
 
     setShowSuccess(false);
   }, [itemsToReview, startingIndex]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(
+        Math.min(startingIndex, Math.max(0, itemsToReview.length - 1)),
+      );
+      resetForm();
+    }
+  }, [isOpen, startingIndex, itemsToReview.length, resetForm]);
 
   if (!isOpen || itemsToReview.length === 0) return null;
 
