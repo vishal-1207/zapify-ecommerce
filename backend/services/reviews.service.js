@@ -138,6 +138,10 @@ export const createReview = async (userId, orderItemId, reviewData, files) => {
     }
   }
 
+  if (!orderItem.Offer) {
+    throw new ApiError(400, "Order item has no associated offer and cannot be reviewed.");
+  }
+
   const transaction = await db.sequelize.transaction();
 
   try {

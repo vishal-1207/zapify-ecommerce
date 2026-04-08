@@ -1,5 +1,6 @@
 const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
 
   if (err.isJoi) {
     statusCode = 400;
@@ -11,7 +12,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   return res.status(statusCode).json({
-    message: err.message || "Internal Server Error",
+    message,
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 };
