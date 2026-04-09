@@ -29,8 +29,13 @@ let _nsfwModel = null;
 
 async function getNsfwModel() {
   if (!_nsfwModel) {
-    await import("@tensorflow/tfjs-node");
+    const tf = await import("@tensorflow/tfjs-node");
     const nsfwjs = require("nsfwjs");
+
+    // Help TFJS optimize for memory
+    if (tf.engine().backendName === "cpu") {
+      console.log("[Moderation] Using CPU backend, memory management is critical.");
+    }
 
     _nsfwModel = await nsfwjs.load();
     console.log("[Moderation] NSFW model loaded.");
@@ -184,6 +189,8 @@ async function checkNsfwMedia(mediaUrls) {
 
     const scores = [];
     for (const url of mediaUrls) {
+      tf.default.engine().startScope();
+      let tensor = null;
       try {
         const response = await fetch(url);
         if (!response.ok) continue;
@@ -196,9 +203,8 @@ async function checkNsfwMedia(mediaUrls) {
           .toFormat("png")
           .toBuffer();
 
-        const tensor = tf.default.node.decodeImage(processedBuffer, 3);
+        tensor = tf.default.node.decodeImage(processedBuffer, 3);
         const predictions = await nsfwModel.classify(tensor);
-        tensor.dispose();
 
         const nsfwScore = predictions
           .filter((p) => ["Porn", "Hentai", "Sexy"].includes(p.className))
@@ -211,6 +217,9 @@ async function checkNsfwMedia(mediaUrls) {
           url,
           imgErr.message,
         );
+      } finally {
+        if (tensor) tensor.dispose();
+        tf.default.engine().endScope();
       }
     }
 
@@ -247,7 +256,8 @@ export async function checkLocalNsfwMedia(files) {
     const scores = [];
     for (const file of files) {
       if (!file.mimetype.startsWith("image/")) continue;
-
+      tf.default.engine().startScope();
+      let tensor = null;
       try {
         const rawBuffer = await fs.readFile(file.path);
 
@@ -257,9 +267,8 @@ export async function checkLocalNsfwMedia(files) {
           .toFormat("png")
           .toBuffer();
 
-        const tensor = tf.default.node.decodeImage(processedBuffer, 3);
+        tensor = tf.default.node.decodeImage(processedBuffer, 3);
         const predictions = await nsfwModel.classify(tensor);
-        tensor.dispose();
 
         const nsfwScore = predictions
           .filter((p) => ["Porn", "Hentai", "Sexy"].includes(p.className))
@@ -275,6 +284,9 @@ export async function checkLocalNsfwMedia(files) {
           file.path,
           imgErr.message,
         );
+      } finally {
+        if (tensor) tensor.dispose();
+        tf.default.engine().endScope();
       }
     }
 
@@ -323,6 +335,7 @@ function computeDecision(flags) {
  * @param {string} reviewId
  */
 export async function runModerationPipeline(reviewId) {
+  const memoryBefore = process.memoryUsage().heapUsed / 1024 / 1024;
   try {
     const review = await db.Review.findByPk(reviewId, {
       include: [{ model: db.Media, as: "media" }],
@@ -407,8 +420,9 @@ export async function runModerationPipeline(reviewId) {
       }
     }
 
+    const memoryAfter = process.memoryUsage().heapUsed / 1024 / 1024;
     console.log(
-      `[Moderation] Review ${reviewId} → status: ${status}, score: ${score}`,
+      `[Moderation] Review ${reviewId} → status: ${status}, score: ${score} | Memory: ${memoryBefore.toFixed(2)}MB -> ${memoryAfter.toFixed(2)}MB`,
     );
   } catch (err) {
     console.error(
