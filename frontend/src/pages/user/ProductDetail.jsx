@@ -10,7 +10,9 @@ import {
   Heart,
   Share2,
   X,
+  Check,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { getProductById, getRecommendations } from "../../api/products";
 import { useCart } from "../../context/CartContext";
 import { formatCurrency } from "../../utils/currency";
@@ -73,6 +75,86 @@ const ProductDetail = () => {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isSellersModalOpen, setIsSellersModalOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleShare = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: product?.name || "Zapify Product",
+      text: `Check out this ${product?.name || "item"} on Zapify!`,
+      url: shareUrl,
+    };
+
+    console.log("[Share] Attempting to share:", shareData);
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log("[Share] Native share successful");
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") {
+          console.log("[Share] User cancelled share");
+          return;
+        }
+        console.warn(
+          "[Share] Native share failed, falling back to clipboard:",
+          err,
+        );
+      }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        handleCopySuccess();
+        return;
+      } catch (err) {
+        console.warn("[Share] Clipboard API failed:", err);
+      }
+    }
+
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        handleCopySuccess();
+      } else {
+        throw new Error("execCommand('copy') returned false");
+      }
+    } catch (err) {
+      console.error("[Share] All share methods failed:", err);
+      toast.error("Could not copy link automatically");
+    }
+  };
+
+  const handleCopySuccess = () => {
+    toast.success("Link copied to clipboard!", {
+      icon: "🔗",
+      style: {
+        borderRadius: "10px",
+        background: "#333",
+        color: "#fff",
+      },
+    });
+    setIsSharing(true);
+    setTimeout(() => setIsSharing(false), 2000);
+    console.log("[Share] Copy to clipboard successful");
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -168,11 +250,13 @@ const ProductDetail = () => {
         <div className="flex flex-col lg:flex-row gap-12 mb-16">
           {/* 1. Image Gallery */}
           <div className="lg:w-1/2">
-              <div className="bg-gray-50 rounded-2xl p-8 mb-4 aspect-square flex items-center justify-center border border-gray-100 relative">
+            <div className="bg-gray-50 rounded-2xl p-8 mb-4 aspect-square flex items-center justify-center border border-gray-100 relative">
               <img
                 src={
-                  product.media?.filter(m => m.tag === "gallery")?.[selectedImage]?.url ||
-                  product.media?.find(m => m.tag === "thumbnail")?.url ||
+                  product.media?.filter((m) => m.tag === "gallery")?.[
+                    selectedImage
+                  ]?.url ||
+                  product.media?.find((m) => m.tag === "thumbnail")?.url ||
                   product.media?.[0]?.url ||
                   "https://placehold.co/600?text=No+Image"
                 }
@@ -199,27 +283,30 @@ const ProductDetail = () => {
                 </span>
               )}
             </div>
-            {product.media && product.media.filter(m => m.tag === 'gallery').length > 0 && (
-              <div className="grid grid-cols-4 gap-4">
-                {product.media.filter(m => m.tag === 'gallery').map((media, i) => (
-                  <div
-                    key={media.id || i}
-                    className={`bg-gray-50 rounded-xl aspect-square border-2 cursor-pointer p-2 flex items-center justify-center ${
-                      selectedImage === i
-                        ? "border-indigo-600"
-                        : "border-transparent hover:border-indigo-200"
-                    }`}
-                    onClick={() => setSelectedImage(i)}
-                  >
-                    <img
-                      src={media.url}
-                      alt={`${product.name} view ${i + 1}`}
-                      className="max-w-full max-h-full object-contain mix-blend-multiply"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            {product.media &&
+              product.media.filter((m) => m.tag === "gallery").length > 0 && (
+                <div className="grid grid-cols-4 gap-4">
+                  {product.media
+                    .filter((m) => m.tag === "gallery")
+                    .map((media, i) => (
+                      <div
+                        key={media.id || i}
+                        className={`bg-gray-50 rounded-xl aspect-square border-2 cursor-pointer p-2 flex items-center justify-center ${
+                          selectedImage === i
+                            ? "border-indigo-600"
+                            : "border-transparent hover:border-indigo-200"
+                        }`}
+                        onClick={() => setSelectedImage(i)}
+                      >
+                        <img
+                          src={media.url}
+                          alt={`${product.name} view ${i + 1}`}
+                          className="max-w-full max-h-full object-contain mix-blend-multiply"
+                        />
+                      </div>
+                    ))}
+                </div>
+              )}
           </div>
 
           {/* 2. Product Info */}
@@ -547,8 +634,16 @@ const ProductDetail = () => {
                 )}
 
               <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
-                <button className="cursor-pointer text-gray-500 text-sm font-medium flex items-center gap-2 hover:text-indigo-600 transition">
-                  <Share2 size={16} /> Share Product
+                <button
+                  onClick={handleShare}
+                  className="cursor-pointer text-gray-500 text-sm font-medium flex items-center gap-2 hover:text-indigo-600 transition"
+                >
+                  {isSharing ? (
+                    <Check size={16} className="text-green-500" />
+                  ) : (
+                    <Share2 size={16} />
+                  )}
+                  {isSharing ? "Link Copied" : "Share Product"}
                 </button>
               </div>
             </div>

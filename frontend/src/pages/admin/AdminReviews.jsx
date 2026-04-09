@@ -65,7 +65,7 @@ const ModerateDialog = ({ reviewId, onDone }) => {
           <button
             key={opt.value}
             onClick={() => setDecision(opt.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
               decision === opt.value
                 ? `bg-${opt.color}-600 text-white border-${opt.color}-600`
                 : `bg-white text-${opt.color}-700 border-${opt.color}-300 hover:bg-${opt.color}-50`
@@ -95,7 +95,7 @@ const ModerateDialog = ({ reviewId, onDone }) => {
         className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
       >
         {submitting && <Loader2 size={14} className="animate-spin" />}
-        Confirm {decision}
+        Confirm {decision.charAt(0).toUpperCase() + decision.slice(1)}
       </button>
     </div>
   );
@@ -302,14 +302,14 @@ const ReviewsQueue = ({ statusFilter }) => {
                   {actingOn === review.id ? (
                     <button
                       onClick={() => setActingOn(null)}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                      className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
                     >
                       Cancel
                     </button>
                   ) : (
                     <button
                       onClick={() => setActingOn(review.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition-colors"
+                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition-colors"
                     >
                       <ShieldAlert size={12} />
                       Moderate
@@ -415,7 +415,7 @@ const ReportsQueue = () => {
               setStatusFilter(s);
               setPage(1);
             }}
-            className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
+            className={`cursor-pointer px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
               statusFilter === s
                 ? "bg-indigo-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -537,7 +537,7 @@ const ReportsQueue = () => {
                     <button
                       onClick={() => handleResolve(report.id, "resolved")}
                       disabled={resolving[report.id]}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60"
+                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {resolving[report.id] ? (
                         <Loader2 size={11} className="animate-spin" />
@@ -549,7 +549,7 @@ const ReportsQueue = () => {
                     <button
                       onClick={() => handleResolve(report.id, "dismissed")}
                       disabled={resolving[report.id]}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60"
+                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <XCircle size={11} />
                       Dismiss
@@ -567,7 +567,7 @@ const ReportsQueue = () => {
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+          className="cursor-pointer flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={14} /> Prev
         </button>
@@ -577,7 +577,7 @@ const ReportsQueue = () => {
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page >= totalPages}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+          className="cursor-pointer flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Next <ChevronRight size={14} />
         </button>
@@ -605,7 +605,7 @@ const AdminReviews = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`cursor-pointer flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? "bg-white text-indigo-700 shadow-sm border border-gray-200"
                 : "text-gray-600 hover:bg-white hover:text-gray-800"
