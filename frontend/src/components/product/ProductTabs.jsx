@@ -13,12 +13,12 @@ const ProductTabs = ({ product }) => {
   return (
     <div className="mb-16">
       {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 mb-8">
+      <div className="flex border-b border-gray-200 mb-8 overflow-x-auto scrollbar-hide whitespace-nowrap">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`cursor-pointer py-4 px-8 text-sm font-bold border-b-2 transition-colors duration-300 ${
+            className={`cursor-pointer py-4 px-6 sm:px-8 text-sm font-bold border-b-2 transition-colors duration-300 flex-shrink-0 ${
               activeTab === tab.id
                 ? "border-indigo-600 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -45,31 +45,39 @@ const ProductTabs = ({ product }) => {
 
         {activeTab === "specs" && (
           <div className="animate-in fade-in duration-300">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-4">
               Technical Specifications
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0 text-sm sm:text-base">
               {/* Common Fields */}
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="font-medium text-gray-900">Brand</span>
-                <span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b border-gray-100 gap-1 sm:gap-4">
+                <span className="font-semibold sm:font-medium text-gray-900 shrink-0">
+                  Brand
+                </span>
+                <span className="text-gray-600 sm:text-gray-900">
                   {typeof product.brand === "object"
                     ? product.brand?.name
                     : product.brand || "N/A"}
                 </span>
               </div>
-              <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="font-medium text-gray-900">Category</span>
-                <span>
+              <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b border-gray-100 gap-1 sm:gap-4">
+                <span className="font-semibold sm:font-medium text-gray-900 shrink-0">
+                  Category
+                </span>
+                <span className="text-gray-600 sm:text-gray-900">
                   {typeof product.category === "object"
                     ? product.category?.name
                     : product.category || "N/A"}
                 </span>
               </div>
               {product.model && (
-                <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="font-medium text-gray-900">Model</span>
-                  <span>{product.model}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between py-3 border-b border-gray-100 gap-1 sm:gap-4">
+                  <span className="font-semibold sm:font-medium text-gray-900 shrink-0">
+                    Model
+                  </span>
+                  <span className="text-gray-600 sm:text-gray-900">
+                    {product.model}
+                  </span>
                 </div>
               )}
 
@@ -78,12 +86,14 @@ const ProductTabs = ({ product }) => {
                 product.specs.map((spec, index) => (
                   <div
                     key={index}
-                    className="flex justify-between py-3 border-b border-gray-100"
+                    className="flex flex-col sm:flex-row sm:justify-between py-3 border-b border-gray-100 gap-1 sm:gap-4"
                   >
-                    <span className="font-medium text-gray-900">
+                    <span className="font-semibold sm:font-medium text-gray-900 shrink-0">
                       {spec.key}
                     </span>
-                    <span>{spec.value}</span>
+                    <span className="text-gray-600 sm:text-gray-900">
+                      {spec.value}
+                    </span>
                   </div>
                 ))
               ) : (

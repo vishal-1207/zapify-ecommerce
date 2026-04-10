@@ -96,11 +96,6 @@ const Address = () => {
       return;
     }
 
-    const payload = {
-      ...formData,
-      details: { landmark: formData.details },
-    };
-    delete payload.details.landmark.details;
     const apiPayload = {
       street: formData.street,
       city: formData.city,
@@ -116,7 +111,7 @@ const Address = () => {
         toast.success("Address updated successfully!");
       } else {
         await createUserAddress(apiPayload);
-        toast.success("Address added successfully!");
+        toast.success("Address saved successfully!");
       }
       fetchAddresses();
       resetForm();
@@ -147,226 +142,228 @@ const Address = () => {
     );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">My Addresses</h2>
-          <p className="text-sm text-gray-500">Manage shipping addresses</p>
+          <h2 className="text-2xl font-bold text-gray-900">My Addresses</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage your shipping and billing locations</p>
         </div>
-        {!isFormOpen && (
-          <button
-            onClick={() => {
-              resetForm();
-              setIsFormOpen(true);
-            }}
-            className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-sm font-bold bg-indigo-50 px-3 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={16} /> Add New
-          </button>
-        )}
+        <button
+          onClick={() => {
+            resetForm();
+            setIsFormOpen(true);
+          }}
+          className="cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
+        >
+          <Plus size={18} /> Add New
+        </button>
       </div>
 
+      {/* Address Form Modal */}
       {isFormOpen && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-50 p-6 rounded-lg mb-8 border border-indigo-100 shadow-sm"
-        >
-          <h3 className="font-bold text-gray-800 mb-4">
-            {editingId ? "Edit Address" : "Add New Address"}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Street Address
-              </label>
-              <input
-                placeholder="123 Main St"
-                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.street ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
-                value={formData.street}
-                onChange={(e) =>
-                  setFormData({ ...formData, street: e.target.value })
-                }
-              />
-              {errors.street && (
-                <p className="text-red-500 text-xs mt-1">{errors.street}</p>
-              )}
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Apartment, suite, etc. (optional)
-              </label>
-              <input
-                placeholder="Apartment 4B, Near Central Park"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                value={formData.details}
-                onChange={(e) =>
-                  setFormData({ ...formData, details: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Country
-              </label>
-              <select
-                className="w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50"
-                value={formData.country}
-                disabled
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={resetForm}
+          ></div>
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white relative w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-900">
+                {editingId ? "Edit Address" : "Add New Address"}
+              </h3>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200 transition-colors"
+                aria-label="Close"
               >
-                <option value="IN">India</option>
-              </select>
+                <Plus size={20} className="rotate-45" />
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State
-              </label>
-              <select
-                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.state ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
-                value={formData.state}
-                onChange={(e) => {
-                  setFormData({ ...formData, state: e.target.value, city: "" });
-                }}
-                required
-              >
-                <option value="">Select State</option>
-                {State.getStatesOfCountry("IN").map((state) => (
-                  <option key={state.isoCode} value={state.isoCode}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-              {errors.state && (
-                <p className="text-red-500 text-xs mt-1">{errors.state}</p>
-              )}
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Street Address
+                </label>
+                <input
+                  placeholder="123 Main St"
+                  className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                    errors.street ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"
+                  }`}
+                  value={formData.street}
+                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                />
+                {errors.street && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.street}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Apartment, suite, etc. (optional)
+                </label>
+                <input
+                  placeholder="Apartment 4B, Near Central Park"
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  value={formData.details}
+                  onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Country</label>
+                  <select
+                    className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed outline-none"
+                    value={formData.country}
+                    disabled
+                  >
+                    <option value="IN">India</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">State</label>
+                  <select
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                      errors.state ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"
+                    }`}
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value, city: "" })}
+                    required
+                  >
+                    <option value="">Select State</option>
+                    {State.getStatesOfCountry("IN").map((state) => (
+                      <option key={state.isoCode} value={state.isoCode}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.state && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.state}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">City</label>
+                  <select
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                      errors.city ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"
+                    }`}
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    required
+                    disabled={!formData.state}
+                  >
+                    <option value="">Select City</option>
+                    {formData.state &&
+                      City.getCitiesOfState("IN", formData.state).map((city) => (
+                        <option key={city.name} value={city.name}>
+                          {city.name}
+                        </option>
+                      ))}
+                  </select>
+                  {errors.city && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.city}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">ZIP Code</label>
+                  <input
+                    placeholder="110001"
+                    maxLength={6}
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                      errors.zipCode ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"
+                    }`}
+                    value={formData.zipCode}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || /^\d+$/.test(val)) {
+                        setFormData({ ...formData, zipCode: val });
+                      }
+                    }}
+                  />
+                  {errors.zipCode && <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.zipCode}</p>}
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
-              <select
-                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.city ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
-                value={formData.city}
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
-                }
-                required
-                disabled={!formData.state}
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="cursor-pointer px-5 py-2.5 text-gray-600 font-bold hover:bg-gray-200 rounded-xl transition-colors"
               >
-                <option value="">Select City</option>
-                {formData.state &&
-                  City.getCitiesOfState("IN", formData.state).map((city) => (
-                    <option key={city.name} value={city.name}>
-                      {city.name}
-                    </option>
-                  ))}
-              </select>
-              {errors.city && (
-                <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-              )}
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="cursor-pointer px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95"
+              >
+                Save
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ZIP / Postal Code
-              </label>
-              <input
-                placeholder="100001"
-                maxLength={6}
-                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${errors.zipCode ? "border-red-300 ring-1 ring-red-300" : "border-gray-300"}`}
-                value={formData.zipCode}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || /^\d+$/.test(val)) {
-                    setFormData({ ...formData, zipCode: val });
-                  }
-                }}
-              />
-              {errors.zipCode && (
-                <p className="text-red-500 text-xs mt-1">{errors.zipCode}</p>
-              )}
-            </div>
-          </div>
-          <div className="mt-6 flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="cursor-pointer px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-md transition-transform transform active:scale-95"
-            >
-              {editingId ? "Update Address" : "Save Address"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
 
-      <div className="space-y-4">
-        {addresses.length === 0 && !isFormOpen ? (
-          <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
-            <MapPin className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <h3 className="text-lg font-medium text-gray-900">
-              No addresses saved
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Add a shipping address to speed up checkout.
+      <div className="grid grid-cols-1 gap-4">
+        {addresses.length === 0 ? (
+          <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
+            <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
+              <MapPin className="text-gray-300" size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">No addresses saved</h3>
+            <p className="text-gray-500 max-w-xs mx-auto mt-1 mb-6">
+              Add a shipping address to speed up your checkout process.
             </p>
             <button
               onClick={() => setIsFormOpen(true)}
-              className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-95"
             >
-              <Plus size={16} className="mr-2" /> Add Address
+              <Plus size={18} className="mr-2" /> Add Address
             </button>
           </div>
         ) : (
           addresses.map((addr) => (
             <div
               key={addr.id}
-              className={`border rounded-lg p-4 flex justify-between items-start transition-all group ${
+              className={`border-2 rounded-2xl p-5 flex justify-between items-start transition-all ${
                 editingId === addr.id
-                  ? "border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50"
-                  : "border-gray-200 hover:border-indigo-300"
+                  ? "border-indigo-600 bg-indigo-50/30 ring-1 ring-indigo-600"
+                  : "border-gray-100 hover:border-indigo-200 hover:shadow-md"
               }`}
             >
-              <div className="flex gap-4">
-                <div className="mt-1 bg-indigo-50 p-2 rounded-full shrink-0 h-9 w-9 flex items-center justify-center">
-                  <MapPin className="text-indigo-600" size={20} />
+              <div className="flex gap-5">
+                <div className="bg-indigo-600 p-2.5 rounded-xl shrink-0 h-11 w-11 flex items-center justify-center shadow-lg shadow-indigo-100">
+                  <MapPin className="text-white" size={22} />
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900">{addr.street}</p>
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-900 text-lg mb-0.5">{addr.street}</p>
                   {addr.details?.landmark && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 leading-relaxed italic mb-1">
                       {addr.details.landmark}
                     </p>
                   )}
-                  <p className="text-gray-600">
-                    {addr.city}, {addr.state} -{" "}
-                    <span className="font-medium text-gray-800">
-                      {addr.zipCode}
-                    </span>
+                  <p className="text-gray-600 font-medium">
+                    {addr.city}, {addr.state} - <span className="text-indigo-600">{addr.zipCode}</span>
                   </p>
-                  <p className="text-gray-500 text-xs mt-1 uppercase tracking-wide">
-                    {addr.country}
+                  <p className="text-gray-400 text-xs mt-2 uppercase font-bold tracking-widest flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    {addr.country === "IN" || addr.country === "India" ? "India" : addr.country}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-1">
                 <button
                   onClick={() => handleEdit(addr)}
-                  className="cursor-pointer text-gray-400 hover:text-indigo-600 p-2 rounded-md hover:bg-indigo-50 transition-colors"
+                  className="cursor-pointer text-gray-400 hover:text-indigo-600 p-2.5 rounded-lg hover:bg-indigo-50 transition-all"
                   title="Edit Address"
                 >
                   <Edit2 size={18} />
                 </button>
                 <button
                   onClick={() => handleDelete(addr.id)}
-                  className="cursor-pointer text-gray-400 hover:text-red-500 p-2 rounded-md hover:bg-red-50 transition-colors"
+                  className="cursor-pointer text-gray-400 hover:text-red-600 p-2.5 rounded-lg hover:bg-red-50 transition-all"
                   title="Delete Address"
                 >
                   <Trash size={18} />

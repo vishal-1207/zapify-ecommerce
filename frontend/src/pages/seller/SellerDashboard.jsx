@@ -197,8 +197,8 @@ const doughnutOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: "right",
-      labels: { boxWidth: 10, font: { size: 11 }, padding: 10 },
+      position: "bottom",
+      labels: { boxWidth: 10, font: { size: 10 }, padding: 10 },
     },
   },
   cutout: "65%",
@@ -282,14 +282,14 @@ const SellerDashboard = () => {
   return (
     <div className="space-y-6">
       {/* ─── Header Navigation ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Seller Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
             Monitor your store's sales, fulfillment, and revenue growth.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           <PeriodSelector
             value={days}
             onChange={setDays}

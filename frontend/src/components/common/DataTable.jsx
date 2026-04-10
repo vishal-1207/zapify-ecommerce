@@ -76,44 +76,42 @@ const DataTable = ({
         </div>
 
         {/* Right Side: Search & Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full md:w-auto">
-          {/* Items Per Page Selector */}
-          <div className="flex items-center gap-2 mr-2">
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              Show:
-            </span>
+        <div className="flex flex-row gap-2 items-center w-auto shrink-0">
+          {/* Items Per Page Selector - Hide on small mobile to save space if needed, or keep compact */}
+          <div className="hidden sm:flex items-center gap-2 mr-1">
+            <span className="text-xs text-gray-400 whitespace-nowrap">Show:</span>
             <select
               value={itemsPerPage}
               onChange={handleItemsPerPageChange}
-              className="bg-white border border-gray-200 text-gray-700 text-sm rounded focus:ring-indigo-500 focus:border-indigo-500 px-2 py-1.5 outline-none cursor-pointer"
+              className="bg-white border border-gray-200 text-gray-700 text-xs rounded focus:ring-indigo-500 focus:border-indigo-500 px-1.5 py-1 outline-none cursor-pointer"
             >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
-              <option value={50}>50</option>
+              {[10, 20, 30, 50].map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
             </select>
           </div>
 
           {onSearch && (
-            <div className="relative">
+            <div className="relative group">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={18}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors"
+                size={16}
               />
               <input
                 type="text"
                 placeholder={searchPlaceholder}
                 value={searchValue !== undefined ? searchValue : undefined}
-                defaultValue={searchValue === undefined ? undefined : undefined}
                 onChange={(e) => {
-                  if (clientPagination) setClientPage(1); // reset page on search
+                  if (clientPagination) setClientPage(1);
                   onSearch(e.target.value);
                 }}
-                className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-32 sm:w-48 md:w-64 pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all"
               />
             </div>
           )}
-          {actions}
+          <div className="flex items-center gap-2">
+            {actions}
+          </div>
         </div>
       </div>
 

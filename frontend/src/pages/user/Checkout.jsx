@@ -20,7 +20,7 @@ const Checkout = () => {
     city: "",
     state: "",
     zipCode: "",
-    country: "USA",
+    country: "IN",
     isDefault: false,
   });
 
@@ -57,7 +57,7 @@ const Checkout = () => {
         city: "",
         state: "",
         zipCode: "",
-        country: "USA",
+        country: "IN",
         isDefault: false,
       });
       toast.success("Address added successfully");

@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ShoppingCart,
   Menu,
@@ -7,7 +6,11 @@ import {
   LayoutDashboard,
   Zap,
   Bell,
+  User,
+  ShieldCheck,
+  Store,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -23,6 +26,7 @@ const Navbar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     getAllCategories()
@@ -31,6 +35,20 @@ const Navbar = () => {
         console.error("Failed to load categories in navbar", error),
       );
   }, []);
+
+  useEffect(() => {
+    const isDashboardPath =
+      location.pathname.startsWith("/admin") ||
+      location.pathname.startsWith("/seller");
+    if (
+      !isDashboardPath &&
+      role !== "user" &&
+      role !== "guest" &&
+      user?.roles?.includes("user")
+    ) {
+      switchRole("user");
+    }
+  }, [role, switchRole, user, location.pathname]);
 
   return (
     <>
@@ -61,9 +79,13 @@ const Navbar = () => {
                       switchRole("admin");
                       navigate("/admin/dashboard");
                     }}
-                    className="cursor-pointer hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide mr-4"
+                    title="Admin Panel"
+                    className="cursor-pointer flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide mr-2 md:mr-4"
                   >
-                    <LayoutDashboard size={14} /> Admin Panel
+                    <ShieldCheck size={20} className="lg:hidden" />
+                    <span className="hidden lg:flex items-center gap-2">
+                      <LayoutDashboard size={14} /> Admin Panel
+                    </span>
                   </button>
                 )}
 
@@ -76,14 +98,22 @@ const Navbar = () => {
                       navigate("/seller/register");
                     }
                   }}
-                  className="cursor-pointer hidden lg:flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide"
+                  title={
+                    user?.roles?.includes("seller")
+                      ? "Seller Dashboard"
+                      : "Sell Tech"
+                  }
+                  className="cursor-pointer flex items-center gap-2 hover:text-orange-300 text-xs font-bold uppercase tracking-wide"
                 >
                   {user?.roles?.includes("seller") ? (
                     <>
-                      <LayoutDashboard size={14} /> Seller Dashboard
+                      <Store size={20} className="lg:hidden" />
+                      <span className="hidden lg:flex items-center gap-2">
+                        <LayoutDashboard size={14} /> Seller Dashboard
+                      </span>
                     </>
                   ) : (
-                    "Sell Tech"
+                    <span className="hidden md:block">Sell Tech</span>
                   )}
                 </button>
               </>
@@ -95,9 +125,13 @@ const Navbar = () => {
                   switchRole("user");
                   navigate("/");
                 }}
-                className="flex items-center gap-1 bg-indigo-800 border border-indigo-600 px-3 py-1 rounded text-xs hover:bg-indigo-900"
+                className="flex items-center justify-center bg-indigo-800 border border-indigo-600 w-8 h-8 rounded hover:bg-indigo-900 transition-colors cursor-pointer group/exit"
+                title={`Exit ${role}`}
               >
-                <LogOut size={14} /> Exit {role}
+                <LogOut
+                  size={16}
+                  className="group-hover/exit:-translate-x-0.5 transition-transform"
+                />
               </button>
             )}
 
@@ -110,15 +144,26 @@ const Navbar = () => {
                       : `/${role}/dashboard`
                     : "/login"
                 }
-                className="flex flex-col cursor-pointer leading-tight hover:text-orange-300"
+                title={role === "user" ? "Account" : "Dashboard"}
+                className="flex items-center gap-2 cursor-pointer leading-tight hover:text-orange-300"
               >
-                <span className="text-[10px] opacity-80">
-                  Hello, {user ? user.fullname : "Sign in"}
-                </span>
-                <span className="font-bold flex items-center gap-1">
-                  {role === "user" ? "Account" : "Dashboard"}
-                  {role !== "user" && <LayoutDashboard size={14} />}
-                </span>
+                <div className="sm:hidden flex items-center justify-center bg-indigo-800 rounded-full w-8 h-8">
+                  {role === "user" ? (
+                    <User size={18} />
+                  ) : (
+                    <LayoutDashboard size={18} />
+                  )}
+                </div>
+
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-[10px] opacity-80">
+                    Hello, {user ? user.fullname.split(" ")[0] : "Sign in"}
+                  </span>
+                  <span className="font-bold flex items-center gap-1">
+                    {role === "user" ? "Account" : "Dashboard"}
+                    {role !== "user" && <LayoutDashboard size={14} />}
+                  </span>
+                </div>
               </Link>
 
               {!user && (

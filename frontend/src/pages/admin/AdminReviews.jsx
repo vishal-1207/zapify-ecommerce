@@ -309,10 +309,11 @@ const ReviewsQueue = ({ statusFilter }) => {
                   ) : (
                     <button
                       onClick={() => setActingOn(review.id)}
-                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition-colors"
+                      title="Moderate"
+                      className="cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition-colors"
                     >
                       <ShieldAlert size={12} />
-                      Moderate
+                      <span className="hidden sm:inline">Moderate</span>
                     </button>
                   )}
                 </div>
@@ -537,22 +538,24 @@ const ReportsQueue = () => {
                     <button
                       onClick={() => handleResolve(report.id, "resolved")}
                       disabled={resolving[report.id]}
-                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      title="Resolve"
+                      className="cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {resolving[report.id] ? (
                         <Loader2 size={11} className="animate-spin" />
                       ) : (
                         <CheckCircle size={11} />
                       )}
-                      Resolve
+                      <span className="hidden sm:inline">Resolve</span>
                     </button>
                     <button
                       onClick={() => handleResolve(report.id, "dismissed")}
                       disabled={resolving[report.id]}
-                      className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      title="Dismiss"
+                      className="cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <XCircle size={11} />
-                      Dismiss
+                      <span className="hidden sm:inline">Dismiss</span>
                     </button>
                   </div>
                 )}

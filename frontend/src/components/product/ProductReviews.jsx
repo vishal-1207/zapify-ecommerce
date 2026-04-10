@@ -50,21 +50,21 @@ const ReviewItem = ({
 
   return (
     <div className="border-b border-gray-100 pb-8 last:border-0 last:pb-0">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-2">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs sm:text-sm shrink-0">
             {(review.user?.fullname || review.User?.fullname || "V")
               .charAt(0)
               .toUpperCase()}
           </div>
-          <div>
-            <h4 className="font-bold text-gray-900">
+          <div className="min-w-0 flex-1">
+            <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate">
               {review.user?.fullname ||
                 review.User?.fullname ||
                 "Verified Buyer"}
             </h4>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+              <span className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">
                 {new Date(review.createdAt).toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "short",
@@ -72,21 +72,21 @@ const ReviewItem = ({
                 })}
               </span>
               {review.OrderItem?.Offer?.sellerProfile?.storeName && (
-                <>
-                  <span className="text-gray-300 text-xs">•</span>
-                  <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-gray-300 text-[10px] hidden sm:block">•</span>
+                  <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full truncate max-w-[150px] sm:max-w-none">
                     Bought from {review.OrderItem.Offer.sellerProfile.storeName}
                   </span>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
-        <div className="flex text-yellow-400">
+        <div className="flex text-yellow-400 self-start sm:self-auto -mt-1 sm:mt-0">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              size={14}
+              size={12}
               fill={i < review.rating ? "currentColor" : "none"}
               className={i >= review.rating ? "text-gray-200" : ""}
             />
@@ -95,9 +95,9 @@ const ReviewItem = ({
       </div>
 
       {review.title && (
-        <h5 className="font-bold text-gray-800 mt-3 mb-2">{review.title}</h5>
+        <h5 className="font-bold text-gray-800 text-sm sm:text-base mt-2 mb-1">{review.title}</h5>
       )}
-      <p className="text-gray-600 leading-relaxed mt-3 mb-4">
+      <p className="text-gray-600 leading-relaxed text-sm sm:text-base mt-2 mb-4">
         {review.comment}
       </p>
 

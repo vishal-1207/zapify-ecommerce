@@ -231,9 +231,11 @@ const SellerProducts = () => {
         actions={
           <button
             onClick={() => navigate("/seller/products/add")}
-            className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 cursor-pointer"
+            className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
+            title="Add Product"
           >
-            <Plus size={20} /> Add Product
+            <Plus size={18} />
+            <span className="hidden sm:inline font-bold text-sm">Add Product</span>
           </button>
         }
       />

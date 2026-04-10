@@ -327,10 +327,10 @@ const ProductDetail = () => {
                 </span>
               )}
 
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
                 {product.name}
               </h1>
-              <h3 className="text-gray-600 mb-8 leading-relaxed">
+              <h3 className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 leading-relaxed">
                 {product.model || "No model available."}
               </h3>
               <div
@@ -353,86 +353,88 @@ const ProductDetail = () => {
                 </span>
               </div>
 
-              <div className="border-t border-b border-gray-100 py-4 mb-6">
-                {(() => {
-                  const isDeal =
-                    selectedOffer &&
-                    selectedOffer.dealPrice &&
-                    parseFloat(selectedOffer.dealPrice) > 0 &&
-                    new Date() >= new Date(selectedOffer.dealStartDate) &&
-                    new Date() <= new Date(selectedOffer.dealEndDate);
+              <div className="hidden lg:block">
+                <div className="border-t border-b border-gray-100 py-4 mb-6">
+                  {(() => {
+                    const isDeal =
+                      selectedOffer &&
+                      selectedOffer.dealPrice &&
+                      parseFloat(selectedOffer.dealPrice) > 0 &&
+                      new Date() >= new Date(selectedOffer.dealStartDate) &&
+                      new Date() <= new Date(selectedOffer.dealEndDate);
 
-                  const effectivePrice = isDeal
-                    ? Number(selectedOffer.dealPrice)
-                    : selectedOffer
-                      ? Number(selectedOffer.price)
-                      : Number(product.price);
+                    const effectivePrice = isDeal
+                      ? Number(selectedOffer.dealPrice)
+                      : selectedOffer
+                        ? Number(selectedOffer.price)
+                        : Number(product.price);
 
-                  const originalPrice = Number(product.price);
-                  const hasDiscount = effectivePrice < originalPrice;
-                  const savingsPercent = hasDiscount
-                    ? Math.round(
-                        ((originalPrice - effectivePrice) / originalPrice) *
-                          100,
-                      )
-                    : 0;
+                    const originalPrice = Number(product.price);
+                    const hasDiscount = effectivePrice < originalPrice;
+                    const savingsPercent = hasDiscount
+                      ? Math.round(
+                          ((originalPrice - effectivePrice) / originalPrice) *
+                            100,
+                        )
+                      : 0;
 
-                  return (
-                    <div className="flex flex-col">
-                      <div className="flex items-baseline gap-3">
-                        {hasDiscount && (
-                          <span className="text-3xl font-light text-red-600">
-                            -{savingsPercent}%
-                          </span>
-                        )}
-                        <span
-                          className={`text-3xl font-bold ${isDeal ? "text-red-600" : "text-gray-900"}`}
-                        >
-                          {formatCurrency(effectivePrice)}
-                        </span>
-                      </div>
-                      {isDeal && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
-                            Lightning Deal
-                          </span>
-                          <span className="text-red-600 text-sm font-medium animate-pulse">
-                            Ends in:{" "}
-                            <CountdownTimer
-                              key={selectedOffer.id}
-                              targetDate={selectedOffer.dealEndDate}
-                            />
+                    return (
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-3">
+                          {hasDiscount && (
+                            <span className="text-3xl font-light text-red-600">
+                              -{savingsPercent}%
+                            </span>
+                          )}
+                          <span
+                            className={`text-3xl font-bold ${isDeal ? "text-red-600" : "text-gray-900"}`}
+                          >
+                            {formatCurrency(effectivePrice)}
                           </span>
                         </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                        {isDeal && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                              Lightning Deal
+                            </span>
+                            <span className="text-red-600 text-sm font-medium animate-pulse">
+                              Ends in:{" "}
+                              <CountdownTimer
+                                key={selectedOffer.id}
+                                targetDate={selectedOffer.dealEndDate}
+                              />
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
-                {selectedOffer && (
-                  <div className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                    <span>M.R.P.:</span>
-                    <span className="relative inline-block text-gray-500">
-                      {formatCurrency(product.price)}
-                      <span className="absolute left-0 top-1/2 w-full h-[1px] bg-gray-500 -translate-y-1/2"></span>
+                  {selectedOffer && (
+                    <div className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                      <span>M.R.P.:</span>
+                      <span className="relative inline-block text-gray-500">
+                        {formatCurrency(product.price)}
+                        <span className="absolute left-0 top-1/2 w-full h-[1px] bg-gray-500 -translate-y-1/2"></span>
+                      </span>
+                    </div>
+                  )}
+                  <div className="text-sm text-gray-500 mt-1">
+                    Inclusive of all taxes
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 text-sm text-gray-500 mb-8">
+                  <div className="flex items-center gap-3">
+                    <Truck size={18} className="text-indigo-600" />{" "}
+                    <span>
+                      Free shipping on all orders over {formatCurrency(500)}
                     </span>
                   </div>
-                )}
-                <div className="text-sm text-gray-500 mt-1">
-                  Inclusive of all taxes
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 text-sm text-gray-500 mb-8">
-                <div className="flex items-center gap-3">
-                  <Truck size={18} className="text-indigo-600" />{" "}
-                  <span>
-                    Free shipping on all orders over {formatCurrency(500)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <ShieldCheck size={18} className="text-indigo-600" />{" "}
-                  <span>Warranty as per brand policy.</span>
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={18} className="text-indigo-600" />{" "}
+                    <span>Warranty as per brand policy.</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -514,6 +516,18 @@ const ProductDetail = () => {
                   {selectedOffer?.stockQuantity > 0
                     ? "In Stock"
                     : "Out of Stock"}
+                </div>
+
+                {/* Mobile-only shipping/warranty info */}
+                <div className="lg:hidden mt-4 space-y-2 border-t border-gray-100 pt-4">
+                  <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                    <Truck size={14} className="text-indigo-600 shrink-0" />
+                    <span>Free shipping on all orders over {formatCurrency(500)}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                    <ShieldCheck size={14} className="text-indigo-600 shrink-0" />
+                    <span>Warranty as per brand policy.</span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-4 border border-gray-200">

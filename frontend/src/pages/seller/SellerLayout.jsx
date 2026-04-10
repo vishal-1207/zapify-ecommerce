@@ -21,7 +21,7 @@ const SellerLayout = () => {
     if (role !== "seller") {
       switchRole("seller");
     }
-  }, []);
+  }, [role, switchRole]);
 
   const links = [
     { name: "Dashboard", path: "/seller/dashboard", icon: LayoutDashboard },

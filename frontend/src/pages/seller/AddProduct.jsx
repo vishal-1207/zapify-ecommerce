@@ -52,15 +52,16 @@ const AddProductValues = ({ onSellYours, onCreateNew }) => {
       {/* Results Section */}
       {query.length > 0 && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-800">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-800 shrink-0">
               Search Results
             </h3>
             <button
               onClick={onCreateNew}
-              className="cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
+              className="cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm font-bold flex items-center gap-1.5 transition-colors group"
             >
-              Product not found? Create a new listing <ArrowRight size={16} />
+              <span className="group-hover:underline">Product not found? Create new</span>
+              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
@@ -75,46 +76,52 @@ const AddProductValues = ({ onSellYours, onCreateNew }) => {
               </p>
               <button
                 onClick={onCreateNew}
-                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition shadow-sm font-bold"
               >
-                <Plus size={18} /> Create a new product listing
+                <Plus size={18} /> Create product listing
               </button>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-3 sm:gap-4">
               {hits.map((product) => (
                 <div
                   key={product.objectID}
-                  className="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 hover:shadow-md transition"
+                  className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition group"
                 >
-                  <div className="w-16 h-16 shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package size={24} />
+                  <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto overflow-hidden">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover mix-blend-multiply"
+                        />
+                      ) : (
+                        <Package size={24} className="text-gray-300" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 truncate text-sm sm:text-base group-hover:text-indigo-600 transition-colors">
+                        {product.name}
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs sm:text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <span className="font-semibold text-gray-400">Brand:</span> {product.brand}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-semibold text-gray-400">Category:</span> {product.category}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                          product.inStock ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"
+                        }`}>
+                          {product.inStock ? "In Stock" : "Out of Stock"}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 truncate">
-                      {product.name}
-                    </h4>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                      <span>Brand: {product.brand}</span>
-                      <span>Category: {product.category}</span>
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">
-                        {product.inStock ? "In Stock" : "Out of Stock"}
-                      </span>
                     </div>
                   </div>
                   <button
                     onClick={() => onSellYours(product)}
-                    className="cursor-pointer shrink-0 px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
+                    className="cursor-pointer w-full sm:w-auto shrink-0 px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-600 hover:text-white transition-all whitespace-nowrap text-sm shadow-sm hover:shadow-indigo-100"
                   >
                     Sell this product
                   </button>

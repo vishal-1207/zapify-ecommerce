@@ -35,7 +35,7 @@ const CategoryCarousel = ({ categories = [] }) => {
       {/* Carousel Container */}
       <div
         ref={scrollRef}
-        className="flex gap-6 overflow-x-auto pb-8 pt-4 px-4 snap-x snap-mandatory scrollbar-hide"
+        className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 sm:pb-8 pt-4 px-4 snap-x snap-mandatory scrollbar-hide"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {categories.map((cat) => {
@@ -43,24 +43,24 @@ const CategoryCarousel = ({ categories = [] }) => {
             <Link
               key={cat.id}
               to={`/shop?category=${cat.slug}`}
-              className="min-w-[260px] md:min-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition duration-300 group/card snap-start flex flex-col justify-between"
+              className="min-w-[180px] sm:min-w-[260px] md:min-w-[280px] bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition duration-300 group/card snap-start flex flex-col justify-between"
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-3 sm:mb-6">
                 <h3
-                  className="text-xl font-bold text-gray-800 line-clamp-1"
+                  className="text-base sm:text-xl font-bold text-gray-800 line-clamp-1 mr-2"
                   title={cat.name}
                 >
                   {cat.name}
                 </h3>
-                <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover/card:bg-indigo-600 group-hover/card:text-white transition-colors duration-300 shadow-sm w-16 h-16 flex items-center justify-center overflow-hidden">
+                <div className="p-2 sm:p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover/card:bg-indigo-600 group-hover/card:text-white transition-colors duration-300 shadow-sm w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center overflow-hidden shrink-0">
                   {cat.media && cat.media.url ? (
                     <img
                       src={cat.media.url}
                       alt="IMG"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain mix-blend-multiply"
                     />
                   ) : (
-                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-xs text-indigo-400 font-bold">
+                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-[10px] sm:text-xs text-indigo-400 font-bold">
                       IMG
                     </div>
                   )}
@@ -68,10 +68,10 @@ const CategoryCarousel = ({ categories = [] }) => {
               </div>
 
               <div>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                <p className="hidden sm:block text-gray-400 text-sm mb-4 line-clamp-2">
                   Discover the best in {cat.name}.
                 </p>
-                <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm group-hover/card:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs sm:text-sm group-hover/card:gap-3 transition-all">
                   Shop Now <ArrowIcon />
                 </div>
               </div>

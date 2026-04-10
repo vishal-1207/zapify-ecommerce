@@ -135,7 +135,7 @@ const NotificationsPanel = ({ isOpen, onClose }) => {
   return (
     <div
       ref={panelRef}
-      className="absolute top-full right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-16 sm:top-full mt-2 sm:w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[150] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white sticky top-0">

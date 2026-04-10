@@ -113,7 +113,7 @@ const StatCard = ({ title, value, icon: Icon, gradient, trend, sub }) => (
 );
 
 // eslint-disable-next-line no-unused-vars
-const SectionHeader = ({ icon: Icon, title, sub }) => (
+const SectionHeader = ({ title, sub, icon: Icon }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
       <Icon size={16} className="text-indigo-600" />
@@ -192,8 +192,8 @@ const doughnutOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: "right",
-      labels: { boxWidth: 10, font: { size: 11 }, padding: 10 },
+      position: "bottom",
+      labels: { boxWidth: 10, font: { size: 10 }, padding: 10 },
     },
   },
   cutout: "65%",
@@ -338,14 +338,14 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Platform Overview</h1>
           <p className="text-sm text-gray-400 mt-0.5">
             Live stats & analytics across Zapify
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           <PeriodSelector
             value={days}
             onChange={setDays}
@@ -354,7 +354,7 @@ const Dashboard = () => {
           <button
             onClick={() => fetchAll(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+            className="cursor-pointer flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-50"
           >
             <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             Refresh
@@ -363,7 +363,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── KPI Stat Cards (8 cards, 2 rows of 4) ──────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Revenue"
           value={formatCurrency(s.totalRevenue || 0)}

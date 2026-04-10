@@ -35,73 +35,94 @@ const Sidebar = ({
   logout,
   theme = "indigo",
   footerActions,
+  isOpen,
+  setIsOpen,
 }) => {
   const location = useLocation();
   const currentTheme = themes[theme] || themes.indigo;
 
   return (
-    <aside
-      className={`w-64 ${currentTheme.sidebarBg} text-white flex-shrink-0 flex flex-col transition-colors duration-300`}
-    >
-      {/* Sidebar Header / Brand */}
-      <div
-        className={`p-6 border-b ${currentTheme.sidebarBorder} flex items-center gap-2`}
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 ${
+          currentTheme.sidebarBg
+        } text-white flex-shrink-0 flex flex-col transition-transform duration-300 transform lg:static lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className={`${currentTheme.iconBg} ${currentTheme.iconColor} p-1.5 rounded-lg`}>
-          {Icon && <Icon size={20} fill="currentColor" />}
-        </div>
-        <span className="text-xl font-bold tracking-tight">{title}</span>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {links.map((link) => {
-          const isActive = location.pathname.startsWith(link.path);
-          return (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive ? currentTheme.linkActive : currentTheme.linkInactive
-              }`}
-            >
-              <link.icon size={20} />
-              <span className="font-medium">{link.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer Section */}
-      <div className={`p-4 border-t ${currentTheme.sidebarBorder} space-y-2`}>
-        
-        {/* Optional Footer Actions (e.g., Switch Role) */}
-        {footerActions}
-
-        {/* User Profile (Only for Indigo theme currently, matches AdminLayout) */}
-        {theme === "indigo" && user && (
-           <div className="flex items-center gap-3 px-4 py-3 mb-2">
-            <div className={`w-8 h-8 rounded-full ${currentTheme.userAvatarBg} flex items-center justify-center font-bold`}>
-              {user.fullname?.[0] || "U"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.fullname}</p>
-              <p className={`text-xs ${currentTheme.userTextSub} truncate`}>{user.email}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Logout Button */}
-        <button
-          onClick={logout}
-          className={`cursor-pointer w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${currentTheme.logoutBtn}`}
+        {/* Sidebar Header / Brand */}
+        <div
+          className={`p-6 border-b ${currentTheme.sidebarBorder} flex items-center gap-2`}
         >
-          <LogOut size={20} />
-          <span className="font-medium">Logout</span>
-        </button>
-        
-      </div>
-    </aside>
+          <div
+            className={`${currentTheme.iconBg} ${currentTheme.iconColor} p-1.5 rounded-lg`}
+          >
+            {Icon && <Icon size={20} fill="currentColor" />}
+          </div>
+          <span className="text-xl font-bold tracking-tight">{title}</span>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-hide">
+          {links.map((link) => {
+            const isActive = location.pathname.startsWith(link.path);
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive ? currentTheme.linkActive : currentTheme.linkInactive
+                }`}
+              >
+                <link.icon size={20} />
+                <span className="font-medium">{link.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer Section */}
+        <div className={`p-4 border-t ${currentTheme.sidebarBorder} space-y-2`}>
+          {/* Optional Footer Actions (e.g., Switch Role) */}
+          {footerActions}
+
+          {/* User Profile (Only for Indigo theme currently, matches AdminLayout) */}
+          {theme === "indigo" && user && (
+            <div className="flex items-center gap-3 px-4 py-3 mb-2">
+              <div
+                className={`w-8 h-8 rounded-full ${currentTheme.userAvatarBg} flex items-center justify-center font-bold flex-shrink-0`}
+              >
+                {user.fullname?.[0] || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.fullname}</p>
+                <p className={`text-xs ${currentTheme.userTextSub} truncate`}>
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Logout Button */}
+          <button
+            onClick={logout}
+            className={`cursor-pointer w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${currentTheme.logoutBtn}`}
+          >
+            <LogOut size={20} />
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 

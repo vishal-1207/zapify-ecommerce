@@ -137,7 +137,7 @@ const ProductCard = ({ product }) => {
           <button
             onClick={handleAddToCart}
             disabled={!product.inStock && product.totalOfferStock <= 0}
-            className={`cursor-pointer w-8 h-8 rounded-full flex items-center justify-center transition-colors mb-1 ${
+            className={`cursor-pointer hidden sm:flex w-8 h-8 rounded-full items-center justify-center transition-colors mb-1 ${
               product.totalOfferStock > 0 || product.inStock
                 ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"

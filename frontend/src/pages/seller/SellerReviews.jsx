@@ -278,24 +278,34 @@ const SellerReviews = () => {
                       onClick={() =>
                         openReply(review.id, review.sellerResponse)
                       }
-                      className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm"
+                      title={review.sellerResponse ? "Edit Reply" : "Reply"}
+                      className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 sm:px-4 text-xs font-semibold bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm"
                     >
                       <MessageSquare size={14} />
-                      {review.sellerResponse ? "Edit Reply" : "Reply"}
+                      <span className="hidden sm:inline">
+                        {review.sellerResponse ? "Edit Reply" : "Reply"}
+                      </span>
                     </button>
                     <button
                       onClick={() => setReportTarget(review.id)}
                       disabled={review.reports && review.reports.length > 0}
-                      className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold border rounded-xl transition-all shadow-sm ${
+                      title={
+                        review.reports && review.reports.length > 0
+                          ? "Reported"
+                          : "Report"
+                      }
+                      className={`cursor-pointer flex items-center justify-center gap-2 px-3 py-2 sm:px-4 text-xs font-semibold border rounded-xl transition-all shadow-sm ${
                         review.reports && review.reports.length > 0
                           ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
                           : "bg-white border-red-200 text-red-600 hover:bg-red-50"
                       }`}
                     >
                       <Flag size={14} />
-                      {review.reports && review.reports.length > 0
-                        ? "Reported"
-                        : "Report"}
+                      <span className="hidden sm:inline">
+                        {review.reports && review.reports.length > 0
+                          ? "Reported"
+                          : "Report"}
+                      </span>
                     </button>
                   </div>
                 </div>
