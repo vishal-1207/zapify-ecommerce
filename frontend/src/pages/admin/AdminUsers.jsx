@@ -279,8 +279,8 @@ const AdminUsers = () => {
 
       {/* Block / Unblock Confirmation Modal */}
       {blockConfirmUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-modal-slide">
             <div className="flex items-center gap-3 mb-4">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
@@ -338,8 +338,8 @@ const AdminUsers = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-modal-slide">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                 <Trash2 size={20} className="text-red-600" />
@@ -378,8 +378,8 @@ const AdminUsers = () => {
 
       {/* Edit User Modal (OTP-gated) */}
       {isEditModalOpen && editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-modal-slide">
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <div>
@@ -400,7 +400,7 @@ const AdminUsers = () => {
             </div>
 
             {/* Fields */}
-            <div className="p-6 space-y-4 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-6 space-y-4 overflow-y-auto">
               {/* Core user fields */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

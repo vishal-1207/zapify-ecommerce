@@ -11,10 +11,10 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-100 flex flex- items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4 animate-backdrop">
       {/* Modal Container */}
       <div
-        className={`bg-white rounded-xl shadow-2xl w-full ${maxWidth} max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200`}
+        className={`bg-white rounded-xl shadow-2xl w-full ${maxWidth} max-h-[90vh] flex flex-col animate-modal-slide`}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10 shrink-0 rounded-t-xl">

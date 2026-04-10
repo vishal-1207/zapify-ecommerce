@@ -448,8 +448,8 @@ const OrderDetail = () => {
 
       {/* ── Cancel Order Modal ── */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-modal-slide">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
@@ -543,8 +543,8 @@ const OrderDetail = () => {
 
       {/* ── Return & Refund Modal ── */}
       {showReturnModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-modal-slide">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">

@@ -186,7 +186,11 @@ const lineChartOptions = (yLabel = "₹") => ({
       grid: { color: "rgba(0,0,0,0.04)" },
       ticks: {
         font: { size: 10 },
-        callback: (v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v),
+        precision: 0,
+        callback: (v) => {
+          if (Math.floor(v) !== v) return "";
+          return v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v;
+        },
       },
     },
   },

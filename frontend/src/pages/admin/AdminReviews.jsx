@@ -166,7 +166,7 @@ const ReviewsQueue = ({ statusFilter }) => {
 
   return (
     <>
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 text-xs text-gray-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-3 border-b border-gray-100 text-xs text-gray-500 gap-3">
         <span>
           {total} review{total !== 1 ? "s" : ""} total
         </span>
@@ -408,32 +408,32 @@ const ReportsQueue = () => {
   return (
     <>
       {/* Status filter for reports */}
-      <div className="flex gap-2 px-6 py-4 border-b border-gray-100">
-        {["open", "resolved", "dismissed", "all"].map((s) => (
-          <button
-            key={s}
-            onClick={() => {
-              setStatusFilter(s);
-              setPage(1);
-            }}
-            className={`cursor-pointer px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
-              statusFilter === s
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-        <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
-          <label htmlFor="limit-reports" className="font-medium">
-            Items per page:
-          </label>
+      <div className="flex flex-col sm:flex-row gap-4 px-4 sm:px-6 py-4 border-b border-gray-100">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          {["open", "resolved", "dismissed", "all"].map((s) => (
+            <button
+              key={s}
+              onClick={() => {
+                setStatusFilter(s);
+                setPage(1);
+              }}
+              className={`cursor-pointer shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-colors ${
+                statusFilter === s
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="sm:ml-auto flex items-center gap-2 text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-wider">
+          <label htmlFor="limit-reports">Items per page:</label>
           <select
             id="limit-reports"
             value={limit}
             onChange={(e) => setLimit(Number(e.target.value))}
-            className="border border-gray-300 rounded px-2 py-1 outline-none text-gray-700 bg-white"
+            className="border border-gray-300 rounded px-2 py-1 outline-none text-gray-700 bg-white font-medium"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -603,15 +603,15 @@ const AdminReviews = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-3 border-b border-gray-100 bg-gray-50/50">
+      <div className="flex gap-1 p-3 border-b border-gray-100 bg-gray-50/50 overflow-x-auto scrollbar-hide">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`cursor-pointer flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`cursor-pointer shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               activeTab === tab.key
                 ? "bg-white text-indigo-700 shadow-sm border border-gray-200"
-                : "text-gray-600 hover:bg-white hover:text-gray-800"
+                : "text-gray-500 hover:bg-white hover:text-gray-800"
             }`}
           >
             {tab.key === "reports" && <Flag size={13} />}

@@ -26,8 +26,8 @@ const EditOfferModal = ({ offer, isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden animate-modal-slide">
         <div className="flex justify-between items-center p-4 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800">Edit Offer</h3>
           <button

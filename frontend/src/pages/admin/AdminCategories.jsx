@@ -258,7 +258,7 @@ const AdminCategories = () => {
             onClick={() => handleOpenModal()}
             className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
           >
-            <Plus size={20} /> Add Category
+            <Plus size={20} /> Add <span className="hidden sm:inline">Category</span>
           </button>
         }
       />

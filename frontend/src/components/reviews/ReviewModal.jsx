@@ -118,8 +118,8 @@ const ReviewModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-modal-slide">
         <button
           onClick={onClose}
           className="cursor-pointer absolute right-4 top-4 text-gray-400 hover:text-gray-600"

@@ -666,8 +666,8 @@ const ProductDetail = () => {
 
         {/* Sellers Modal */}
         {isSellersModalOpen && product.offers && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 animate-backdrop">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-modal-slide">
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900">
                   Other Sellers on Zapify

@@ -323,7 +323,7 @@ const AdminProducts = () => {
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition cursor-pointer"
           >
-            <Plus size={20} /> Add Product
+            <Plus size={20} /> Add <span className="hidden sm:inline">Product</span>
           </button>
         }
       />

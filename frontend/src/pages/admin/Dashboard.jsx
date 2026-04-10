@@ -181,7 +181,11 @@ const lineChartOptions = (yLabel = "₹") => ({
       grid: { color: "rgba(0,0,0,0.04)" },
       ticks: {
         font: { size: 10 },
-        callback: (v) => (yLabel === "₹" ? `₹${(v / 1000).toFixed(0)}k` : v),
+        precision: 0,
+        callback: (v) => {
+          if (Math.floor(v) !== v) return "";
+          return yLabel === "₹" ? `₹${(v / 1000).toFixed(0)}k` : v;
+        },
       },
     },
   },
@@ -317,22 +321,6 @@ const Dashboard = () => {
     fetchAll();
   }, [fetchAll]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="lg:col-span-2 h-72" />
-          <Skeleton className="h-72" />
-        </div>
-      </div>
-    );
-  }
-
   const s = stats || {};
 
   return (
@@ -364,66 +352,74 @@ const Dashboard = () => {
 
       {/* ── KPI Stat Cards (8 cards, 2 rows of 4) ──────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Revenue"
-          value={formatCurrency(s.totalRevenue || 0)}
-          icon={IndianRupee}
-          gradient="bg-gradient-to-br from-indigo-500 to-indigo-600"
-          trend={s.revenueGrowth}
-          sub={`${formatCurrency(s.todayRevenue || 0)} today`}
-        />
-        <StatCard
-          title="Total Orders"
-          value={(s.totalOrders || 0).toLocaleString()}
-          icon={ShoppingCart}
-          gradient="bg-gradient-to-br from-violet-500 to-violet-600"
-          trend={s.ordersGrowth}
-          sub="All time"
-        />
-        <StatCard
-          title="Total Sellers"
-          value={(s.totalSellers || 0).toLocaleString()}
-          icon={Store}
-          gradient="bg-gradient-to-br from-sky-500 to-sky-600"
-        />
-        <StatCard
-          title="Total Customers"
-          value={(s.totalUsers || 0).toLocaleString()}
-          icon={Users}
-          gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
-        />
-        <StatCard
-          title="Pending Products"
-          value={s.pendingProducts || 0}
-          icon={Package}
-          gradient="bg-gradient-to-br from-orange-400 to-orange-500"
-          sub="Awaiting review"
-        />
-        <StatCard
-          title="Pending Reviews"
-          value={s.pendingReviews || 0}
-          icon={Star}
-          gradient="bg-gradient-to-br from-pink-500 to-pink-600"
-          sub="Awaiting moderation"
-        />
-        <StatCard
-          title="GMV (30d)"
-          value={formatCurrency(
-            s.revenueGrowth !== undefined && s.totalRevenue
-              ? s.totalRevenue * (1 / (1 + (s.revenueGrowth || 0) / 100))
-              : 0,
-          )}
-          icon={TrendingUp}
-          gradient="bg-gradient-to-br from-teal-500 to-teal-600"
-          sub="Previous 30 days"
-        />
-        <StatCard
-          title="Activity"
-          value="Live"
-          icon={Activity}
-          gradient="bg-gradient-to-br from-rose-500 to-rose-600"
-          sub="All workers running"
-        />
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total Revenue"
+              value={formatCurrency(s.totalRevenue || 0)}
+              icon={IndianRupee}
+              gradient="bg-gradient-to-br from-indigo-500 to-indigo-600"
+              trend={s.revenueGrowth}
+              sub={`${formatCurrency(s.todayRevenue || 0)} today`}
+            />
+            <StatCard
+              title="Total Orders"
+              value={(s.totalOrders || 0).toLocaleString()}
+              icon={ShoppingCart}
+              gradient="bg-gradient-to-br from-violet-500 to-violet-600"
+              trend={s.ordersGrowth}
+              sub="All time"
+            />
+            <StatCard
+              title="Total Sellers"
+              value={(s.totalSellers || 0).toLocaleString()}
+              icon={Store}
+              gradient="bg-gradient-to-br from-sky-500 to-sky-600"
+            />
+            <StatCard
+              title="Total Customers"
+              value={(s.totalUsers || 0).toLocaleString()}
+              icon={Users}
+              gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
+            />
+            <StatCard
+              title="Pending Products"
+              value={s.pendingProducts || 0}
+              icon={Package}
+              gradient="bg-gradient-to-br from-orange-400 to-orange-500"
+              sub="Awaiting review"
+            />
+            <StatCard
+              title="Pending Reviews"
+              value={s.pendingReviews || 0}
+              icon={Star}
+              gradient="bg-gradient-to-br from-pink-500 to-pink-600"
+              sub="Awaiting moderation"
+            />
+            <StatCard
+              title="GMV (30d)"
+              value={formatCurrency(
+                s.revenueGrowth !== undefined && s.totalRevenue
+                  ? s.totalRevenue * (1 / (1 + (s.revenueGrowth || 0) / 100))
+                  : 0,
+              )}
+              icon={TrendingUp}
+              gradient="bg-gradient-to-br from-teal-500 to-teal-600"
+              sub="Previous 30 days"
+            />
+            <StatCard
+              title="Activity"
+              value="Live"
+              icon={Activity}
+              gradient="bg-gradient-to-br from-rose-500 to-rose-600"
+              sub="All workers running"
+            />
+          </>
+        )}
       </div>
 
       {/* ── Charts Row 1: Sales Over Time + Category Doughnut ──────────── */}
@@ -434,14 +430,18 @@ const Dashboard = () => {
           icon={TrendingUp}
           className="lg:col-span-2"
         >
-          {salesData ? (
+          {loading ? (
+            <Skeleton className="h-64" />
+          ) : salesData ? (
             <Line
               data={salesData}
               options={lineChartOptions("₹")}
               height={280}
             />
           ) : (
-            <Skeleton className="h-64" />
+            <div className="h-64 flex items-center justify-center text-gray-400">
+              No sales data yet
+            </div>
           )}
         </ChartCard>
 
@@ -450,7 +450,9 @@ const Dashboard = () => {
           sub="All-time, delivered"
           icon={ShoppingBag}
         >
-          {categoryData && categoryData.labels.length > 0 ? (
+          {loading ? (
+            <Skeleton className="h-64" />
+          ) : categoryData && categoryData.labels.length > 0 ? (
             <Doughnut
               data={categoryData}
               options={doughnutOptions}
@@ -518,7 +520,13 @@ const Dashboard = () => {
             title="Top Products"
             sub="By revenue · delivered only"
           />
-          {topProducts.length === 0 ? (
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : topProducts.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
               No sales data yet
             </p>
@@ -569,7 +577,13 @@ const Dashboard = () => {
             title="Top Sellers"
             sub="By revenue · delivered only"
           />
-          {topSellers.length === 0 ? (
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : topSellers.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
               No sales data yet
             </p>
@@ -617,7 +631,13 @@ const Dashboard = () => {
           title="Recent Orders"
           sub="Latest 8 orders across the platform"
         />
-        {recentOrders.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : recentOrders.length === 0 ? (
           <p className="text-sm text-gray-400 py-8 text-center">
             No orders placed yet
           </p>

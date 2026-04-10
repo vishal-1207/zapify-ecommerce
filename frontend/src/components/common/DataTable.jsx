@@ -69,14 +69,14 @@ const DataTable = ({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header Section */}
-      <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
+      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 bg-gray-50/50">
         {/* Left Side: Filters/Tabs */}
         <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
           {filters}
         </div>
 
         {/* Right Side: Search & Actions */}
-        <div className="flex flex-row gap-2 items-center w-auto shrink-0">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0">
           {/* Items Per Page Selector - Hide on small mobile to save space if needed, or keep compact */}
           <div className="hidden sm:flex items-center gap-2 mr-1">
             <span className="text-xs text-gray-400 whitespace-nowrap">Show:</span>

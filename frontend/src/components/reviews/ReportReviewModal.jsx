@@ -62,8 +62,8 @@ const ReportReviewModal = ({ isOpen, onClose, reviewId, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md relative">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 animate-backdrop">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md relative animate-modal-slide">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
