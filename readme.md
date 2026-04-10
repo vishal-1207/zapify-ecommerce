@@ -114,4 +114,4 @@ VITE_ALGOLIA_SEARCH_KEY=your_algolia_search_key
 ---
 
 ## 👤 Author
-Developed by **Vishal**
+Developed by **[Vishal](https://github.com/vishal-1207)**
