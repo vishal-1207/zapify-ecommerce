@@ -133,7 +133,6 @@ const SellerPayments = () => {
         searchPlaceholder="Search by product name or Order ID..."
         emptyMessage={
           <div className="flex flex-col items-center justify-center text-gray-500 py-12">
-            <CreditCard size={48} className="text-gray-300 mb-4" />
             <p className="font-medium text-gray-900 text-lg">
               No transactions found
             </p>

@@ -290,7 +290,11 @@ const SellerDashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <PeriodSelector value={days} onChange={setDays} />
+          <PeriodSelector
+            value={days}
+            onChange={setDays}
+            className="cursor-pointer"
+          />
           <button
             onClick={handleRefresh}
             className="cursor-pointer p-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"

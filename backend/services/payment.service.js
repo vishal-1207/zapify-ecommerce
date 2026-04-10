@@ -279,7 +279,7 @@ export const getSellerTransactions = async (userId, page = 1, limit = 10) => {
   return paginate(
     db.OrderItem,
     {
-      where: { status: "Delivered" },
+      where: { status: "delivered" },
       attributes: ["id", "priceAtTimeOfPurchase", "quantity", "updatedAt"],
       include: [
         {
