@@ -1,6 +1,8 @@
 # Zapify - Premium E-commerce Platform
 
-Zapify is a modern, high-performance e-commerce ecosystem built with the PERN stack (PostgreSQL, Express, React, Node.js). It provides a seamless experience for customers, a powerful dashboard for sellers, and a comprehensive moderation suite for administrators.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-6366f1?style=for-the-badge&logo=vercel)](https://zapify-kappa.vercel.app/)
+
+Zapify is a modern, high-performance e-commerce ecosystem built with the MySQL, Express, React, Node.js. It provides a seamless experience for customers, a powerful dashboard for sellers, and a comprehensive moderation suite for administrators.
 
 ## 🚀 Key Features
 
@@ -26,7 +28,7 @@ zapify/
 
 ### Prerequisites
 -   Node.js (v18+)
--   PostgreSQL
+-   MySQL
 -   Redis (for background workers)
 
 ### Installation
@@ -51,10 +53,10 @@ zapify/
 | `STRIPE_SECRET_KEY` | Stripe API secret for payments |
 | `REDIS_URL` | Redis connection string (e.g., redis://localhost:6379) |
 | `ALGOLIA_ADMIN_KEY` | Algolia API key for indexing products |
+-- and more... (Check .env.sample)
 
 ### Running the App
 -   **Development**: `npm run dev` (starts server with nodemon)
--   **Workers**: `npm run worker` (starts background tasks)
 
 ---
 
@@ -102,7 +104,7 @@ VITE_ALGOLIA_SEARCH_KEY=your_algolia_search_key
 
 ### Backend
 -   **Node.js** & **Express**
--   **Sequelize (ORM)** with **PostgreSQL**
+-   **Sequelize (ORM)** with **MySQL**
 -   **Redis** (BullMQ for background jobs)
 -   **Stripe** (Payment Gateway)
 -   **Algolia** (Search Engine)
