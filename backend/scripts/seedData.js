@@ -1010,8 +1010,9 @@ export async function seed() {
       }
 
       const [product, created] = await db.Product.findOrCreate({
-        where: { name: p.name, model: p.model },
+        where: { name: p.name },
         defaults: {
+          model: p.model,
           description: p.description,
           price: p.price,
           status: "approved",
