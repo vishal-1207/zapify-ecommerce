@@ -9,7 +9,6 @@ const Review = db.Review;
 const Order = db.Order;
 
 export const purgeDeletedCategories = async () => {
-  console.log("Running scheduled job: Purging soft-deleted categories...");
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -49,7 +48,6 @@ export const purgeDeletedCategories = async () => {
     }
 
     await transaction.commit();
-    console.log(`Successfully purged ${categoriesToPurge.length} category(s).`);
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error("Error during category purge:", error);
@@ -57,7 +55,6 @@ export const purgeDeletedCategories = async () => {
 };
 
 const purgeExpiredUsers = async () => {
-  console.log("Running scheduled job: Purging soft-deleted user accounts...");
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -71,7 +68,6 @@ const purgeExpiredUsers = async () => {
     });
 
     if (usersToPurge.length === 0) {
-      console.log("No user accounts to purge today.");
       await transaction.commit();
       return;
     }
@@ -91,7 +87,6 @@ const purgeExpiredUsers = async () => {
     }
 
     await transaction.commit();
-    console.log(`Successfully purged ${usersToPurge.length} user account(s).`);
   } catch (error) {
     await transaction.rollback();
     console.error(
@@ -105,7 +100,6 @@ export const startCleanupService = () => {
   const USER_PURGE_INTERVAL = 24 * 60 * 60 * 1000; // 24 Hours
   const CATEGORY_PURGE_INTERVAL = 5 * 60 * 60 * 1000; // 5 Hours
 
-  console.log("Cleanup service started.");
   
   purgeExpiredUsers();
   setInterval(purgeExpiredUsers, USER_PURGE_INTERVAL);

@@ -7,9 +7,8 @@ import { syncProductToAlgolia } from "../services/algolia.service.js";
 const run = async () => {
   try {
     await db.sequelize.authenticate();
-    console.log("DB Connected");
-
-    console.log(`Clearing Algolia Index '${INDEX_NAME}'...`);
+    await db.sequelize.authenticate();
+    const INDEX_NAME = "products";
     try {
         await client.clearObjects({ indexName: INDEX_NAME });
     } catch (e) {
@@ -21,14 +20,10 @@ const run = async () => {
         attributes: ["id", "name"]
     });
 
-    console.log(`Found ${products.length} approved products to sync.`);
-
     for (const p of products) {
-        console.log(`Syncing ${p.name} (${p.id})...`);
         await syncProductToAlgolia(p.id);
     }
 
-    console.log("Full Sync Completed.");
   } catch (error) {
     console.error("Critical Error:", error);
   } finally {

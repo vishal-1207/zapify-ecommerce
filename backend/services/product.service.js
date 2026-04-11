@@ -139,9 +139,7 @@ export const getCustomerProductDetails = async (slug) => {
     if (cachedProduct) {
       return cachedProduct;
     }
-  } catch (error) {
-    console.error("Cache retrieval error:", error);
-  }
+  } catch (error) {}
 
   const isUUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -235,7 +233,7 @@ export const getCustomerProductDetails = async (slug) => {
     .set(cacheKey, JSON.stringify(plainProduct), {
       EX: CACHE_TTL,
     })
-    .catch((err) => console.error("[Cache] Write Error:", err.message));
+    .catch((err) => {});
 
   return plainProduct;
 };
@@ -403,16 +401,11 @@ export const adminCreateProduct = async (productData, files) => {
       "approved",
     );
 
-    syncProductToAlgolia(newProduct.id).catch((err) =>
-      console.error(
-        `[Algolia] Create sync failed for ${newProduct.id}:`,
-        err.message,
-      ),
-    );
+    syncProductToAlgolia(newProduct.id).catch((err) => {});
 
     return newProduct;
   } catch (error) {
-    console.log(error);
+    // error handled by throw
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
     }
@@ -438,16 +431,10 @@ export const updateProduct = async (productId, data, files) => {
       await invalidateCache(`product:${product.slug}`);
     }
 
-    syncProductToAlgolia(product.id).catch((err) =>
-      console.error(
-        `[Algolia] Update sync failed for ${product.id}:`,
-        err.message,
-      ),
-    );
+    syncProductToAlgolia(product.id).catch((err) => {});
 
     return product;
   } catch (error) {
-    console.error(error);
     await transaction.rollback();
     if (error.name === "SequqlizeUniqueConstraintError") {
       throw new ApiError(409, "A product with this name already exist.");
@@ -529,16 +516,7 @@ export const updateProductAggregates = async (productId) => {
     const priceChanged = oldMinOfferPrice !== newMinOfferPrice;
 
     if (priceChanged) {
-      syncProductToAlgolia(productId).catch((err) =>
-        console.error(
-          `[Aggregates] Algolia sync failed for ${productId}:`,
-          err.message,
-        ),
-      );
-    } else {
-      console.log(
-        `[Aggregates] Algolia sync skipped for ${productId} — price unchanged (${newMinOfferPrice}).`,
-      );
+      syncProductToAlgolia(productId).catch((err) => {});
     }
   } catch (error) {
     if (transaction) {

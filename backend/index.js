@@ -26,7 +26,6 @@ import wishlistRoutes from "./routes/wishlist.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import affiliateRoutes from "./routes/affiliate.routes.js";
 import { startCleanupService } from "./services/cleanup.service.js";
-import { startModerationWorker } from "./workers/moderation.worker.js";
 import otpRoutes from "./routes/otp.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import passport from "passport";
@@ -100,51 +99,28 @@ app.use("/api/search", searchRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/discount", discountRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Hello world.");
-});
-
 app.use(errorHandler);
 
 const startServer = async () => {
   try {
     if (!fs.existsSync("uploads")) {
-      console.log("⏳ Creating 'uploads' directory...");
       fs.mkdirSync("uploads");
-      console.log("✅ 'uploads' directory created.");
     }
-
-    try {
-      await redisClient.ping();
-      console.log("Redis client connected...");
-    } catch (redisErr) {
-      console.warn(
-        "⚠️ Redis client failed to connect on startup. The application will continue running with degraded cache/features, while Redis attempts to reconnect in the background.",
-      );
-      console.warn("Redis Error:", redisErr.message);
-    }
-
-    // One-time manual migration for tax columns (safe for TiDB)
-    try {
-      await db.sequelize.query(`
-        ALTER TABLE Orders 
-        ADD COLUMN IF NOT EXISTS taxAmount DECIMAL(10, 2) DEFAULT 0.00,
-        ADD COLUMN IF NOT EXISTS taxRate DECIMAL(5, 2) DEFAULT 18.00;
-      `);
-      console.log("✅ Manual migration: tax columns ensured.");
-    } catch (migErr) {
-      console.warn("⚠️ Manual migration notice:", migErr.message);
-    }
-
-    await db.sequelize.sync();
-    console.log("Database synced...");
-
-    startCleanupService();
-    startModerationWorker();
-
-    app.listen(PORT, () => {
-      console.log(`Listening on port ${PORT}`);
-    });
+  
+      try {
+        await redisClient.ping();
+      } catch (redisErr) {
+        console.warn(
+          "⚠️ Redis client failed to connect on startup. The application will continue running with degraded cache/features, while Redis attempts to reconnect in the background.",
+        );
+        console.warn("Redis Error:", redisErr.message);
+      }
+  
+      await db.sequelize.sync();
+  
+      startCleanupService();
+  
+      app.listen(PORT);
   } catch (error) {
     console.error("Failed to sync database:", error);
     process.exit(1);

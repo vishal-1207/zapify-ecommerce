@@ -32,7 +32,6 @@ export const configureAlgoliaIndex = async () => {
         ],
       },
     });
-    console.log("Algolia index settings configured.");
   } catch (error) {
     console.error("Failed to configure Algolia settings:", error);
   }

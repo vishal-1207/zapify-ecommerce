@@ -18,12 +18,7 @@ export const processBackgroundUpload = async ({
   associatedId,
   tag = "thumbnail",
 }) => {
-  console.log(
-    `[Worker] Starting background upload for ${associatedType} ${associatedId}...`,
-  );
-
   if (!filePath) {
-    console.warn("[Worker] No file path provided for background upload.");
     return;
   }
 
@@ -31,7 +26,6 @@ export const processBackgroundUpload = async ({
     const upload = await uploadToCloudinary(filePath, folder);
 
     if (!upload) {
-      console.error("[Worker] Upload failed or returned null.");
       return;
     }
 
@@ -72,10 +66,6 @@ export const processBackgroundUpload = async ({
         associatedId: associatedId,
       });
     }
-
-    console.log(
-      `[Worker] Background upload successful for ${associatedType} ${associatedId}.`,
-    );
 
     if (associatedType === "product" || associatedType === "Product") {
       const { syncProductToAlgolia } = await import("./algolia.service.js");

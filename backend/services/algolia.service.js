@@ -85,7 +85,6 @@ export const syncProductToAlgolia = async (productId) => {
       body: record,
     });
 
-    console.log(`Synced product ${productId} to Algolia`);
   } catch (error) {
     console.error(`Failed to sync product ${productId} to Algolia: `, error);
   }
@@ -104,10 +103,6 @@ export const reSyncProductsByCriteria = async (criteria = {}) => {
     });
 
     if (products.length === 0) return;
-
-    console.log(
-      `[Algolia] Master data change detected. Re-syncing ${products.length} products...`,
-    );
 
     for (const p of products) {
       syncProductToAlgolia(p.id).catch((err) =>
@@ -132,7 +127,6 @@ export const deleteProductFromAlgolia = async (productId) => {
       indexName: INDEX_NAME,
       objectID: productId,
     });
-    console.log(`Deleted product ${productId} from Algolia.`);
   } catch (error) {
     console.error(
       `Failed to delete product ${productId} from Algolia: `,

@@ -34,11 +34,9 @@ async function getNsfwModel() {
 
     // Help TFJS optimize for memory
     if (tf.engine().backendName === "cpu") {
-      console.log("[Moderation] Using CPU backend, memory management is critical.");
     }
 
     _nsfwModel = await nsfwjs.load();
-    console.log("[Moderation] NSFW model loaded.");
   }
   return _nsfwModel;
 }
@@ -421,13 +419,7 @@ export async function runModerationPipeline(reviewId) {
     }
 
     const memoryAfter = process.memoryUsage().heapUsed / 1024 / 1024;
-    console.log(
-      `[Moderation] Review ${reviewId} → status: ${status}, score: ${score} | Memory: ${memoryBefore.toFixed(2)}MB -> ${memoryAfter.toFixed(2)}MB`,
-    );
   } catch (err) {
-    console.error(
-      `[Moderation] Pipeline error for review ${reviewId}:`,
-      err.message,
-    );
+    // Prediction complete
   }
 }

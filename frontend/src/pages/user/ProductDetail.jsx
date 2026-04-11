@@ -91,22 +91,14 @@ const ProductDetail = () => {
       url: shareUrl,
     };
 
-    console.log("[Share] Attempting to share:", shareData);
-
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-        console.log("[Share] Native share successful");
         return;
       } catch (err) {
         if (err.name === "AbortError") {
-          console.log("[Share] User cancelled share");
           return;
         }
-        console.warn(
-          "[Share] Native share failed, falling back to clipboard:",
-          err,
-        );
       }
     }
 
@@ -154,7 +146,6 @@ const ProductDetail = () => {
     });
     setIsSharing(true);
     setTimeout(() => setIsSharing(false), 2000);
-    console.log("[Share] Copy to clipboard successful");
   };
 
   const handleBuyNow = async () => {
@@ -447,7 +438,7 @@ const ProductDetail = () => {
                     </div>
                   )}
                   <div className="text-sm text-gray-500 mt-1">
-                    Inclusive of all taxes
+                    Exclusive of all taxes
                   </div>
                 </div>
 
@@ -549,10 +540,15 @@ const ProductDetail = () => {
                 <div className="lg:hidden mt-4 space-y-2 border-t border-gray-100 pt-4">
                   <div className="flex items-center gap-2.5 text-xs text-gray-600">
                     <Truck size={14} className="text-indigo-600 shrink-0" />
-                    <span>Free shipping on all orders over {formatCurrency(500)}</span>
+                    <span>
+                      Free shipping on all orders over {formatCurrency(500)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2.5 text-xs text-gray-600">
-                    <ShieldCheck size={14} className="text-indigo-600 shrink-0" />
+                    <ShieldCheck
+                      size={14}
+                      className="text-indigo-600 shrink-0"
+                    />
                     <span>Warranty as per brand policy.</span>
                   </div>
                 </div>

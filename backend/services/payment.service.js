@@ -48,7 +48,6 @@ const sendOrderConfirmationEmail = async (order) => {
  */
 const sendOrderConfirmationSms = async (order) => {
   if (!order?.User?.phoneNumber) {
-    console.log(`Skipping SMS for order ${order.id}: No phone number found.`);
     return;
   }
   const messageBody = `Thank you! Your order #${order.id.slice(0, 8)} for ₹${

@@ -762,9 +762,6 @@ export const reportReview = async (
 
   if (openReports >= 5 && review.status === "approved") {
     await review.update({ status: "flagged" });
-    console.log(
-      `[Review] Auto-escalated review ${reviewId} to flagged (${openReports} reports).`,
-    );
   }
 
   return report;

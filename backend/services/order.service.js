@@ -286,19 +286,16 @@ export const getOrderDetailsForCustomer = async (orderId, userId) => {
  * @param {object} query - Query params (page, limit, status, search).
  */
 export const getSellerOrdersHistory = async (userId, query = {}) => {
-  console.log("getSellerOrdersHistory called for userId:", userId);
   try {
     const profile = await getSellerProfile(userId);
-    console.log("Seller profile found:", profile?.id);
     const { page = 1, limit = 10, status, search } = query;
     const offset = (page - 1) * limit;
 
-    const whereClause = {
-    };
+  const whereClause = {};
 
-    if (status) {
-      whereClause.status = status;
-    }
+  if (status) {
+    whereClause.status = status;
+  }
 
     let productWhere = {};
     let orderWhere = {};

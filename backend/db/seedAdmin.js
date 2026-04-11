@@ -29,7 +29,6 @@ const createAdmin = async () => {
     });
 
     if (existingAdmin) {
-      console.log("ℹ️ Admin already exists in the database.");
       await transaction.rollback();
       return;
     }
@@ -50,12 +49,6 @@ const createAdmin = async () => {
     );
 
     await transaction.commit();
-    console.log("✅ Admin created successfully:", {
-      id: admin.id,
-      username: admin.username,
-      email: admin.email,
-      roles: admin.roles,
-    });
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error("❌ Error creating admin:", error.message);

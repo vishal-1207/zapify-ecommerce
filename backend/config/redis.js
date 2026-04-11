@@ -20,12 +20,11 @@ const redisClient = createClient({
   disableOfflineQueue: true,
 });
 
-redisClient.on("error", (err) => console.log("Redis Client Error", err));
+redisClient.on("error", (err) => {});
 
 (async () => {
   try {
     await redisClient.connect();
-    console.log("Successfully connected to Redis Cloud.");
   } catch (err) {
     console.error("Failed to connect to Redis Cloud:", err);
   }

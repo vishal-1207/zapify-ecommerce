@@ -58,10 +58,6 @@ let developmentTransporter = null;
 const getDevelopmentTransporter = async () => {
   if (!developmentTransporter) {
     const testAccount = await nodemailer.createTestAccount();
-    console.log(
-      "Ethereal test account created. Preview emails at:",
-      nodemailer.getTestMessageUrl(testAccount),
-    );
 
     developmentTransporter = nodemailer.createTransport({
       host: testAccount.smtp.host,
@@ -123,7 +119,6 @@ const sendMail = async (to, subject, content) => {
       }
 
       const data = await response.json();
-      console.log("Email sent successfully via Brevo API: ", data.messageId);
       return data;
     } else {
       const transporter = await getDevelopmentTransporter();
@@ -136,10 +131,6 @@ const sendMail = async (to, subject, content) => {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      console.log(
-        "Email sent (Ethereal), preview URL: %s",
-        nodemailer.getTestMessageUrl(info),
-      );
       return info;
     }
   } catch (error) {

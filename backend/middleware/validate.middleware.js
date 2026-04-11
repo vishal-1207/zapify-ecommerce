@@ -21,7 +21,6 @@ const deleteUploadedFiles = (req) => {
 export const validate = (schema, source = "body") => {
   return async (req, res, next) => {
     try {
-      console.log(`[DEBUG] Validating ${source}:`, JSON.stringify(req[source], null, 2));
       const value = await schema.validateAsync(req[source], {
         abortEarly: false,
         stripUnknown: true,

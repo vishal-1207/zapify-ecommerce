@@ -70,7 +70,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.log("Auth middleware error: ", error.message);
+    if (error instanceof ApiError) throw error;
     if (error.name === "TokenExpiredError") {
       return res
         .status(401)

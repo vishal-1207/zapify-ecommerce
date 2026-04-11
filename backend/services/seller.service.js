@@ -37,7 +37,6 @@ const findStore = async (storeName) => {
 export const createSellerProfile = async (data, optional) => {
   const transaction = await sequelize.transaction();
   try {
-    console.log("[DEBUG] createSellerProfile called with:", data);
     const { storeName, contactNumber, userId } = data;
     const { bio } = optional;
 
@@ -77,7 +76,6 @@ export const createSellerProfile = async (data, optional) => {
         { roles: newRoles },
         { where: { id: userId }, transaction, validate: false },
       );
-      console.log(`[DEBUG] Roles update affected rows: ${affectedRows}`);
 
       if (affectedRows === 0) {
         throw new Error(
@@ -87,10 +85,6 @@ export const createSellerProfile = async (data, optional) => {
     }
 
 
-    console.log(
-      `[DEBUG] Seller Profile Created for UserID: ${userId}. New Roles:`,
-      newRoles,
-    );
 
     await transaction.commit();
     await invalidateCache(`user_session:${userId}`);

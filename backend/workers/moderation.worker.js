@@ -31,13 +31,11 @@ const startWorkerIfNeeded = () => {
   if (workerActive) return;
   workerActive = true;
 
-  console.log("[BullMQ] Starting moderation worker on-demand...");
 
   worker = new Worker(
     "review-moderation",
     async (job) => {
       const { reviewId } = job.data;
-      console.log(`[BullMQ] Processing moderation for review: ${reviewId}`);
 
       const { runModerationPipeline } =
         await import("../services/moderation.service.js");
@@ -52,11 +50,6 @@ const startWorkerIfNeeded = () => {
     },
   );
 
-  worker.on("completed", (job) => {
-    console.log(
-      `[BullMQ] Moderation complete for review: ${job.data.reviewId}`,
-    );
-  });
 
   worker.on("failed", (job, err) => {
     console.error(
@@ -66,9 +59,6 @@ const startWorkerIfNeeded = () => {
   });
 
   worker.on("drain", async () => {
-    console.log(
-      "[BullMQ] Queue drained — shutting down worker to save Redis commands.",
-    );
     workerActive = false;
     await worker.close();
     worker = null;
@@ -99,12 +89,3 @@ export const closeModerationWorker = async () => {
   }
 };
 
-/**
- * Kept for backwards-compatibility with the index.js import.
- * The worker now starts lazily via enqueueModeration() — this is a no-op.
- */
-export const startModerationWorker = () => {
-  console.log(
-    "[BullMQ] Lazy worker mode — worker starts automatically on first job.",
-  );
-};
