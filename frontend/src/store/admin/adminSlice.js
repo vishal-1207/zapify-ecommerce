@@ -13,13 +13,8 @@ export const fetchAdminProducts = createAsyncThunk(
   "admin/fetchProducts",
   async (tab, { rejectWithValue }) => {
     try {
-      let data;
-      if (tab === "pending") {
-        data = await getPendingProducts();
-      } else {
-        data = await getAllProducts();
-      }
-      return Array.isArray(data) ? data : [];
+      const response = tab === "pending" ? await getPendingProducts() : await getAllProducts();
+      return Array.isArray(response) ? response : response?.products || [];
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch products");
     }
