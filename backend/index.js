@@ -124,7 +124,19 @@ const startServer = async () => {
       console.warn("Redis Error:", redisErr.message);
     }
 
-    await db.sequelize.sync({ alter: true });
+    // One-time manual migration for tax columns (safe for TiDB)
+    try {
+      await db.sequelize.query(`
+        ALTER TABLE Orders 
+        ADD COLUMN IF NOT EXISTS taxAmount DECIMAL(10, 2) DEFAULT 0.00,
+        ADD COLUMN IF NOT EXISTS taxRate DECIMAL(5, 2) DEFAULT 18.00;
+      `);
+      console.log("✅ Manual migration: tax columns ensured.");
+    } catch (migErr) {
+      console.warn("⚠️ Manual migration notice:", migErr.message);
+    }
+
+    await db.sequelize.sync();
     console.log("Database synced...");
 
     startCleanupService();
