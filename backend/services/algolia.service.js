@@ -155,6 +155,7 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     searchOptions.filters += " AND " + filterConditions.join(" AND ");
   }
 
+  try {
     const searchResults = await client.searchSingleIndex({
       indexName: INDEX_NAME,
       searchOptions,
