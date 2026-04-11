@@ -50,7 +50,14 @@ export const fetchCartFromBackend = createAsyncThunk(
         condition: item.details.condition,
         sellerProfile: item.details.sellerProfile,
       }));
-      return transformedCart;
+      return {
+        items: transformedCart,
+        subtotal: data.subtotal || 0,
+        discount: data.discount || 0,
+        taxAmount: data.taxAmount || 0,
+        totalAmount: data.totalAmount || 0,
+        taxRate: data.taxRate || 0,
+      };
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch cart");
     }
@@ -127,6 +134,10 @@ const getInitialGuestCart = () => {
 
 const initialState = {
   cart: getInitialGuestCart(),
+  subtotal: 0,
+  taxAmount: 0,
+  discount: 0,
+  totalAmount: 0,
   loading: false,
   error: null,
 };
@@ -216,7 +227,11 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCartFromBackend.fulfilled, (state, action) => {
         state.loading = false;
-        state.cart = action.payload;
+        state.cart = action.payload.items;
+        state.subtotal = action.payload.subtotal;
+        state.taxAmount = action.payload.taxAmount;
+        state.discount = action.payload.discount;
+        state.totalAmount = action.payload.totalAmount;
       })
       .addCase(fetchCartFromBackend.rejected, (state, action) => {
         state.loading = false;

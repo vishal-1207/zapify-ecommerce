@@ -14,7 +14,14 @@ import {
 
 export const useCart = () => {
   const dispatch = useDispatch();
-  const { cart, loading } = useSelector((state) => state.cart);
+  const { 
+    cart, 
+    loading, 
+    subtotal: stateSubtotal, 
+    taxAmount: stateTaxAmount, 
+    totalAmount: stateTotalAmount, 
+    discount: stateDiscount 
+  } = useSelector((state) => state.cart);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -55,11 +62,10 @@ export const useCart = () => {
     }
   };
 
-  const cartTotal = useMemo(
-    () =>
-      cart.reduce((sum, item) => sum + (Number(item.price) || 0) * item.qty, 0),
-    [cart],
-  );
+  const cartTotal = useMemo(() => {
+    if (user) return stateTotalAmount;
+    return cart.reduce((sum, item) => sum + (Number(item.price) || 0) * item.qty, 0);
+  }, [cart, user, stateTotalAmount]);
 
   const cartMrpTotal = useMemo(
     () =>
@@ -88,10 +94,20 @@ export const useCart = () => {
     [cart],
   );
 
-  const cartDiscount = useMemo(
-    () => cartMrpTotal - cartTotal,
-    [cartMrpTotal, cartTotal],
-  );
+  const cartDiscount = useMemo(() => {
+    if (user) return stateDiscount;
+    return cartMrpTotal - cartTotal;
+  }, [cartMrpTotal, cartTotal, user, stateDiscount]);
+
+  const taxAmount = useMemo(() => {
+    if (user) return stateTaxAmount;
+    return cartTotal * 0.18; // Default to 18% for guest
+  }, [cartTotal, user, stateTaxAmount]);
+
+  const subtotal = useMemo(() => {
+    if (user) return stateSubtotal;
+    return cartTotal - taxAmount;
+  }, [cartTotal, taxAmount, user, stateSubtotal]);
 
   const cartCount = useMemo(
     () => cart.reduce((sum, item) => sum + item.qty, 0),
@@ -114,6 +130,8 @@ export const useCart = () => {
     cartSellerPriceTotal,
     cartDiscount,
     cartCount,
+    taxAmount,
+    subtotal,
     loading,
     refreshCart,
   };

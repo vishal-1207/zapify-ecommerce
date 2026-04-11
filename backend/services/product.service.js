@@ -452,24 +452,9 @@ export const updateProduct = async (productId, data, files) => {
 export const updateProductAggregates = async (productId) => {
   if (!productId) return;
 
-  const transaction = await db.sequelize.transaction();
-
   try {
-    const currentProduct = await db.Product.findByPk(productId, {
-      attributes: ["price", "minOfferPrice"],
-      transaction,
-    });
-
-    if (!currentProduct) {
-      await transaction.rollback();
-      return;
-    }
-
-    const oldMinOfferPrice = currentProduct.minOfferPrice
-      ? parseFloat(currentProduct.minOfferPrice)
-      : null;
-
-    const stats = await db.Offer.findAll({
+    // 1. Get raw aggregation stats from active offers
+    const stats = await db.Offer.findOne({
       where: { productId, status: "active" },
       attributes: [
         [
@@ -488,47 +473,39 @@ export const updateProductAggregates = async (productId) => {
         [db.sequelize.fn("COUNT", db.sequelize.col("id")), "count"],
       ],
       raw: true,
-      transaction,
     });
 
-    const aggregateData = stats[0] || {};
+    const aggregateData = stats || {};
 
-    const finalMinPrice =
-      aggregateData.minPrice !== null
-        ? parseFloat(aggregateData.minPrice)
-        : parseFloat(currentProduct.price);
+    // 2. Resolve final values with fallbacks
+    const totalStock = parseInt(aggregateData.totalStock, 10) || 0;
+    const offerCount = parseInt(aggregateData.count, 10) || 0;
+    
+    // For price, if no active offers with stock exist, we fallback to the catalog base price
+    let finalMinPrice = aggregateData.minPrice ? parseFloat(aggregateData.minPrice) : null;
+    
+    if (finalMinPrice === null) {
+      const product = await db.Product.findByPk(productId, { attributes: ["price"] });
+      finalMinPrice = product ? parseFloat(product.price) : 0;
+    }
 
+    // 3. Update the Product record
     await db.Product.update(
       {
         minOfferPrice: finalMinPrice,
-        totalOfferStock: parseInt(aggregateData.totalStock, 10) || 0,
-        offerCount: parseInt(aggregateData.count, 10) || 0,
+        totalOfferStock: totalStock,
+        offerCount: offerCount,
       },
-      {
-        where: { id: productId },
-        transaction,
-      },
+      { where: { id: productId } },
     );
 
-    await transaction.commit();
+    // 4. Determine if we need to sync to Algolia (on price change)
+    // For simplicity and correctness with stock sync, we'll always trigger the sync if stock or price changed
+    // as Algolia often tracks stock as well for filtering.
+    syncProductToAlgolia(productId).catch(() => {});
 
-    const newMinOfferPrice = finalMinPrice;
-    const priceChanged = oldMinOfferPrice !== newMinOfferPrice;
-
-    if (priceChanged) {
-      syncProductToAlgolia(productId).catch((err) => {});
-    }
   } catch (error) {
-    if (transaction) {
-      try {
-        await transaction.rollback();
-      } catch (tranErr) {
-        console.error(
-          `[Aggregates] Transaction rollback failed for product ${productId}:`,
-          tranErr.message,
-        );
-      }
-    }
+    console.error(`[Aggregates] Sync failed for product ${productId}:`, error.message);
     throw error;
   }
 };

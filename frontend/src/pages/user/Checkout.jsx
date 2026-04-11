@@ -9,11 +9,12 @@ import { formatCurrency } from "../../utils/currency";
 const Checkout = () => {
   const { 
     cart, 
-    cartTotal, 
-    cartMrpTotal, 
-    cartSellerPriceTotal, 
-    cartDiscount,
-    taxAmount,
+    cartTotal = 0, 
+    cartMrpTotal = 0, 
+    cartSellerPriceTotal = 0, 
+    cartDiscount = 0,
+    taxAmount = 0,
+    subtotal = 0,
     loading: cartLoading 
   } = useCart();
   const navigate = useNavigate();
@@ -229,7 +230,7 @@ const Checkout = () => {
               )}
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>{formatCurrency(cartTotal - taxAmount)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
