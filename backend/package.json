@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --max-old-space-size=1024 node_modules/nodemon/bin/nodemon.js index.js",
     "start": "node --max-old-space-size=1024 index.js",
-    "postinstall": "puppeteer browsers install chrome"
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "author": "Vishal Chaudhary",
   "license": "ISC",
