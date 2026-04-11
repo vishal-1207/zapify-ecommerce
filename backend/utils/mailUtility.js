@@ -1,4 +1,53 @@
 import nodemailer from "nodemailer";
+import handlebars from "handlebars";
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TEMPLATES_DIR = path.join(__dirname, "../templates");
+
+// Register Handlebars Helpers
+handlebars.registerHelper("formatCurrency", (value) => {
+  if (typeof value !== "number") value = parseFloat(value) || 0;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(value);
+});
+
+handlebars.registerHelper("formatDate", (value) => {
+  return new Date(value).toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+});
+
+/**
+ * Renders a Handlebars template with a layout.
+ */
+export const renderTemplate = async (templateName, context) => {
+  try {
+    const layoutSource = await fs.readFile(
+      path.join(TEMPLATES_DIR, "layout.hbs"),
+      "utf-8"
+    );
+    const templateSource = await fs.readFile(
+      path.join(TEMPLATES_DIR, `${templateName}.hbs`),
+      "utf-8"
+    );
+
+    const layout = handlebars.compile(layoutSource);
+    const template = handlebars.compile(templateSource);
+
+    const body = template(context);
+    return layout({ ...context, body });
+  } catch (error) {
+    console.error(`Failed to render template ${templateName}:`, error);
+    throw error;
+  }
+};
 
 let developmentTransporter = null;
 
@@ -30,13 +79,23 @@ const getDevelopmentTransporter = async () => {
 
 /**
  * A generic, reusable function to send emails.
- * Uses Brevo REST API for production to avoid SMTP ETIMEDOUT issues on Render.
+ * Supports both raw HTML and Handlebars templates.
  * @param {string} to - The recipient's email address.
  * @param {string} subject - The subject of the email.
- * @param {string} html - The HTML body of the email.
+ * @param {string|object} content - HTML string or { template, context } object.
  */
-const sendMail = async (to, subject, html) => {
+const sendMail = async (to, subject, content) => {
   try {
+    let html = "";
+    if (typeof content === "object" && content.template) {
+      html = await renderTemplate(content.template, {
+        ...content.context,
+        frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+      });
+    } else {
+      html = content;
+    }
+
     if (process.env.BREVO_API_KEY) {
       const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -96,10 +155,10 @@ export default sendMail;
  *
  * @param {string} to - Recipient email address.
  * @param {string} subject - Email subject.
- * @param {string} html - HTML body.
+ * @param {string|object} content - HTML string or { template, context } object.
  */
-export const enqueueMail = async (to, subject, html) => {
-  sendMail(to, subject, html).catch((err) => {
+export const enqueueMail = async (to, subject, content) => {
+  sendMail(to, subject, content).catch((err) => {
     console.error("Async background mail failed:", err.message);
   });
 };

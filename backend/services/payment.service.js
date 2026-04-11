@@ -23,20 +23,22 @@ const sendOrderConfirmationEmail = async (order) => {
   }
 
   const subject = `Your Order Confirmation (#${order.id.slice(0, 8)})`;
-  const itemsHtml = order.OrderItems.map(
-    (item) =>
-      `<li>${item.quantity} x ${item.Offer.Product.name} (Sold by: ${item.Offer.SellerProfile.storeName}) - ₹${item.priceAtTimeOfPurchase}</li>`,
-  ).join("");
+  
+  const items = order.OrderItems.map((item) => ({
+    productName: item.Offer.Product.name,
+    quantity: item.quantity,
+    price: item.priceAtTimeOfPurchase,
+  }));
 
-  const html = `
-    <h1>Thank you for your order, ${order.User.fullname}!</h1>
-    <p>We've received your payment and your order is now being processed. You can view your order details in your account.</p>
-    <h3>Order Summary:</h3>
-    <ul>${itemsHtml}</ul>
-    <p><strong>Total Amount:</strong> ₹${order.totalAmount}</p>
-  `;
-
-  await enqueueMail(order.User.email, subject, html);
+  await enqueueMail(order.User.email, subject, {
+    template: "orderConfirmation",
+    context: {
+      fullname: order.User.fullname || "Customer",
+      orderId: order.uniqueOrderId || order.id.slice(0, 8),
+      items: items,
+      total: order.totalAmount,
+    },
+  });
 };
 
 /**
@@ -85,24 +87,16 @@ const notifySellersOfNewOrder = async (order) => {
       0,
       8,
     )}`;
-    const itemsHtml = items
-      .map(
-        (item) =>
-          `<li>${item.quantity} x ${item.Offer.Product.name} at ₹${item.priceAtTimeOfPurchase} each</li>`,
-      )
-      .join("");
 
-    const html = `
-      <h1>You've made a sale!</h1>
-      <p>Please prepare the following items from Order #${order.id.slice(
-        0,
-        8,
-      )} for shipment:</p>
-      <ul>${itemsHtml}</ul>
-      <p>Please update the shipment status in your seller dashboard once the items are dispatched.</p>
-    `;
-
-    await enqueueMail(sellerUser.email, subject, html);
+    await enqueueMail(sellerUser.email, subject, {
+      template: "orderUpdate",
+      context: {
+        fullname: sellerUser.fullname || "Seller",
+        orderId: order.id,
+        productName: items.map((i) => i.Offer.Product.name).join(", "),
+        statusLabel: "New Order to Fulfill",
+      },
+    });
 
     const message = `New Sale! You have ${
       items.length

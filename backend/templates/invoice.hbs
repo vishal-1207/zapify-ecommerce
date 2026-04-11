@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice #{{orderId}}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            color: #6366f1;
+        }
+        .invoice-title {
+            text-align: right;
+        }
+        .invoice-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #6366f1;
+        }
+        .invoice-title p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #64748b;
+        }
+        .address-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .address-box {
+            width: 45%;
+        }
+        .address-box h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .address-box p {
+            margin: 2px 0;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th {
+            background-color: #f8fafc;
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+        .summary {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .summary-box {
+            width: 40%;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .summary-row.total {
+            border-top: 2px solid #6366f1;
+            margin-top: 10px;
+            padding-top: 15px;
+            font-weight: 800;
+            font-size: 18px;
+            color: #4f46e5;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Zapify</div>
+        <div class="invoice-title">
+            <h1>INVOICE</h1>
+            <p>#{{orderId}}</p>
+            <p>{{formatDate date}}</p>
+        </div>
+    </div>
+
+    <div class="address-row">
+        <div class="address-box">
+            <h3>Billed To</h3>
+            <p><strong>{{customerName}}</strong></p>
+            <p>{{customerEmail}}</p>
+        </div>
+        <div class="address-box">
+            <h3>Shipping Address</h3>
+            <p>{{address.fullname}}</p>
+            <p>{{address.addressLine}}</p>
+            <p>{{address.city}}, {{address.state}} - {{address.postalCode}}</p>
+            <p>{{address.country}}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each items}}
+            <tr>
+                <td><strong>{{productName}}</strong><br/><span style="font-size: 11px; color: #64748b;">Sold by: {{sellerStore}}</span></td>
+                <td style="text-align: center;">{{quantity}}</td>
+                <td style="text-align: right;">{{formatCurrency priceAtTimeOfPurchase}}</td>
+                <td style="text-align: right;">{{formatCurrency itemTotal}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>{{formatCurrency subtotal}}</span>
+            </div>
+            <div class="summary-row">
+                <span>Tax (GST 18%)</span>
+                <span>Included</span>
+            </div>
+            {{#if discount}}
+            <div class="summary-row" style="color: #059669;">
+                <span>Discount</span>
+                <span>-{{formatCurrency discount}}</span>
+            </div>
+            {{/if}}
+            <div class="summary-row total">
+                <span>Amount Paid</span>
+                <span>{{formatCurrency total}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Thank you for choosing Zapify!</p>
+        <p>This is a computer-generated invoice and does not require a signature.</p>
+        <p>Zapify Marketplace • 123 Commerce St • Digital City • support@zapify.com</p>
+    </div>
+</body>
+</html>

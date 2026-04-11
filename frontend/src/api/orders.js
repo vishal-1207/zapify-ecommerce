@@ -28,3 +28,10 @@ export const requestReturn = async (orderId, reason) => {
   const response = await api.post(`/order/${orderId}/return`, { reason });
   return response.data;
 };
+
+export const downloadInvoice = async (orderId) => {
+  const response = await api.get(`/order/${orderId}/invoice`, {
+    responseType: "blob",
+  });
+  return response.data;
+};

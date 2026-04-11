@@ -193,3 +193,22 @@ export const requestReturn = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+/**
+ * Controller to generate and download an order invoice as a PDF.
+ */
+export const downloadInvoice = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const userId = req.user.id;
+
+  const order = await orderService.getOrderDetailsForCustomer(orderId, userId);
+  const { generateInvoicePDF } = await import("../utils/pdfUtility.js");
+  const pdfBuffer = await generateInvoicePDF(order);
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=invoice-${order.uniqueOrderId || orderId}.pdf`
+  );
+  res.send(pdfBuffer);
+});

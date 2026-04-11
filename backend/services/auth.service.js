@@ -68,8 +68,10 @@ export const registerService = async (userData) => {
 
     if (email) {
       const subject = "Welcome to Zapify!";
-      const html = `<h1>Hi ${fullname},</h1><p>Thank you for registering. Welcome to our community!</p>`;
-      sendMail(email, subject, html).catch((err) =>
+      sendMail(email, subject, {
+        template: "welcome",
+        context: { fullname },
+      }).catch((err) =>
         console.error("Failed to send welcome email:", err.message),
       );
 

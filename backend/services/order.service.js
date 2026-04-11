@@ -470,24 +470,40 @@ export const updateOrderItemStatus = async (
 
     if (normalizedStatus === "delivered" && customer?.email) {
       const subject = `Your item has been Delivered!`;
-      const html = `
-        <h1>Hi ${customer.fullname || "Customer"},</h1>
-        <p>Good news! Your item <strong>${item.Offer.product.name}</strong> from Order #${item.orderId.slice(0, 8)} has been delivered.</p>
-        <p>We hope you enjoy your purchase!</p>
-      `;
-      enqueueMail(customer.email, subject, html).catch(err => 
-        console.error("Delivered email error:", err)
-      );
+      enqueueMail(customer.email, subject, {
+        template: "orderUpdate",
+        context: {
+          fullname: customer.fullname || "Customer",
+          orderId: item.orderId,
+          productName: item.Offer.product.name,
+          statusLabel: "Delivered",
+        },
+      }).catch((err) => console.error("Delivered email error:", err));
     } else if (normalizedStatus === "cancelled" && customer?.email) {
       const subject = `Order Item Cancelled`;
-      const html = `
-        <h1>Hi ${customer.fullname || "Customer"},</h1>
-        <p>Your order for <strong>${item.Offer.product.name}</strong> (Order #${item.orderId.slice(0, 8)}) has been cancelled.</p>
-        <p>If you have already been charged, a refund will be processed automatically.</p>
-      `;
-      enqueueMail(customer.email, subject, html).catch(err => 
-        console.error("Cancelled email error:", err)
-      );
+      enqueueMail(customer.email, subject, {
+        template: "orderUpdate",
+        context: {
+          fullname: customer.fullname || "Customer",
+          orderId: item.orderId,
+          productName: item.Offer.product.name,
+          statusLabel: "Cancelled",
+        },
+      }).catch((err) => console.error("Cancelled email error:", err));
+    } else if (customer?.email) {
+      // General update for Shipped/Processing etc
+      const subject = `Order Status Update: ${statusLabel}`;
+      enqueueMail(customer.email, subject, {
+        template: "orderUpdate",
+        context: {
+          fullname: customer.fullname || "Customer",
+          orderId: item.orderId,
+          productName: item.Offer.product.name,
+          statusLabel: statusLabel,
+          trackingNumber: trackingData?.trackingNumber,
+          carrier: trackingData?.shippingCarrier,
+        },
+      }).catch((err) => console.error("Order update email error:", err));
     }
 
     return item;
@@ -630,14 +646,15 @@ export const cancelOrderService = async (orderId, userId, reason) => {
 
   if (order.user?.email) {
     const subject = `Order Cancelled`;
-    const html = `
-      <h1>Hi ${order.user.fullname || "Customer"},</h1>
-      <p>Your Order #${orderId.slice(0, 8)} has been successfully cancelled.</p>
-      <p>If you have already been charged, a refund will be processed automatically to your original payment method.</p>
-    `;
-    enqueueMail(order.user.email, subject, html).catch(err => 
-      console.error("Cancelled email error:", err)
-    );
+    enqueueMail(order.user.email, subject, {
+      template: "orderUpdate",
+      context: {
+        fullname: order.user.fullname || "Customer",
+        orderId: orderId,
+        productName: "Entire Order",
+        statusLabel: "Cancelled",
+      },
+    }).catch((err) => console.error("Cancelled email error:", err));
   }
 
   return await db.Order.findByPk(orderId);

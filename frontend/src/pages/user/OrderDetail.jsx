@@ -14,8 +14,14 @@ import {
   X,
   ShieldCheck,
   Star,
+  FileText,
 } from "lucide-react";
-import { getOrderDetails, cancelOrder, requestReturn } from "../../api/orders";
+import { 
+  getOrderDetails, 
+  cancelOrder, 
+  requestReturn,
+  downloadInvoice 
+} from "../../api/orders";
 import { createReview } from "../../api/reviews";
 import ReviewModal from "../../components/reviews/ReviewModal";
 import { formatCurrency } from "../../utils/currency";
@@ -65,6 +71,7 @@ const OrderDetail = () => {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [startingReviewIndex, setStartingReviewIndex] = useState(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const unreviewedItems =
     order?.orderItems?.filter((item) => !item.review) || [];
@@ -157,6 +164,29 @@ const OrderDetail = () => {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    setIsDownloading(true);
+    try {
+      const blob = await downloadInvoice(orderId);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `invoice-${order?.uniqueOrderId || orderId}.pdf`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Invoice downloaded successfully!");
+    } catch (err) {
+      console.error("Failed to download invoice", err);
+      toast.error("Failed to generate/download invoice. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
@@ -244,6 +274,18 @@ const OrderDetail = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleDownloadInvoice}
+                disabled={isDownloading}
+                className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                {isDownloading ? (
+                  <Loader2 size={15} className="animate-spin text-slate-400" />
+                ) : (
+                  <FileText size={15} className="text-slate-400" />
+                )}
+                Invoice
+              </button>
               {isCancellable && (
                 <button
                   onClick={() => setShowCancelModal(true)}

@@ -13,6 +13,7 @@ router
   .get(orderControllers.getOrdersForCustomer);
 
 router.route("/:orderId").get(orderControllers.getOrderDetailsForCustomer);
+router.route("/:orderId/invoice").get(orderControllers.downloadInvoice);
 
 router
   .route("/:orderId/tracking")
