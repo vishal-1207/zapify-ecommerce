@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
   Truck,
@@ -67,6 +67,7 @@ const CountdownTimer = ({ targetDate }) => {
 
 const ProductDetail = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { addToCart, cart } = useCart();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -154,6 +155,32 @@ const ProductDetail = () => {
     setIsSharing(true);
     setTimeout(() => setIsSharing(false), 2000);
     console.log("[Share] Copy to clipboard successful");
+  };
+
+  const handleBuyNow = async () => {
+    if (!selectedOffer) return;
+
+    const isDeal =
+      selectedOffer.dealPrice &&
+      new Date() >= new Date(selectedOffer.dealStartDate) &&
+      new Date() <= new Date(selectedOffer.dealEndDate);
+    const finalPrice = isDeal ? selectedOffer.dealPrice : selectedOffer.price;
+
+    const cartProduct = {
+      ...product,
+      id: product.id,
+      offerId: selectedOffer.id,
+      price: finalPrice,
+      sellerName: selectedOffer.sellerProfile?.storeName,
+    };
+
+    // Add to cart only if not already in cart
+    if (!cart.some((item) => item.offerId === selectedOffer.id)) {
+      await addToCart(cartProduct, qty);
+    }
+
+    // Redirect to checkout
+    navigate("/checkout");
   };
 
   useEffect(() => {
@@ -610,7 +637,10 @@ const ProductDetail = () => {
                         </button>
                       )}
 
-                      <button className="cursor-pointer w-full bg-orange-400 text-indigo-900 py-3.5 rounded-xl font-bold hover:bg-orange-500 transition">
+                      <button
+                        onClick={handleBuyNow}
+                        className="cursor-pointer w-full bg-orange-400 text-indigo-900 py-3.5 rounded-xl font-bold hover:bg-orange-500 transition"
+                      >
                         Buy Now
                       </button>
 

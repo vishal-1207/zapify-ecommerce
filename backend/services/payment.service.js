@@ -15,25 +15,25 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
  * @private
  */
 const sendOrderConfirmationEmail = async (order) => {
-  if (!order?.User?.email) {
+  if (!order?.user?.email) {
     console.error(
       `Skipping confirmation email for order ${order.id}: No user email found.`,
     );
     return;
   }
 
-  const subject = `Your Order Confirmation (#${order.id.slice(0, 8)})`;
+  const subject = `Your Order Confirmation (#${order.uniqueOrderId || order.id.slice(0, 8)})`;
   
-  const items = order.OrderItems.map((item) => ({
-    productName: item.Offer.Product.name,
+  const items = order.orderItems.map((item) => ({
+    productName: item.Offer.product.name,
     quantity: item.quantity,
     price: item.priceAtTimeOfPurchase,
   }));
 
-  await enqueueMail(order.User.email, subject, {
+  await enqueueMail(order.user.email, subject, {
     template: "orderConfirmation",
     context: {
-      fullname: order.User.fullname || "Customer",
+      fullname: order.user.fullname || "Customer",
       orderId: order.uniqueOrderId || order.id.slice(0, 8),
       items: items,
       total: order.totalAmount,
@@ -67,11 +67,11 @@ const notifySellersOfNewOrder = async (order) => {
 
   const itemsBySeller = {};
 
-  for (const item of order.OrderItems) {
-    const sellerId = item.Offer.SellerProfile.id;
+  for (const item of order.orderItems) {
+    const sellerId = item.Offer.sellerProfile.id;
     if (!itemsBySeller[sellerId]) {
       itemsBySeller[sellerId] = {
-        seller: item.Offer.SellerProfile,
+        seller: item.Offer.sellerProfile,
         items: [],
       };
     }
@@ -92,8 +92,8 @@ const notifySellersOfNewOrder = async (order) => {
       template: "orderUpdate",
       context: {
         fullname: sellerUser.fullname || "Seller",
-        orderId: order.id,
-        productName: items.map((i) => i.Offer.Product.name).join(", "),
+        orderId: order.uniqueOrderId || order.id.slice(0, 8),
+        productName: items.map((i) => i.Offer.product.name).join(", "),
         statusLabel: "New Order to Fulfill",
       },
     });
@@ -200,23 +200,24 @@ export const handleStripeWebhook = async (event) => {
 
       const order = await db.Order.findByPk(orderId, {
         include: [
-          {
-            model: db.User,
-            attributes: ["id", "email", "fullname", "phoneNumber"],
-          },
-          {
-            model: db.OrderItem,
-            as: "orderItems",
-            include: [
-              {
-                model: db.Offer,
-                include: [
-                  { model: db.Product, as: "product" },
-                  { model: db.SellerProfile, as: "sellerProfile" },
-                ],
-              },
-            ],
-          },
+            {
+              model: db.User,
+              as: "user",
+              attributes: ["id", "email", "fullname", "phoneNumber"],
+            },
+            {
+              model: db.OrderItem,
+              as: "orderItems",
+              include: [
+                {
+                  model: db.Offer,
+                  include: [
+                    { model: db.Product, as: "product" },
+                    { model: db.SellerProfile, as: "sellerProfile" },
+                  ],
+                },
+              ],
+            },
           {
             model: db.Payment,
             as: "payments",

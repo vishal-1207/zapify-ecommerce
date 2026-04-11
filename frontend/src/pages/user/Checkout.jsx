@@ -7,8 +7,15 @@ import { Plus, Check, MapPin, Truck } from "lucide-react";
 import { formatCurrency } from "../../utils/currency";
 
 const Checkout = () => {
-  const { cart, cartTotal, cartMrpTotal, cartSellerPriceTotal, cartDiscount } =
-    useCart();
+  const { 
+    cart, 
+    cartTotal, 
+    cartMrpTotal, 
+    cartSellerPriceTotal, 
+    cartDiscount,
+    taxAmount,
+    loading: cartLoading 
+  } = useCart();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -25,12 +32,14 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    if (cart.length === 0) {
+    if (!cartLoading && cart.length === 0) {
       navigate("/cart");
       return;
     }
-    fetchAddresses();
-  }, [cart, navigate]);
+    if (!cartLoading && cart.length > 0) {
+      fetchAddresses();
+    }
+  }, [cart, cartLoading, navigate]);
 
   const fetchAddresses = async () => {
     try {
@@ -74,10 +83,10 @@ const Checkout = () => {
     navigate("/payment", { state: { addressId: selectedAddressId } });
   };
 
-  if (loading)
+  if (loading || cartLoading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Loading...
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
 
@@ -220,20 +229,20 @@ const Checkout = () => {
               )}
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>{formatCurrency(cartTotal)}</span>
+                <span>{formatCurrency(cartTotal - taxAmount)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
                 <span className="text-green-600 font-bold">Free</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>Tax Estimate</span>
-                <span>{formatCurrency(cartTotal * 0.08)}</span>
+                <span>Tax (18% GST)</span>
+                <span>{formatCurrency(taxAmount)}</span>
               </div>
               <div className="h-px bg-gray-100 my-4"></div>
               <div className="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>
-                <span>{formatCurrency(cartTotal * 1.08)}</span>
+                <span>{formatCurrency(cartTotal)}</span>
               </div>
             </div>
             <button

@@ -451,11 +451,19 @@ const OrderDetail = () => {
                   <span className="font-medium">
                     {formatCurrency(
                       Number(order.subtotalAmount) > 0
-                        ? order.subtotalAmount
-                        : order.totalAmount,
+                        ? Number(order.subtotalAmount) - Number(order.taxAmount)
+                        : Number(order.totalAmount) - Number(order.taxAmount),
                     )}
                   </span>
                 </div>
+                {Number(order.taxAmount) > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax (18% GST)</span>
+                    <span className="font-medium">
+                      {formatCurrency(order.taxAmount)}
+                    </span>
+                  </div>
+                )}
                 {Number(order.discountAmount) > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Total Discount</span>

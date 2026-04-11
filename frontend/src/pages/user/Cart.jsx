@@ -14,6 +14,8 @@ const Cart = () => {
     cartSellerPriceTotal,
     cartDiscount,
     cartCount,
+    loading,
+    taxAmount,
   } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +27,14 @@ const Cart = () => {
       navigate("/login", { state: { from: "/checkout" } });
     }
   };
+
+  if (loading && cart.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -99,7 +109,11 @@ const Cart = () => {
               )}
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>{formatCurrency(cartTotal)}</span>
+                <span>{formatCurrency(cartTotal - taxAmount)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Estimated Tax (18% GST)</span>
+                <span>{formatCurrency(taxAmount)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>

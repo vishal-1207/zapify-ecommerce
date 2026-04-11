@@ -160,8 +160,8 @@
                 <span>{{formatCurrency subtotal}}</span>
             </div>
             <div class="summary-row">
-                <span>Tax (GST 18%)</span>
-                <span>Included</span>
+                <span>Tax (GST {{taxRate}}%)</span>
+                <span>{{formatCurrency taxAmount}}</span>
             </div>
             {{#if discount}}
             <div class="summary-row" style="color: #059669;">

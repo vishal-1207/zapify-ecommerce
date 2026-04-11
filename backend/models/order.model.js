@@ -59,6 +59,16 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       allowNull: false,
     },
+    taxAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    taxRate: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      defaultValue: 18.0, // Standard 18% GST
+    },
   });
 
   Order.associate = (models) => {

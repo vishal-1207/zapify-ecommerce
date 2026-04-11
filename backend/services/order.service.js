@@ -21,6 +21,8 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
       items: cartItems,
       subtotal,
       discount,
+      taxAmount,
+      taxRate,
       totalAmount,
       couponDetails,
     } = await getCart(userId);
@@ -92,6 +94,8 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
         mrp: mrpTotal,
         subtotalAmount: subtotal,
         discountAmount: mrpTotal - subtotal + discount,
+        taxAmount,
+        taxRate,
         deliveryFee: 0,
         totalAmount,
         affiliateId,

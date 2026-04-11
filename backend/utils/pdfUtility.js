@@ -21,7 +21,9 @@ export const generateInvoicePDF = async (order) => {
         priceAtTimeOfPurchase: item.priceAtTimeOfPurchase,
         itemTotal: item.priceAtTimeOfPurchase * item.quantity,
       })),
-      subtotal: order.subtotalAmount,
+      subtotal: Number(order.subtotalAmount) - Number(order.taxAmount),
+      taxAmount: order.taxAmount,
+      taxRate: order.taxRate || 18,
       discount: order.discountAmount,
       total: order.totalAmount,
     });

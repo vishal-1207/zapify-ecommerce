@@ -149,11 +149,18 @@ export const getCart = async (userId) => {
     }
   }
 
+  let taxableAmount = Math.max(0, subtotal - discountAmount);
+  const taxRate = 18; // 18% GST
+  const taxAmount = taxableAmount * (taxRate / 100);
+  const totalAmount = taxableAmount + taxAmount;
+
   return {
     items,
     subtotal: Number(subtotal.toFixed(2)),
     discount: Number(discountAmount.toFixed(2)),
-    totalAmount: Number(Math.max(0, subtotal - discountAmount).toFixed(2)),
+    taxAmount: Number(taxAmount.toFixed(2)),
+    taxRate: taxRate,
+    totalAmount: Number(totalAmount.toFixed(2)),
     appliedCoupon,
     couponDetails,
   };
