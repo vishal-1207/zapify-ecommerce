@@ -303,16 +303,16 @@ const ProductDetail = () => {
             </div>
             {product.media &&
               product.media.filter((m) => m.tag === "gallery").length > 0 && (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x">
                   {product.media
                     .filter((m) => m.tag === "gallery")
                     .map((media, i) => (
                       <div
                         key={media.id || i}
-                        className={`bg-gray-50 rounded-xl aspect-square border-2 cursor-pointer p-2 flex items-center justify-center ${
+                        className={`flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-xl border-2 cursor-pointer p-2 flex items-center justify-center snap-start transition-all ${
                           selectedImage === i
-                            ? "border-indigo-600"
-                            : "border-transparent hover:border-indigo-200"
+                            ? "border-indigo-600 ring-2 ring-indigo-50 shadow-sm"
+                            : "border-transparent hover:border-indigo-200 grayscale-[0.5] hover:grayscale-0"
                         }`}
                         onClick={() => setSelectedImage(i)}
                       >
