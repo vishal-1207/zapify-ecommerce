@@ -164,30 +164,30 @@ export const suggestProductSchema = Joi.object({
 export const categorySchema = Joi.object({
   name: Joi.string()
     .trim()
-    .pattern(/^[a-zA-Z\s]+$/)
-    .min(4)
-    .max(15)
+    .pattern(/^[a-zA-Z\s&-]+$/)
+    .min(2)
+    .max(50)
     .required()
     .custom(sanitize)
     .messages({
       "string.empty": "Category name is required.",
-      "string.min": "Category name should be atleast 4 characters long.",
-      "string.max": "Category name cannot exceed 15 characters.",
+      "string.min": "Category name should be atleast 2 characters long.",
+      "string.max": "Category name cannot exceed 50 characters.",
     }),
 });
 
 export const brandSchema = Joi.object({
   name: Joi.string()
     .trim()
-    .pattern(/^[a-zA-Z]+$/)
+    .pattern(/^[a-zA-Z0-9\s&.-]+$/)
     .min(2)
-    .max(25)
+    .max(50)
     .required()
     .custom(sanitize)
     .messages({
       "string.empty": "Brand name is required.",
       "string.min": "Brand name should be atleast 2 characters long.",
-      "string.max": "Brand name cannot exceed 25 characters.",
+      "string.max": "Brand name cannot exceed 50 characters.",
     }),
   description: Joi.string().max(500).required().messages({
     "string.empty": "Brand description is required.",
