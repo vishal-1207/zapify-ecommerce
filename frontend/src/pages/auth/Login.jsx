@@ -80,7 +80,8 @@ const Login = () => {
   };
 
   const handleSocialLogin = (provider) => {
-    window.location.href = `http://localhost:3000/api/auth/${provider}`;
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    window.location.href = `${apiUrl}/api/auth/${provider}`;
   };
 
   return (
