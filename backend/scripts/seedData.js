@@ -986,7 +986,10 @@ export async function seed() {
       if (!brandMap[br.name]) {
         const [record] = await db.Brand.findOrCreate({
           where: { name: br.name },
-          defaults: { isActive: true },
+          defaults: { 
+            description: `${br.name} is a leading brand in the electronics and technology industry.`,
+            isActive: true 
+          },
         });
         brandMap[br.name] = record.id;
       }
