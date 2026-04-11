@@ -270,7 +270,7 @@ export const getOrderDetailsForCustomer = async (orderId, userId) => {
               {
                 model: db.Product,
                 as: "product",
-                attributes: ["id", "name"],
+                attributes: ["id", "name", "price"],
                 include: [{ model: db.Media, as: "media" }],
               },
               {

@@ -171,9 +171,11 @@
             <div class="address-box">
                 <h3>Shipping Address</h3>
                 <p><strong>{{address.fullname}}</strong></p>
-                <p>{{address.addressLine1}}</p>
-                {{#if address.addressLine2}}<p>{{address.addressLine2}}</p>{{/if}}
-                <p>{{address.city}}, {{address.state}} - {{address.pincode}}</p>
+                <p>{{address.street}}</p>
+                {{#if address.details}}<p style="font-style: italic; color: #64748b;">{{address.details}}</p>{{/if}}
+                <p>{{address.city}}, {{address.state}} - {{address.zipCode}}</p>
+                <p style="font-weight: 700;">{{address.country}}</p>
+                <p style="margin-top: 5px; color: #64748b;">{{address.phoneNumber}}</p>
             </div>
         </div>
 
@@ -182,10 +184,13 @@
             <tr>
                 <th>Description</th>
                 <th style="text-align: center;">Qty</th>
-                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">MRP</th>
+                <th style="text-align: right;">Selling Price</th>
+                <th style="text-align: right;">Disc.</th>
                 <th style="text-align: right;">Total</th>
             </tr>
         </thead>
+        <tbody>
             {{#each items}}
             <tr>
                 <td>
@@ -193,7 +198,9 @@
                     <span class="item-seller">Sold by: {{sellerStore}}</span>
                 </td>
                 <td style="text-align: center;">{{quantity}}</td>
+                <td style="text-align: right; color: #94a3b8; text-decoration: line-through;">{{formatCurrency mrp}}</td>
                 <td style="text-align: right;">{{formatCurrency priceAtTimeOfPurchase}}</td>
+                <td style="text-align: right; color: #059669; font-weight: 600;">{{formatCurrency discount}}</td>
                 <td style="text-align: right; font-weight: 700;">{{formatCurrency itemTotal}}</td>
             </tr>
             {{/each}}
@@ -202,6 +209,10 @@
 
     <div class="summary">
         <div class="summary-box">
+            <div class="summary-row">
+                <span>Total MRP</span>
+                <span>{{formatCurrency mrpTotal}}</span>
+            </div>
             <div class="summary-row">
                 <span>Subtotal</span>
                 <span style="font-weight: 600;">{{formatCurrency subtotal}}</span>
@@ -212,7 +223,7 @@
             </div>
             {{#if discount}}
             <div class="summary-row" style="color: #059669; font-weight: 600;">
-                <span>Discount</span>
+                <span>Total Savings</span>
                 <span>-{{formatCurrency discount}}</span>
             </div>
             {{/if}}
