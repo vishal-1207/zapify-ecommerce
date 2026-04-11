@@ -13,8 +13,8 @@ const fileFilter = (req, file, cb) => {
   const allowedTypes = [
     "image/jpeg",
     "image/png",
+    "image/webp",
     "image/svg+xml",
-    "image/svg",
     "video/mp4",
     "video/quicktime",
   ];

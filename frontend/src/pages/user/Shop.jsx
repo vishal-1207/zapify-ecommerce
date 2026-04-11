@@ -36,50 +36,56 @@ const Shop = () => {
 
   const [priceRange, setPriceRange] = useState({
     min: Number(searchParams.get("minPrice")) || 0,
-    max: Number(searchParams.get("maxPrice")) || 1000000, // Large initial fallback
+    max: Number(searchParams.get("maxPrice")) || 1000000,
   });
 
-  // Calculate the absolute max price available for the current Category/Brand/Search context
   const dynamicMaxPrice = useMemo(() => {
     const searchQuery = searchParams.get("search")?.toLowerCase() || "";
     const filteredForMax = products.filter((product) => {
-      // 1. Search Filter
       if (searchQuery) {
         const matchesName = product.name?.toLowerCase().includes(searchQuery);
         const matchesModel = product.model?.toLowerCase().includes(searchQuery);
-        const matchesBrand = typeof product.brand === "object" 
-          ? product.brand?.name?.toLowerCase().includes(searchQuery)
-          : String(product.brand).toLowerCase().includes(searchQuery);
-        const matchesCategory = typeof product.category === "object"
-          ? product.category?.name?.toLowerCase().includes(searchQuery)
-          : String(product.category).toLowerCase().includes(searchQuery);
-        if (!matchesName && !matchesModel && !matchesBrand && !matchesCategory) return false;
+        const matchesBrand =
+          typeof product.brand === "object"
+            ? product.brand?.name?.toLowerCase().includes(searchQuery)
+            : String(product.brand).toLowerCase().includes(searchQuery);
+        const matchesCategory =
+          typeof product.category === "object"
+            ? product.category?.name?.toLowerCase().includes(searchQuery)
+            : String(product.category).toLowerCase().includes(searchQuery);
+        if (!matchesName && !matchesModel && !matchesBrand && !matchesCategory)
+          return false;
       }
-      // 2. Category Filter
       if (selectedCategorySlugs.length > 0) {
-        const productCatSlug = typeof product.category === "object" ? product.category?.slug : null;
-        if (!productCatSlug || !selectedCategorySlugs.includes(productCatSlug)) return false;
+        const productCatSlug =
+          typeof product.category === "object" ? product.category?.slug : null;
+        if (!productCatSlug || !selectedCategorySlugs.includes(productCatSlug))
+          return false;
       }
-      // 3. Brand Filter
       if (selectedBrandSlugs.length > 0) {
-        const productBrandSlug = typeof product.brand === "object" ? product.brand?.slug : null;
-        if (!productBrandSlug || !selectedBrandSlugs.includes(productBrandSlug)) return false;
+        const productBrandSlug =
+          typeof product.brand === "object" ? product.brand?.slug : null;
+        if (!productBrandSlug || !selectedBrandSlugs.includes(productBrandSlug))
+          return false;
       }
       return true;
     });
 
     if (filteredForMax.length === 0) return 300000;
-    const max = Math.max(...filteredForMax.map(p => Number(p.minOfferPrice) || Number(p.price) || 0));
-    return Math.ceil(max / 1000) * 1000; // Round up to nearest 1000
+    const max = Math.max(
+      ...filteredForMax.map(
+        (p) => Number(p.minOfferPrice) || Number(p.price) || 0,
+      ),
+    );
+    return Math.ceil(max / 1000) * 1000;
   }, [products, selectedCategorySlugs, selectedBrandSlugs, searchParams]);
 
   const MAX_PRICE_LIMIT = dynamicMaxPrice;
 
-  // Sync state if URL param is missing or exceeds limit
   useEffect(() => {
     const urlMax = searchParams.get("maxPrice");
     if (!urlMax) {
-      setPriceRange(prev => ({ ...prev, max: MAX_PRICE_LIMIT }));
+      setPriceRange((prev) => ({ ...prev, max: MAX_PRICE_LIMIT }));
     }
   }, [MAX_PRICE_LIMIT, searchParams]);
 
@@ -110,7 +116,7 @@ const Shop = () => {
       }
     };
     fetchData();
-  }, []); // Run once
+  }, []);
 
   const updateFilters = (
     newCategorySlugs,
@@ -462,7 +468,8 @@ const Shop = () => {
                         </span>
                       );
                     })}
-                    {(priceRange.min > 0 || priceRange.max < MAX_PRICE_LIMIT) && (
+                    {(priceRange.min > 0 ||
+                      priceRange.max < MAX_PRICE_LIMIT) && (
                       <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium">
                         {formatCurrency(priceRange.min)} -{" "}
                         {priceRange.max >= MAX_PRICE_LIMIT

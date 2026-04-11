@@ -145,29 +145,21 @@ const startServer = async () => {
     if (!fs.existsSync("uploads")) {
       fs.mkdirSync("uploads");
     }
-  
-      try {
-        await redisClient.ping();
-      } catch (redisErr) {
-        console.warn(
-          "⚠️ Redis client failed to connect on startup. The application will continue running with degraded cache/features, while Redis attempts to reconnect in the background.",
-        );
-        console.warn("Redis Error:", redisErr.message);
-      }
-  
-      await db.sequelize.sync();
 
-      // Run automatic seeding for initial data
-      try {
-        const { seed } = await import("./scripts/seedData.js");
-        seed().catch((err) => console.error("Seeding failed in background:", err));
-      } catch (err) {
-        console.error("Could not load seeder:", err.message);
-      }
-  
-      startCleanupService();
-  
-      app.listen(PORT);
+    try {
+      await redisClient.ping();
+    } catch (redisErr) {
+      console.warn(
+        "⚠️ Redis client failed to connect on startup. The application will continue running with degraded cache/features, while Redis attempts to reconnect in the background.",
+      );
+      console.warn("Redis Error:", redisErr.message);
+    }
+
+    await db.sequelize.sync();
+
+    startCleanupService();
+
+    app.listen(PORT);
   } catch (error) {
     console.error("Failed to sync database:", error);
     process.exit(1);
