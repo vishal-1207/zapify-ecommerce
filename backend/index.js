@@ -35,6 +35,8 @@ import initializePassport from "./config/passport.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
 app.use(
@@ -43,7 +45,36 @@ app.use(
     credentials: true,
   }),
 );
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": [
+          "'self'",
+          "'unsafe-inline'",
+          "https://accounts.google.com",
+          "https://github.com",
+          "https://github.githubassets.com",
+        ],
+        "connect-src": [
+          "'self'",
+          "https://accounts.google.com",
+          "https://play.google.com",
+          "https://github.com",
+          "https://api.github.com",
+        ],
+        "frame-src": [
+          "'self'",
+          "https://accounts.google.com",
+          "https://github.com",
+        ],
+      },
+    },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(
   pino(
     process.env.NODE_ENV === "development"
