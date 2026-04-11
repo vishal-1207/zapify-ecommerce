@@ -160,9 +160,6 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
       searchOptions,
     });
 
-    // To get the max price irrespective of price filters, we check facets_stats
-    // We add facets: ['price'] to the main search or do a separate one if needed.
-    // For simplicity and accuracy with our searchOptions.filters, we'll request facets here.
     const statsResults = await client.searchSingleIndex({
       indexName: INDEX_NAME,
       searchOptions: {
