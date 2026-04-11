@@ -420,7 +420,11 @@ const Shop = () => {
 
             <div className="space-y-6 pb-20 lg:pb-0">
               {/* Active Filters Summary */}
-                    (priceRange.min > 0 || priceRange.max < MAX_PRICE_LIMIT) && (
+              {(selectedCategorySlugs.length > 0 ||
+                selectedBrandSlugs.length > 0 ||
+                minRating > 0 ||
+                priceRange.min > 0 ||
+                priceRange.max < MAX_PRICE_LIMIT) && (
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-bold text-gray-900 uppercase">
@@ -458,7 +462,7 @@ const Shop = () => {
                         </span>
                       );
                     })}
-                    {(priceRange.min > 0 || priceRange.max < 300000) && (
+                    {(priceRange.min > 0 || priceRange.max < MAX_PRICE_LIMIT) && (
                       <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium">
                         {formatCurrency(priceRange.min)} -{" "}
                         {priceRange.max >= MAX_PRICE_LIMIT
