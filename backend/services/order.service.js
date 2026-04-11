@@ -5,6 +5,7 @@ import { createNotification } from "./notification.service.js";
 import { enqueueMail } from "../utils/mailUtility.js";
 import { getCart, clearCart } from "./cart.service.js";
 import { Sequelize, Op } from "sequelize";
+import { updateProductAggregates } from "./product.service.js";
 
 /**
  * Creates a new order for a user based on the contents of their cart.
@@ -144,6 +145,16 @@ export const createOrderFromCart = async (userId, addressId, affiliateCode = nul
 
     await clearCart(userId);
 
+    // Sync product aggregates (totalOfferStock) after stock deduction
+    const productIds = [
+      ...new Set(cartItems.map((item) => item.details.productId)),
+    ];
+    for (const pid of productIds) {
+      await updateProductAggregates(pid).catch((err) =>
+        console.error(`Failed to sync aggregate for product ${pid}:`, err),
+      );
+    }
+
     const shortId = newOrder.uniqueOrderId;
     createNotification(
       userId,
@@ -240,6 +251,11 @@ export const getOrderDetailsForCustomer = async (orderId, userId) => {
   const order = await db.Order.findOne({
     where: { id: orderId, userId },
     include: [
+      {
+        model: db.User,
+        as: "user",
+        attributes: ["id", "fullname", "email"],
+      },
       {
         model: db.OrderItem,
         as: "orderItems",
@@ -460,6 +476,23 @@ export const updateOrderItemStatus = async (
 
     await transaction.commit();
 
+    // RESTORE STOCK IF CANCELLED
+    if (normalizedStatus === "cancelled") {
+      await db.Offer.update(
+        {
+          stockQuantity: Sequelize.literal(`stockQuantity + ${item.quantity}`),
+        },
+        { where: { id: item.offerId } },
+      );
+
+      const productId = item.Offer.productId;
+      if (productId) {
+        await updateProductAggregates(productId).catch((err) =>
+          console.error(`Failed to sync aggregate for product ${productId}:`, err),
+        );
+      }
+    }
+
     const customer = item.Order.user;
     const customerId = item.Order.userId;
     const statusLabel =
@@ -626,11 +659,47 @@ export const cancelOrderService = async (orderId, userId, reason) => {
     );
   }
 
-  await db.Order.update(
-    { status: "cancelled", cancellationReason: reason },
-    { where: { id: orderId } },
-  );
-  await db.OrderItem.update({ status: "cancelled" }, { where: { orderId } });
+  const items = await db.OrderItem.findAll({
+    where: { orderId },
+    include: [{ model: db.Offer, attributes: ["id", "productId"] }],
+  });
+
+  const transaction = await db.sequelize.transaction();
+  try {
+    await db.Order.update(
+      { status: "cancelled", cancellationReason: reason },
+      { where: { id: orderId }, transaction },
+    );
+    await db.OrderItem.update(
+      { status: "cancelled" },
+      { where: { orderId }, transaction },
+    );
+
+    // Restore stock for all items
+    for (const item of items) {
+      await db.Offer.update(
+        {
+          stockQuantity: Sequelize.literal(`stockQuantity + ${item.quantity}`),
+        },
+        { where: { id: item.offerId }, transaction },
+      );
+    }
+
+    await transaction.commit();
+
+    // Sync product aggregates (totalOfferStock)
+    const productIds = [...new Set(items.map((i) => i.Offer?.productId))].filter(
+      Boolean,
+    );
+    for (const pid of productIds) {
+      await updateProductAggregates(pid).catch((err) =>
+        console.error(`Failed to sync aggregate for product ${pid}:`, err),
+      );
+    }
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 
   const payment = order.payments;
   if (payment?.status === "succeeded") {

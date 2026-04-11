@@ -11,10 +11,10 @@ export const generateInvoicePDF = async (order) => {
     const html = await renderTemplate("invoice", {
       orderId: order.uniqueOrderId || order.id,
       date: order.createdAt,
-      customerName: order.User.fullname,
-      customerEmail: order.User.email,
+      customerName: order.user?.fullname || "Customer",
+      customerEmail: order.user?.email || "",
       address: order.shippingAddress,
-      items: order.OrderItems.map((item) => ({
+      items: (order.orderItems || []).map((item) => ({
         productName: item.Offer.product.name,
         sellerStore: item.Offer.sellerProfile.storeName,
         quantity: item.quantity,

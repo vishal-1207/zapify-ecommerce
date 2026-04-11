@@ -106,6 +106,66 @@ const notifySellersOfNewOrder = async (order) => {
 };
 
 /**
+ * Internal logic for order updates after a successful payment.
+ * Idempotent: Only sends notifications/emails once if status is pending.
+ * @param {string} orderId
+ * @private
+ */
+const _executePostPaymentLogic = async (orderId) => {
+  const order = await db.Order.findByPk(orderId, {
+    include: [
+      {
+        model: db.User,
+        as: "user",
+        attributes: ["id", "email", "fullname", "phoneNumber"],
+      },
+      {
+        model: db.OrderItem,
+        as: "orderItems",
+        include: [
+          {
+            model: db.Offer,
+            include: [
+              { model: db.Product, as: "product" },
+              { model: db.SellerProfile, as: "sellerProfile" },
+            ],
+          },
+        ],
+      },
+      {
+        model: db.Payment,
+        as: "payments",
+      },
+    ],
+  });
+
+  if (!order) return;
+
+  // Idempotency: skip if already processed
+  if (order.status !== "pending") {
+    return;
+  }
+
+  order.status = "processed";
+  await order.save();
+
+  const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
+  createNotification(
+    order.userId,
+    "order_status_update",
+    `✅ Payment confirmed! Your order #${shortId} is being processed.`,
+    `/account/orders/${orderId}`,
+  );
+
+  sendOrderConfirmationEmail(order).catch((err) =>
+    console.error("Failed to send confirmation email:", err),
+  );
+  notifySellersOfNewOrder(order).catch((err) =>
+    console.error("Failed to notify sellers:", err),
+  );
+};
+
+/**
  * Create a stripe payment intent for a given order.
  * @param {string} orderId - The ID of the order to be paid for.
  * @returns {object} The created payment intent object containing the client secret.
@@ -197,51 +257,7 @@ export const handleStripeWebhook = async (event) => {
       };
       await payment.save();
 
-      const order = await db.Order.findByPk(orderId, {
-        include: [
-            {
-              model: db.User,
-              as: "user",
-              attributes: ["id", "email", "fullname", "phoneNumber"],
-            },
-            {
-              model: db.OrderItem,
-              as: "orderItems",
-              include: [
-                {
-                  model: db.Offer,
-                  include: [
-                    { model: db.Product, as: "product" },
-                    { model: db.SellerProfile, as: "sellerProfile" },
-                  ],
-                },
-              ],
-            },
-          {
-            model: db.Payment,
-            as: "payments",
-          },
-        ],
-      });
-      if (order) {
-        order.status = "processed";
-        await order.save();
-
-        const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
-        createNotification(
-          order.userId,
-          "order_status_update",
-          `✅ Payment confirmed! Your order #${shortId} is being processed.`,
-          `/account/orders/${orderId}`,
-        );
-
-        sendOrderConfirmationEmail(order).catch((err) =>
-          console.error("Failed to send confirmation email:", err),
-        );
-        notifySellersOfNewOrder(order).catch((err) =>
-          console.error("Failed to notify sellers:", err),
-        );
-      }
+      await _executePostPaymentLogic(orderId);
     }
   }
 
@@ -423,51 +439,7 @@ export const verifyAndUpdatePayment = async (paymentIntentId) => {
   await payment.save();
 
   const orderId = fullIntent.metadata?.orderId || payment.orderId;
-  const order = await db.Order.findByPk(orderId, {
-    include: [
-      {
-        model: db.User,
-        attributes: ["id", "email", "fullname", "phoneNumber"],
-      },
-      {
-        model: db.OrderItem,
-        as: "orderItems",
-        include: [
-          {
-            model: db.Offer,
-            include: [
-              { model: db.Product, as: "product" },
-              { model: db.SellerProfile, as: "sellerProfile" },
-            ],
-          },
-        ],
-      },
-      {
-        model: db.Payment,
-        as: "payments",
-      },
-    ],
-  });
-
-  if (order) {
-    order.status = "processed";
-    await order.save();
-
-    const shortId = order.uniqueOrderId || orderId.slice(0, 8).toUpperCase();
-    createNotification(
-      order.userId,
-      "order_status_update",
-      `✅ Payment confirmed! Your order #${shortId} is being processed.`,
-      `/account/orders/${orderId}`,
-    );
-
-    sendOrderConfirmationEmail(order).catch((err) =>
-      console.error("Failed to send confirmation email:", err),
-    );
-    notifySellersOfNewOrder(order).catch((err) =>
-      console.error("Failed to notify sellers:", err),
-    );
-  }
+  await _executePostPaymentLogic(orderId);
 
   return payment;
 };
