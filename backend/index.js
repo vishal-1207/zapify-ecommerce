@@ -124,8 +124,8 @@ const startServer = async () => {
       console.warn("Redis Error:", redisErr.message);
     }
 
-    await db.sequelize.sync({ alter: true });
-    console.log("Database synced and schema updated...");
+    await db.sequelize.sync();
+    console.log("Database synced...");
 
     startCleanupService();
     startModerationWorker();
