@@ -25,23 +25,29 @@ handlebars.registerHelper("formatDate", (value) => {
 });
 
 /**
- * Renders a Handlebars template with a layout.
+ * Renders a Handlebars template with an optional layout.
+ * @param {string} templateName - Name of the template to render.
+ * @param {object} context - Data to pass to the template.
+ * @param {string|null} layoutName - Name of the layout to use, or null to skip layout.
  */
-export const renderTemplate = async (templateName, context) => {
+export const renderTemplate = async (templateName, context, layoutName = "layout") => {
   try {
-    const layoutSource = await fs.readFile(
-      path.join(TEMPLATES_DIR, "layout.hbs"),
-      "utf-8"
-    );
     const templateSource = await fs.readFile(
       path.join(TEMPLATES_DIR, `${templateName}.hbs`),
       "utf-8"
     );
-
-    const layout = handlebars.compile(layoutSource);
     const template = handlebars.compile(templateSource);
-
     const body = template(context);
+
+    if (!layoutName) {
+      return body;
+    }
+
+    const layoutSource = await fs.readFile(
+      path.join(TEMPLATES_DIR, `${layoutName}.hbs`),
+      "utf-8"
+    );
+    const layout = handlebars.compile(layoutSource);
     return layout({ ...context, body });
   } catch (error) {
     console.error(`Failed to render template ${templateName}:`, error);

@@ -26,7 +26,7 @@ export const generateInvoicePDF = async (order) => {
       taxRate: order.taxRate || 18,
       discount: order.discountAmount,
       total: order.totalAmount,
-    });
+    }, null);
 
     const browser = await puppeteer.launch({
       headless: "new",
