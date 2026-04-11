@@ -108,7 +108,7 @@ const productData = [
     name: "Microsoft Surface Laptop 7",
     brand: "Microsoft",
     category: "Laptops",
-    model: "Copilot+ PC",
+    model: "Surface Laptop 7",
     price: 109900,
     description: "The next generation of Surface. Powered by Snapdragon X Elite for incredible AI speeds and multi-day battery life.",
     specs: { "CPU": "Snapdragon X Elite", "RAM": "16GB", "Storage": "512GB SSD", "Display": "13.8-inch PixelSense" }
@@ -236,7 +236,7 @@ const productData = [
     name: "Microsoft Surface Pro 11",
     brand: "Microsoft",
     category: "Tablets",
-    model: "Copilot+ PC",
+    model: "Surface Pro 11",
     price: 115000,
     description: "The most powerful 2-in-1 tablet. Powered by Snapdragon X and designed for Windows AI features.",
     specs: { "CPU": "Snapdragon X Elite", "RAM": "16GB", "Storage": "256GB SSD", "Display": "13-inch OLED 120Hz" }
@@ -366,7 +366,7 @@ const productData = [
     name: "Sony WH-1000XM5",
     brand: "Sony",
     category: "Headphones & Audio",
-    model: "Black",
+    model: "WH-1000XM5 Black",
     price: 29990,
     description: "The best noise cancelling headphones on the market. Exceptional sound and crystal clear calls.",
     specs: { "ANC": "Industry-leading", "Battery": "30 hours", "Multipoint": "Yes", "Voice": "Built-in Alexa/Assistant" }
@@ -429,7 +429,7 @@ const productData = [
     name: "Sennheiser Accentum Plus",
     brand: "Sennheiser",
     category: "Headphones & Audio",
-    model: "Black",
+    model: "Accentum Plus Black",
     price: 15990,
     description: "Premium features at a great price. 50 hours of battery life and Hybrid ANC.",
     specs: { "Battery": "50 hours", "Charging": "10 min = 5 hours", "ANC": "Hybrid Adaptive", "Controls": "Touch Pad" }
@@ -456,7 +456,7 @@ const productData = [
     name: "Sonos Ace",
     brand: "Sony", // Substituted Sony for Sonos
     category: "Headphones & Audio",
-    model: "White",
+    model: "Sonos Ace White",
     price: 44900,
     description: "The most comfortable premium headphones with legendary sound and lossless audio support.",
     specs: { "Design": "Memory Foam Earcups", "Audio": "Lossless over Bluetooth", "Cinema": "Home Theater Audio Swap", "Battery": "30 hours" }
@@ -512,7 +512,7 @@ const productData = [
     name: "Canon EOS R6 Mark II",
     brand: "Canon",
     category: "Cameras",
-    model: "Body Only",
+    model: "EOS R6 II Body Only",
     price: 225990,
     description: "Lightning fast AF and 40fps continuous shooting. High performance hybrid camera for every project.",
     specs: { "Sensor": "24.2 MP Full-Frame", "Speed": "40fps Electronic Shutter", "AF": "Dual Pixel CMOS AF II", "Video": "4K 60p Uncropped" }
@@ -703,7 +703,7 @@ const productData = [
     name: "Nintendo Switch Pro Controller",
     brand: "Nintendo",
     category: "Gaming Consoles",
-    model: "Black",
+    model: "Switch Pro Controller Black",
     price: 5990,
     description: "The premium controller for the Switch. Traditional design for a better TV-mode experience.",
     specs: { "Features": "Motion Controls, HD Rumble", "NFC": "Built-in for amiibo", "Charging": "USB-C", "Battery": "Long-lasting" }
