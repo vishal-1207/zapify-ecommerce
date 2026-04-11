@@ -156,6 +156,14 @@ const startServer = async () => {
       }
   
       await db.sequelize.sync();
+
+      // Run automatic seeding for initial data
+      try {
+        const { seed } = await import("./scripts/seedData.js");
+        seed().catch((err) => console.error("Seeding failed in background:", err));
+      } catch (err) {
+        console.error("Could not load seeder:", err.message);
+      }
   
       startCleanupService();
   
