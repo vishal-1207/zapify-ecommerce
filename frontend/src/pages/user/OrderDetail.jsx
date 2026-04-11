@@ -224,157 +224,175 @@ const OrderDetail = () => {
   const isReturnable = order.status === "delivered";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-      {/* Header */}
-      <div className="mb-8 border-b border-gray-100 pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/account/orders"
-            className="text-gray-500 hover:text-indigo-600 flex items-center gap-2 transition-colors text-sm font-medium"
-          >
-            <ArrowLeft size={16} /> Back to Orders
-          </Link>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-              statusColors[order.status] || "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {order.status.replace("_", " ")}
-          </span>
-        </div>
+    <div className="max-w-5xl mx-auto pb-12">
+      {/* Top Navigation & Status */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          to="/account/orders"
+          className="text-slate-500 hover:text-indigo-600 flex items-center gap-2 transition-colors text-sm font-medium"
+        >
+          <ArrowLeft size={16} /> Back to Orders
+        </Link>
+        <span
+          className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border ${
+            statusColors[order.status] || "bg-gray-100 text-gray-700 border-gray-200"
+          }`}
+        >
+          {order.status.replace("_", " ")}
+        </span>
+      </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              Order #{order.uniqueOrderId || order.id.slice(0, 8).toUpperCase()}
+      {/* Hero Header Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-3">
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              Order <span className="text-indigo-600">#{order.uniqueOrderId || order.id.slice(0, 8).toUpperCase()}</span>
             </h1>
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-              <span className="flex items-center gap-1.5">
-                <Calendar size={14} />
-                {new Date(order.createdAt).toLocaleDateString()}
+            <div className="flex flex-wrap items-center gap-4 text-slate-500">
+              <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 italic">
+                <Calendar size={15} />
+                {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric"
+                })}
               </span>
-              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-              <span>{new Date(order.createdAt).toLocaleTimeString()}</span>
+              <span className="w-1.5 h-1.5 bg-slate-300 rounded-full hidden sm:block"></span>
+              <span className="text-sm font-medium">{new Date(order.createdAt).toLocaleTimeString()}</span>
             </div>
-
-            {/* Cancellation reason shown if present */}
             {order.cancellationReason && (
-              <p className="mt-2 text-sm text-gray-500 italic">
+              <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 text-xs font-medium px-3 py-1.5 rounded-lg border border-red-100">
+                <AlertCircle size={14} />
                 Reason: {order.cancellationReason}
-              </p>
+              </div>
             )}
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="text-right">
-              <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-              <p className="text-2xl font-bold text-indigo-600">
-                {formatCurrency(order.totalAmount)}
-              </p>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDownloadInvoice}
-                disabled={isDownloading}
-                className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-              >
-                {isDownloading ? (
-                  <Loader2 size={15} className="animate-spin text-slate-400" />
-                ) : (
-                  <FileText size={15} className="text-slate-400" />
-                )}
-                Invoice
-              </button>
-              {isCancellable && (
-                <button
-                  onClick={() => setShowCancelModal(true)}
-                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                >
-                  <XCircle size={15} /> Cancel Order
-                </button>
-              )}
-              {isReturnable && (
-                <button
-                  onClick={() => setShowReturnModal(true)}
-                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-                >
-                  <RotateCcw size={15} /> Return & Refund
-                </button>
-              )}
-              {order.status === "delivered" && unreviewedItems.length > 0 && (
-                <button
-                  onClick={() => handleReviewClick(unreviewedItems[0].id)}
-                  className="cursor-pointer flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-                >
-                  <Star size={15} className="fill-indigo-600" /> Review Items
-                </button>
-              )}
-            </div>
+          <div className="flex flex-col items-start md:items-end gap-1 border-t md:border-t-0 pt-4 md:pt-0">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Amount</p>
+            <p className="text-4xl font-black text-indigo-600 tracking-tighter">
+              {formatCurrency(order.totalAmount)}
+            </p>
           </div>
+        </div>
+
+        {/* Action Bar - Modern Grid Layout */}
+        <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4 border-t border-slate-100 pt-8">
+          <button
+            onClick={handleDownloadInvoice}
+            disabled={isDownloading}
+            className="group cursor-pointer flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50 transition-all duration-200 shadow-sm"
+          >
+            <div className={`p-2 rounded-lg ${isDownloading ? "bg-slate-100" : "bg-slate-50 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600"}`}>
+              {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <FileText size={20} />}
+            </div>
+            <span className="text-sm font-bold text-slate-700">Invoice</span>
+          </button>
+
+          {isCancellable && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="group cursor-pointer flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-red-100 bg-red-50/30 hover:bg-red-50 transition-all duration-200"
+            >
+              <div className="p-2 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-200">
+                <XCircle size={20} />
+              </div>
+              <span className="text-sm font-bold text-red-700">Cancel Order</span>
+            </button>
+          )}
+
+          {isReturnable && (
+            <button
+              onClick={() => setShowReturnModal(true)}
+              className="group cursor-pointer flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-orange-100 bg-orange-50/30 hover:bg-orange-50 transition-all duration-200"
+            >
+              <div className="p-2 rounded-lg bg-orange-100 text-orange-500 group-hover:bg-orange-200">
+                <RotateCcw size={20} />
+              </div>
+              <span className="text-sm font-bold text-orange-700 text-center leading-tight">Return &<br/>Refund</span>
+            </button>
+          )}
+
+          {order.status === "delivered" && unreviewedItems.length > 0 && (
+            <button
+              onClick={() => handleReviewClick(unreviewedItems[0].id)}
+              className="group cursor-pointer flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-indigo-100 bg-indigo-50/30 hover:bg-indigo-50 transition-all duration-200"
+            >
+              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <Star size={20} />
+              </div>
+              <span className="text-sm font-bold text-indigo-700 text-center leading-tight">Review Items</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Order Items */}
-        <div className="lg:col-span-2">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Package className="text-indigo-600" size={20} /> Order Items
+        <div className="lg:col-span-2 space-y-4">
+          <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
+            <Package className="text-indigo-600 shrink-0" size={24} /> 
+            Order Items
           </h2>
-          <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-            <div className="divide-y divide-gray-200">
+          
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="divide-y divide-slate-100">
               {order.orderItems?.map((item) => (
-                <div key={item.id} className="p-4 sm:p-6 flex gap-4 sm:gap-6">
-                  <div className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
-                    <img
-                      src={
-                        item.Offer?.product?.media?.[0]?.url ||
-                        "https://placehold.co/100"
-                      }
-                      alt={item.Offer?.product?.name}
-                      className="h-full w-full object-cover object-center"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-base font-semibold text-gray-900 line-clamp-2">
-                          {item.Offer?.product?.name}
-                        </h3>
-                        <p className="font-semibold text-gray-900 ml-4">
-                          {formatCurrency(
-                            item.priceAtTimeOfPurchase * item.quantity,
-                          )}
+                <div key={item.id} className="p-4 sm:p-6 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex gap-4 sm:gap-6">
+                    <div className="h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-2">
+                      <img
+                        src={item.Offer?.product?.media?.[0]?.url || "https://placehold.co/150"}
+                        alt={item.Offer?.product?.name}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-snug">
+                            {item.Offer?.product?.name}
+                          </h3>
+                          <p className="mt-1 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Seller: <span className="text-indigo-600">{item.Offer?.sellerProfile?.storeName}</span>
+                          </p>
+                        </div>
+                        <p className="text-xl font-black text-slate-900 whitespace-nowrap">
+                          {formatCurrency(item.priceAtTimeOfPurchase * item.quantity)}
                         </p>
                       </div>
-                      <p className="mt-1 text-sm text-gray-600">
-                        Seller: {item.Offer?.sellerProfile?.storeName}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="text-sm text-gray-500 bg-white px-2 py-1 rounded border border-gray-200 inline-block">
-                        Qty:{" "}
-                        <span className="font-medium text-gray-900">
-                          {item.quantity}
-                        </span>{" "}
-                        × {formatCurrency(item.priceAtTimeOfPurchase)}
+                      
+                      <div className="flex flex-wrap items-center justify-between gap-4 mt-auto pt-4">
+                        <div className="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm">
+                          <span className="text-slate-400 font-bold">Qty:</span>
+                          <span className="font-black text-slate-900">{item.quantity}</span>
+                          <span className="text-slate-300 mx-1">|</span>
+                          <span className="font-medium text-slate-600">{formatCurrency(item.priceAtTimeOfPurchase)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {order.status === "delivered" && !item.review && (
+                            <button
+                              onClick={() => handleReviewClick(item.id)}
+                              className="cursor-pointer text-sm font-bold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 px-4 py-2 rounded-xl transition-all duration-200 border border-indigo-100"
+                            >
+                              Leave a rating
+                            </button>
+                          )}
+
+                          {order.status === "delivered" && item.review && (
+                            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl border border-emerald-100 text-sm font-bold">
+                              <ShieldCheck size={18} />
+                              Reviewed
+                            </div>
+                          )}
+                        </div>
                       </div>
-
-                      {order.status === "delivered" && !item.review && (
-                        <button
-                          onClick={() => handleReviewClick(item.id)}
-                          className="cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
-                        >
-                          Leave a rating
-                        </button>
-                      )}
-
-                      {order.status === "delivered" && item.review && (
-                        <span className="text-sm font-medium text-green-600 flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
-                          <ShieldCheck size={16} /> Reviewed
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -387,38 +405,45 @@ const OrderDetail = () => {
         <div className="space-y-6">
           {/* Shipping */}
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <MapPin className="text-indigo-600" size={20} /> Shipping Details
+            <h2 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-3">
+              <MapPin className="text-indigo-600 shrink-0" size={24} /> 
+              Shipping Details
             </h2>
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-5">
-              <div className="text-sm text-gray-700 space-y-1.5">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <div className="text-sm text-slate-600 space-y-3">
                 {order.shippingAddress ? (
                   <>
-                    <p className="font-medium text-gray-900 mb-2">
-                      Delivery Address
-                    </p>
-                    <p>{order.shippingAddress.addressLine1}</p>
-                    {order.shippingAddress.addressLine2 && (
-                      <p>{order.shippingAddress.addressLine2}</p>
-                    )}
-                    <p>
-                      {order.shippingAddress.city},{" "}
-                      {order.shippingAddress.state}
-                    </p>
-                    <p>{order.shippingAddress.pincode}</p>
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-                        Contact
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Delivery Address</p>
+                      <p className="text-slate-900 font-bold text-lg leading-tight uppercase">
+                        {order.shippingAddress.fullname || order.user?.fullname}
                       </p>
-                      <p className="font-medium">
+                    </div>
+                    
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1">
+                      <p className="font-medium text-slate-700">{order.shippingAddress.addressLine1}</p>
+                      {order.shippingAddress.addressLine2 && (
+                        <p className="font-medium text-slate-700">{order.shippingAddress.addressLine2}</p>
+                      )}
+                      <p className="font-bold text-slate-900">
+                        {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100">
+                      <p className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">
+                        Contact Number
+                      </p>
+                      <p className="font-extrabold text-slate-900 text-lg">
                         {order.shippingAddress.phoneNumber}
                       </p>
                     </div>
                   </>
                 ) : (
-                  <p className="italic text-gray-500">
-                    Address info unavailable
-                  </p>
+                  <div className="py-4 text-center">
+                    <AlertCircle className="mx-auto h-8 w-8 text-slate-300 mb-2" />
+                    <p className="italic text-slate-400">Address information unavailable for this order.</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -426,69 +451,76 @@ const OrderDetail = () => {
 
           {/* Payment Summary */}
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <CreditCard className="text-indigo-600" size={20} /> Payment
-              Summary
+            <h2 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-3">
+              <CreditCard className="text-indigo-600 shrink-0" size={24} /> 
+              Payment Summary
             </h2>
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-5">
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-gray-600">
-                  <span>MRP Total</span>
-                  <span className="font-medium">
-                    {formatCurrency(
-                      Number(order.mrp) > 0 ? order.mrp : order.totalAmount,
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Selling Price</span>
-                  <span className="font-medium">
-                    {formatCurrency(sellerPriceTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="font-medium">
-                    {formatCurrency(
-                      Number(order.subtotalAmount) > 0
-                        ? Number(order.subtotalAmount) - Number(order.taxAmount)
-                        : Number(order.totalAmount) - Number(order.taxAmount),
-                    )}
-                  </span>
-                </div>
-                {Number(order.taxAmount) > 0 && (
-                  <div className="flex justify-between text-gray-600">
-                    <span>Tax (18% GST)</span>
-                    <span className="font-medium">
-                      {formatCurrency(order.taxAmount)}
+            <div className="bg-indigo-600 rounded-2xl p-1 shadow-lg shadow-indigo-100">
+              <div className="bg-white rounded-xl p-6">
+                <div className="space-y-4 text-sm">
+                  <div className="flex justify-between items-center text-slate-500">
+                    <span className="font-medium">MRP Total</span>
+                    <span className="font-bold text-slate-900">
+                      {formatCurrency(Number(order.mrp) > 0 ? order.mrp : order.totalAmount)}
                     </span>
                   </div>
-                )}
-                {Number(order.discountAmount) > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Total Discount</span>
-                    <span className="font-medium">
-                      -{formatCurrency(order.discountAmount)}
+                  
+                  <div className="flex justify-between items-center text-slate-500">
+                    <span className="font-medium">Selling Price</span>
+                    <span className="font-bold text-slate-900">
+                      {formatCurrency(sellerPriceTotal)}
                     </span>
                   </div>
-                )}
-                <div className="flex justify-between text-gray-600">
-                  <span>Delivery Fee</span>
-                  <span className="font-medium">
-                    {Number(order.deliveryFee) > 0 ? (
-                      formatCurrency(order.deliveryFee)
-                    ) : (
-                      <span className="text-green-600">Free</span>
-                    )}
-                  </span>
-                </div>
-                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                  <span className="text-gray-900 font-bold text-base">
-                    Total Paid
-                  </span>
-                  <span className="text-indigo-600 font-bold text-xl">
-                    {formatCurrency(order.totalAmount)}
-                  </span>
+
+                  <div className="flex justify-between items-center text-slate-500">
+                    <span className="font-medium">Subtotal</span>
+                    <span className="font-bold text-slate-900">
+                      {formatCurrency(
+                        Number(order.subtotalAmount) > 0
+                          ? Number(order.subtotalAmount) - Number(order.taxAmount)
+                          : Number(order.totalAmount) - Number(order.taxAmount),
+                      )}
+                    </span>
+                  </div>
+
+                  {Number(order.taxAmount) > 0 && (
+                    <div className="flex justify-between items-center text-slate-500">
+                      <span className="font-medium">Tax (18% GST)</span>
+                      <span className="font-bold text-slate-900">
+                        {formatCurrency(order.taxAmount)}
+                      </span>
+                    </div>
+                  )}
+
+                  {Number(order.discountAmount) > 0 && (
+                    <div className="flex justify-between items-center text-emerald-600 bg-emerald-50/50 px-3 py-2 rounded-lg border border-emerald-100">
+                      <span className="font-bold">Total Discount</span>
+                      <span className="font-black">
+                        -{formatCurrency(order.discountAmount)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-slate-500">
+                    <span className="font-medium">Delivery Fee</span>
+                    <span className="font-bold text-slate-900">
+                      {Number(order.deliveryFee) > 0 ? (
+                        formatCurrency(order.deliveryFee)
+                      ) : (
+                        <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter">Free</span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="border-t-2 border-dashed border-slate-100 pt-4 mt-2 flex justify-between items-center">
+                    <div>
+                      <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest block mb-0.5">Grand Total</span>
+                      <span className="text-slate-900 font-black text-lg">Total Paid</span>
+                    </div>
+                    <span className="text-indigo-600 font-extrabold text-3xl tracking-tighter">
+                      {formatCurrency(order.totalAmount)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
