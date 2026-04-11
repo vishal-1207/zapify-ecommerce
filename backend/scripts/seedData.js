@@ -1015,7 +1015,6 @@ export async function seed() {
           model: p.model,
           description: p.description,
           price: p.price,
-          totalOfferStock: 0,
           status: "approved",
           isActive: true,
           categoryId,
