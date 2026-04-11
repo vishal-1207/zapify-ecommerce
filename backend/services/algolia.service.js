@@ -155,18 +155,31 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     searchOptions.filters += " AND " + filterConditions.join(" AND ");
   }
 
-  try {
-    const { hits, nbHits, nbPages } = await client.searchSingleIndex({
+    const searchResults = await client.searchSingleIndex({
       indexName: INDEX_NAME,
       searchOptions,
     });
 
+    // To get the max price irrespective of price filters, we check facets_stats
+    // We add facets: ['price'] to the main search or do a separate one if needed.
+    // For simplicity and accuracy with our searchOptions.filters, we'll request facets here.
+    const statsResults = await client.searchSingleIndex({
+      indexName: INDEX_NAME,
+      searchOptions: {
+        ...searchOptions,
+        filters: `status:approved${category ? ` AND category:"${category}"` : ""}${brand ? ` AND brand:"${brand}"` : ""}`,
+        hitsPerPage: 0,
+        facets: ["price"],
+      },
+    });
+
     return {
-      products: hits,
-      total: nbHits,
+      products: searchResults.hits,
+      total: searchResults.nbHits,
       page: parseInt(page),
       limit: parseInt(limit),
-      totalPages: nbPages,
+      totalPages: searchResults.nbPages,
+      maxPrice: statsResults.facets_stats?.price?.max || 0,
     };
   } catch (error) {
     console.warn(
@@ -175,7 +188,7 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     );
 
     const offset = (page - 1) * limit;
-    const whereClause = {
+    const baseWhereClause = {
       status: "approved",
       [db.Sequelize.Op.or]: [
         { name: { [db.Sequelize.Op.like]: `%${query}%` } },
@@ -184,6 +197,19 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
     };
 
     if (category) {
+      const cat = await db.Category.findOne({ where: { slug: category } });
+      if (cat) baseWhereClause.categoryId = cat.id;
+    }
+    if (brand) {
+      const br = await db.Brand.findOne({ where: { slug: brand } });
+      if (br) baseWhereClause.brandId = br.id;
+    }
+
+    const whereClause = { ...baseWhereClause };
+    if (minPrice || maxPrice) {
+      whereClause.minOfferPrice = {};
+      if (minPrice) whereClause.minOfferPrice[db.Sequelize.Op.gte] = parseFloat(minPrice);
+      if (maxPrice) whereClause.minOfferPrice[db.Sequelize.Op.lte] = parseFloat(maxPrice);
     }
 
     const { count, rows } = await db.Product.findAndCountAll({
@@ -195,6 +221,12 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
         { model: db.Category, as: "category" },
         { model: db.Media, as: "media" },
       ],
+    });
+
+    const maxPriceData = await db.Product.findOne({
+      where: baseWhereClause,
+      attributes: [[db.sequelize.fn("MAX", db.sequelize.col("minOfferPrice")), "maxPrice"]],
+      raw: true
     });
 
     const formattedProducts = rows.map((p) => ({
@@ -216,6 +248,7 @@ export const searchProductsAlgolia = async (query, filters = {}) => {
       page: parseInt(page),
       limit: parseInt(limit),
       totalPages: Math.ceil(count / limit),
+      maxPrice: parseFloat(maxPriceData?.maxPrice) || 0,
     };
   }
 };

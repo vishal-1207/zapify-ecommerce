@@ -2,7 +2,7 @@ import api from "./axios";
 
 export const getAllProducts = async (params = {}, signal) => {
   const response = await api.get("/product", { params, signal });
-  return response.data.data?.products || response.data.data || [];
+  return response.data.data;
 };
 
 export const getPendingProducts = async (params = {}) => {
@@ -16,23 +16,27 @@ export const getProductById = async (id, signal) => {
 };
 
 export const getFeaturedProducts = async () => {
-  const products = await getAllProducts({ limit: 4, sort: "-rating" });
+  const data = await getAllProducts({ limit: 4, sort: "-rating" });
+  const products = data?.products || data || [];
   return products.slice(0, 4);
 };
 
 export const getNewArrivals = async () => {
-  const products = await getAllProducts({ sort: "-createdAt" });
+  const data = await getAllProducts({ sort: "-createdAt" });
+  const products = data?.products || data || [];
   return products.slice(0, 8);
 };
 
 export const getPopularProducts = async () => {
-  const products = await getAllProducts({ sort: "-reviews" });
+  const data = await getAllProducts({ sort: "-reviews" });
+  const products = data?.products || data || [];
   return products.slice(0, 5);
 };
 
 export const getRecommendations = async (slug, signal) => {
   if (!slug) {
-    const products = await getAllProducts({}, signal);
+    const data = await getAllProducts({}, signal);
+    const products = data?.products || data || [];
     return products.slice(0, 4);
   }
   const response = await api.get(`/product/${slug}/similar`, { signal });

@@ -58,6 +58,18 @@ export const getAllProducts = async (filters = {}) => {
     ];
   }
 
+  // Calculate maxPrice for the current result set (ignoring price filters)
+  const baseWhereCondition = { ...whereCondition };
+  delete baseWhereCondition.minOfferPrice;
+
+  const maxPriceData = await db.Product.findOne({
+    where: baseWhereCondition,
+    attributes: [
+      [db.sequelize.fn("MAX", db.sequelize.col("minOfferPrice")), "maxPrice"],
+    ],
+    raw: true,
+  });
+
   const { count, rows } = await db.Product.findAndCountAll({
     where: whereCondition,
     limit: parseInt(limit),
@@ -124,6 +136,7 @@ export const getAllProducts = async (filters = {}) => {
     totalPages: Math.ceil(count / limit),
     currentPage: parseInt(page),
     limit: parseInt(limit),
+    maxPrice: parseFloat(maxPriceData?.maxPrice) || 0,
   };
 };
 

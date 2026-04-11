@@ -34,10 +34,55 @@ const Shop = () => {
     [searchParams],
   );
 
-  const [priceRange, setPriceRange] = useState(() => ({
+  const [priceRange, setPriceRange] = useState({
     min: Number(searchParams.get("minPrice")) || 0,
-    max: Number(searchParams.get("maxPrice")) || 300000,
-  }));
+    max: Number(searchParams.get("maxPrice")) || 1000000, // Large initial fallback
+  });
+
+  // Calculate the absolute max price available for the current Category/Brand/Search context
+  const dynamicMaxPrice = useMemo(() => {
+    const searchQuery = searchParams.get("search")?.toLowerCase() || "";
+    const filteredForMax = products.filter((product) => {
+      // 1. Search Filter
+      if (searchQuery) {
+        const matchesName = product.name?.toLowerCase().includes(searchQuery);
+        const matchesModel = product.model?.toLowerCase().includes(searchQuery);
+        const matchesBrand = typeof product.brand === "object" 
+          ? product.brand?.name?.toLowerCase().includes(searchQuery)
+          : String(product.brand).toLowerCase().includes(searchQuery);
+        const matchesCategory = typeof product.category === "object"
+          ? product.category?.name?.toLowerCase().includes(searchQuery)
+          : String(product.category).toLowerCase().includes(searchQuery);
+        if (!matchesName && !matchesModel && !matchesBrand && !matchesCategory) return false;
+      }
+      // 2. Category Filter
+      if (selectedCategorySlugs.length > 0) {
+        const productCatSlug = typeof product.category === "object" ? product.category?.slug : null;
+        if (!productCatSlug || !selectedCategorySlugs.includes(productCatSlug)) return false;
+      }
+      // 3. Brand Filter
+      if (selectedBrandSlugs.length > 0) {
+        const productBrandSlug = typeof product.brand === "object" ? product.brand?.slug : null;
+        if (!productBrandSlug || !selectedBrandSlugs.includes(productBrandSlug)) return false;
+      }
+      return true;
+    });
+
+    if (filteredForMax.length === 0) return 300000;
+    const max = Math.max(...filteredForMax.map(p => Number(p.minOfferPrice) || Number(p.price) || 0));
+    return Math.ceil(max / 1000) * 1000; // Round up to nearest 1000
+  }, [products, selectedCategorySlugs, selectedBrandSlugs, searchParams]);
+
+  const MAX_PRICE_LIMIT = dynamicMaxPrice;
+
+  // Sync state if URL param is missing or exceeds limit
+  useEffect(() => {
+    const urlMax = searchParams.get("maxPrice");
+    if (!urlMax) {
+      setPriceRange(prev => ({ ...prev, max: MAX_PRICE_LIMIT }));
+    }
+  }, [MAX_PRICE_LIMIT, searchParams]);
+
   const [minRating, setMinRating] = useState(() => {
     return Number(searchParams.get("minRating")) || 0;
   });
@@ -49,12 +94,13 @@ const Shop = () => {
     window.scrollTo(0, 0);
     const fetchData = async () => {
       try {
-        const [productsData, categoriesData, brandsData] = await Promise.all([
+        const [response, categoriesData, brandsData] = await Promise.all([
           getAllProducts({ limit: 1000 }),
           getAllCategories(),
           getAllBrands(),
         ]);
-        setProducts(productsData || []);
+        const productsData = response?.products || response || [];
+        setProducts(productsData);
         setCategories(categoriesData);
         setBrands(brandsData);
       } catch (error) {
@@ -87,7 +133,7 @@ const Shop = () => {
 
     const pRange = newPrice || priceRange;
     if (pRange.min > 0) newParams.set("minPrice", pRange.min);
-    if (pRange.max < 300000) newParams.set("maxPrice", pRange.max);
+    if (pRange.max < MAX_PRICE_LIMIT) newParams.set("maxPrice", pRange.max);
 
     const rating = newRating !== undefined ? newRating : minRating;
     if (rating > 0) newParams.set("minRating", rating);
@@ -172,7 +218,7 @@ const Shop = () => {
         const price =
           Number(product.minOfferPrice) || Number(product.price) || 0;
         if (price < min) return false;
-        if (max < 300000 && price > max) return false;
+        if (price > max) return false;
 
         if ((product.averageRating || 0) < minRating) return false;
 
@@ -234,8 +280,7 @@ const Shop = () => {
   };
 
   const MIN_PRICE_LIMIT = 0;
-  const MAX_PRICE_LIMIT = 300000;
-  const PRICE_GAP = 5000;
+  const PRICE_GAP = Math.max(100, Math.floor(MAX_PRICE_LIMIT / 50));
 
   const handleMinPriceChange = (e) => {
     const value = Math.min(Number(e.target.value), priceRange.max - PRICE_GAP);
@@ -375,11 +420,7 @@ const Shop = () => {
 
             <div className="space-y-6 pb-20 lg:pb-0">
               {/* Active Filters Summary */}
-              {(selectedCategorySlugs.length > 0 ||
-                selectedBrandSlugs.length > 0 ||
-                minRating > 0 ||
-                priceRange.min > 0 ||
-                priceRange.max < 300000) && (
+                    (priceRange.min > 0 || priceRange.max < MAX_PRICE_LIMIT) && (
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-bold text-gray-900 uppercase">
@@ -420,13 +461,13 @@ const Shop = () => {
                     {(priceRange.min > 0 || priceRange.max < 300000) && (
                       <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1 font-medium">
                         {formatCurrency(priceRange.min)} -{" "}
-                        {priceRange.max >= 300000
-                          ? `${formatCurrency(300000)}+`
+                        {priceRange.max >= MAX_PRICE_LIMIT
+                          ? `${formatCurrency(MAX_PRICE_LIMIT)}+`
                           : formatCurrency(priceRange.max)}{" "}
                         <X
                           size={10}
                           onClick={() => {
-                            const reset = { min: 0, max: 300000 };
+                            const reset = { min: 0, max: MAX_PRICE_LIMIT };
                             setPriceRange(reset);
                             updateFilters(null, null, reset, undefined, null);
                           }}
