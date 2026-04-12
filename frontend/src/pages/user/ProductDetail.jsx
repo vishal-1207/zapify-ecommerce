@@ -281,7 +281,7 @@ const ProductDetail = () => {
                   "https://placehold.co/600?text=No+Image"
                 }
                 alt={product.name}
-                className="max-w-full max-h-full object-contain mix-blend-multiply"
+                className="w-full h-full object-contain mix-blend-multiply"
               />
               <WishlistButton
                 productId={product.id}
@@ -321,7 +321,7 @@ const ProductDetail = () => {
                         <img
                           src={media.url}
                           alt={`${product.name} view ${i + 1}`}
-                          className="max-w-full max-h-full object-contain mix-blend-multiply"
+                          className="w-full h-full object-contain mix-blend-multiply"
                         />
                       </div>
                     ))}
