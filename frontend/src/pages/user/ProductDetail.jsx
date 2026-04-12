@@ -198,7 +198,9 @@ const ProductDetail = () => {
             );
           };
 
-          const offers = [...foundProduct.offers];
+          const offers = Array.isArray(foundProduct.offers)
+            ? [...foundProduct.offers]
+            : [];
           const dealOffers = offers.filter(isOfferActiveDeal);
 
           if (dealOffers.length > 0) {

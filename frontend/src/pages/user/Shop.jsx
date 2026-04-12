@@ -40,8 +40,9 @@ const Shop = () => {
   });
 
   const dynamicMaxPrice = useMemo(() => {
+    const safeProducts = Array.isArray(products) ? products : [];
     const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-    const filteredForMax = products.filter((product) => {
+    const filteredForMax = safeProducts.filter((product) => {
       if (searchQuery) {
         const matchesName = product.name?.toLowerCase().includes(searchQuery);
         const matchesModel = product.model?.toLowerCase().includes(searchQuery);
@@ -72,12 +73,14 @@ const Shop = () => {
     });
 
     if (filteredForMax.length === 0) return 300000;
-    const max = Math.max(
-      ...filteredForMax.map(
-        (p) => Number(p.minOfferPrice) || Number(p.price) || 0,
-      ),
-    );
-    return Math.ceil(max / 1000) * 1000;
+
+    // Use reduce instead of spread to avoid "not iterable" or stack limits on huge arrays
+    const max = filteredForMax.reduce((acc, p) => {
+      const price = Number(p.minOfferPrice) || Number(p.price) || 0;
+      return price > acc ? price : acc;
+    }, 0);
+
+    return Math.ceil((max || 300000) / 1000) * 1000;
   }, [products, selectedCategorySlugs, selectedBrandSlugs, searchParams]);
 
   const MAX_PRICE_LIMIT = dynamicMaxPrice;
@@ -105,12 +108,23 @@ const Shop = () => {
           getAllCategories(),
           getAllBrands(),
         ]);
-        const productsData = response?.products || response || [];
+
+        // Defensive handling for structured API response
+        let productsData = [];
+        if (Array.isArray(response)) {
+          productsData = response;
+        } else if (response && Array.isArray(response.products)) {
+          productsData = response.products;
+        }
+
         setProducts(productsData);
-        setCategories(categoriesData);
-        setBrands(brandsData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setBrands(Array.isArray(brandsData) ? brandsData : []);
       } catch (error) {
         console.error("Failed to load shop data", error);
+        setProducts([]);
+        setCategories([]);
+        setBrands([]);
       } finally {
         setLoading(false);
       }
@@ -167,9 +181,10 @@ const Shop = () => {
   };
 
   const filteredProducts = useMemo(() => {
+    const safeProducts = Array.isArray(products) ? products : [];
     const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
-    return products
+    return safeProducts
       .filter((product) => {
         if (searchQuery) {
           const matchesName = product.name?.toLowerCase().includes(searchQuery);
@@ -644,7 +659,7 @@ const Shop = () => {
                       }}
                     >
                       <div className="flex text-yellow-400 gap-0.5">
-                        {[...Array(5)].map((_, i) => (
+                        {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
                             size={12}
@@ -685,7 +700,7 @@ const Shop = () => {
           <div className="flex-1 min-w-0">
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {[...Array(10)].map((_, i) => (
+                {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
                     className="h-64 bg-gray-200 rounded-xl animate-pulse"

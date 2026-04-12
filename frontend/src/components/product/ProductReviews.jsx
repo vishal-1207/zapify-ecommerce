@@ -83,7 +83,7 @@ const ReviewItem = ({
           </div>
         </div>
         <div className="flex text-yellow-400 self-start sm:self-auto -mt-1 sm:mt-0">
-          {[...Array(5)].map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
               size={12}
@@ -229,8 +229,8 @@ const ProductReviews = ({ product }) => {
 
         let newLikes = review.likes || 0;
         let newDislikes = review.dislikes || 0;
-        let newLikedBy = [...likedBy];
-        let newDislikedBy = [...dislikedBy];
+        let newLikedBy = Array.isArray(likedBy) ? [...likedBy] : [];
+        let newDislikedBy = Array.isArray(dislikedBy) ? [...dislikedBy] : [];
 
         if (voteType === "like") {
           if (hasLiked) {
@@ -361,7 +361,7 @@ const ProductReviews = ({ product }) => {
               </span>
               <div className="mb-2">
                 <div className="flex text-yellow-400 mb-1">
-                  {[...Array(5)].map((_, i) => (
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       size={20}
