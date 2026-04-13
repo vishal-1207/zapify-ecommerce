@@ -35,6 +35,7 @@ const AdminProducts = () => {
   const dispatch = useDispatch();
   const {
     products,
+    productsTotalPages,
     productsLoading: loading,
     error: reduxError,
   } = useSelector((state) => state.admin);
@@ -44,12 +45,15 @@ const AdminProducts = () => {
   const [brands, setBrands] = useState([]);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [submissionLoading, setSubmissionLoading] = useState(false);
 
   const fetchProducts = useCallback(() => {
-    dispatch(fetchAdminProducts(activeTab));
-  }, [dispatch, activeTab]);
+    dispatch(fetchAdminProducts({ tab: activeTab, page, limit, search }));
+  }, [dispatch, activeTab, page, limit, search]);
 
   const fetchCategoriesAndBrands = useCallback(async () => {
     try {
@@ -136,6 +140,7 @@ const AdminProducts = () => {
 
   const handleSubmit = async (data) => {
     try {
+      setSubmissionLoading(true);
       if (editingProduct) {
         await updateProduct(editingProduct.id, data);
         toast.success("Product updated successfully");
@@ -148,12 +153,12 @@ const AdminProducts = () => {
     } catch (error) {
       const msg = handleApiError(error, "Form submission failed");
       toast.error(msg);
+    } finally {
+      setSubmissionLoading(false);
     }
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredProducts = products;
 
   const columns = [
     {
@@ -290,8 +295,14 @@ const AdminProducts = () => {
         loading={loading}
         error={error}
         onRetry={fetchProducts}
-        onSearch={setSearch}
-        clientPagination={true}
+        onSearch={(value) => { setSearch(value); setPage(1); }}
+        pagination={{
+          currentPage: page,
+          totalPages: productsTotalPages || 1,
+          onPageChange: setPage,
+          itemsPerPage: limit,
+          onItemsPerPageChange: (newLimit) => { setLimit(newLimit); setPage(1); },
+        }}
         searchPlaceholder="Search products..."
         emptyMessage="No products found."
         filters={
@@ -343,7 +354,7 @@ const AdminProducts = () => {
             await handleSubmit(formData);
           }}
           onCancel={handleCloseModal}
-          isLoading={loading}
+          isLoading={submissionLoading}
           showStock={false}
         />
       </Modal>

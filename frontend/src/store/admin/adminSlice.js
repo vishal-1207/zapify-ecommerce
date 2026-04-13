@@ -11,10 +11,12 @@ import api from "../../api/axios";
 
 export const fetchAdminProducts = createAsyncThunk(
   "admin/fetchProducts",
-  async (tab, { rejectWithValue }) => {
+  async ({ tab, page = 1, limit = 10, search = "" } = {}, { rejectWithValue }) => {
     try {
-      const response = tab === "pending" ? await getPendingProducts() : await getAllProducts();
-      return Array.isArray(response) ? response : response?.products || [];
+      const params = { page, limit };
+      if (search) params.search = search;
+      const response = tab === "pending" ? await getPendingProducts(params) : await getAllProducts(params);
+      return response;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch products");
     }
@@ -307,6 +309,7 @@ export const moderateReviewAction = createAsyncThunk(
 
 const initialState = {
   products: [],
+  productsTotalPages: 1,
   categories: [],
   brands: [],
   orders: [],
@@ -335,7 +338,8 @@ const adminSlice = createSlice({
       })
       .addCase(fetchAdminProducts.fulfilled, (state, action) => {
         state.productsLoading = false;
-        state.products = action.payload;
+        state.products = Array.isArray(action.payload) ? action.payload : action.payload?.products || [];
+        state.productsTotalPages = action.payload?.totalPages || 1;
       })
       .addCase(fetchAdminProducts.rejected, (state, action) => {
         state.productsLoading = false;
