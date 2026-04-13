@@ -9,6 +9,7 @@ import {
   AtSign,
   Eye,
   EyeOff,
+  Loader2,
 } from "lucide-react";
 import { registerUser, getCsrfToken } from "../../api/auth";
 import { useAuth } from "../../context/AuthContext";
@@ -231,9 +232,16 @@ const Register = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="cursor-pointer w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-70"
+              className="cursor-pointer w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
 

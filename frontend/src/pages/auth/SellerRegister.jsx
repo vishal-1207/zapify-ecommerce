@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Briefcase, Building2, AlertCircle } from "lucide-react";
+import { Briefcase, Building2, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { getCsrfToken } from "../../api/auth";
@@ -173,9 +173,16 @@ const SellerRegister = () => {
             <button
               type="submit"
               disabled={loading}
-              className="cursor-pointer w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition disabled:opacity-75"
+              className="cursor-pointer w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition disabled:opacity-75 disabled:cursor-not-allowed"
             >
-              {loading ? "Registering..." : "Register Business"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                "Register Business"
+              )}
             </button>
           </form>
 

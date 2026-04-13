@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, Plus, Trash, Edit2, AlertCircle } from "lucide-react";
+import { MapPin, Plus, Trash, Edit2, AlertCircle, Loader2 } from "lucide-react";
 import { Country, State, City } from "country-state-city";
 import {
   getUserAddresses,
@@ -14,6 +14,7 @@ const Address = () => {
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialAddressState = {
     street: "",
@@ -96,6 +97,8 @@ const Address = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     const apiPayload = {
       street: formData.street,
       city: formData.city,
@@ -118,6 +121,8 @@ const Address = () => {
     } catch (err) {
       console.error("Failed to save address", err);
       toast.error("Failed to save address. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -297,9 +302,17 @@ const Address = () => {
               </button>
               <button
                 type="submit"
-                className="cursor-pointer px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95"
+                disabled={isSubmitting}
+                className="cursor-pointer px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95 disabled:opacity-75 flex items-center gap-2 disabled:cursor-not-allowed"
               >
-                Save
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
               </button>
             </div>
           </form>

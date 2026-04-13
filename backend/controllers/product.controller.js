@@ -42,6 +42,7 @@ const parseProductInput = (req) => {
     price,
     stock,
     specs = [],
+    mediaToDelete,
   } = req.body;
 
   return {
@@ -54,6 +55,7 @@ const parseProductInput = (req) => {
       price: price ? parseFloat(price) : undefined,
       stock: stock ? parseInt(stock, 10) : undefined,
       specs: safeParseJSON(specs, "specs"),
+      mediaToDelete: safeParseJSON(mediaToDelete, "mediaToDelete"),
     },
     files: req.files || {},
   };

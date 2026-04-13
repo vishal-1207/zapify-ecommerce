@@ -107,12 +107,22 @@ const ProductForm = ({
   const handleGalleryChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      const remainingSlots = 10 - galleryPreview.length;
+      if (remainingSlots <= 0) {
+        alert("You can upload up to 10 images only.");
+        return;
+      }
+      const allowedFiles = files.slice(0, remainingSlots);
+      if (files.length > remainingSlots) {
+        alert("You can upload up to 10 images only.");
+      }
+
       setFormData((prev) => ({
         ...prev,
-        gallery: [...prev.gallery, ...files],
+        gallery: [...prev.gallery, ...allowedFiles],
       }));
 
-      const newPreviews = files.map((file) => ({
+      const newPreviews = allowedFiles.map((file) => ({
         url: URL.createObjectURL(file),
         isExisting: false,
         file: file,
@@ -477,6 +487,9 @@ const ProductForm = ({
                   )}
                 </div>
               </div>
+              <p className="mt-2 text-sm text-gray-500">
+                You can upload up to 10 images only. {galleryPreview.length}/10 uploaded.
+              </p>
             </div>
           </div>
         )}
