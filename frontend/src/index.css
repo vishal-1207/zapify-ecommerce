@@ -31,23 +31,28 @@ body {
 }
 
 @keyframes modalSlideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from { transform: translate3d(0, 20px, 0) scale(0.98); opacity: 0; }
+    to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
 }
 
 @keyframes backdropFadeIn {
-    from { opacity: 0; backdrop-filter: blur(0); }
-    to { opacity: 1; backdrop-filter: blur(4px); }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .animate-modal-fade {
-    animation: modalFadeIn 0.3s ease-out forwards;
+    animation: modalFadeIn 0.2s ease-out forwards;
+    will-change: opacity;
 }
 
 .animate-modal-slide {
-    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity;
 }
 
 .animate-backdrop {
-    animation: backdropFadeIn 0.3s ease-out forwards;
+    animation: backdropFadeIn 0.2s ease-out forwards;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    will-change: opacity;
 }

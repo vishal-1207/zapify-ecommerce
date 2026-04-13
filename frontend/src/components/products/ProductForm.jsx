@@ -463,13 +463,13 @@ const ProductForm = ({
                   </div>
                 ))}
 
-                <div className="relative aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-center hover:border-indigo-500 transition-colors cursor-pointer bg-gray-50/50">
+                <div className={`relative aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center transition-colors bg-gray-50/50 ${galleryPreview.length >= 10 ? 'border-gray-200 opacity-60 cursor-not-allowed' : 'border-gray-300 hover:border-indigo-500 cursor-pointer'}`}>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleGalleryChange}
-                    disabled={isLoading}
+                    disabled={isLoading || galleryPreview.length >= 10}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                   {isLoading ? (
@@ -479,6 +479,11 @@ const ProductForm = ({
                         className="animate-spin text-indigo-600 mb-2"
                       />
                     </div>
+                  ) : galleryPreview.length >= 10 ? (
+                    <>
+                      <CheckCircle size={24} className="text-gray-400 mb-2" />
+                      <span className="text-xs text-gray-500">Max Reached</span>
+                    </>
                   ) : (
                     <>
                       <Plus size={24} className="text-gray-400 mb-2" />
