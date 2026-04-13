@@ -27,8 +27,14 @@ const BrandStore = () => {
                 setBrand(brandData);
                 
                 if (brandData?.id) {
-                     const productsData = await getAllProducts({ brandId: brandData.id, limit: 1000 }); // Fetch all to paginate locally
-                     setProducts(productsData || []); // Fix: Use returned array directly
+                     const productsData = await getAllProducts({ brandId: brandData.id, limit: 1000 }); 
+                     let safeProducts = [];
+                     if (Array.isArray(productsData)) {
+                         safeProducts = productsData;
+                     } else if (productsData && Array.isArray(productsData.products)) {
+                         safeProducts = productsData.products;
+                     }
+                     setProducts(safeProducts);
                 }
             } catch (error) {
                 console.error("Failed to load brand store", error);
@@ -43,7 +49,8 @@ const BrandStore = () => {
     }, [slug]);
 
     const processedProducts = useMemo(() => {
-        let result = [...products];
+        const safeProducts = Array.isArray(products) ? products : [];
+        let result = [...safeProducts];
 
         if (selectedCategory !== "all") {
             result = result.filter(p => p.category?.name === selectedCategory);
@@ -79,7 +86,8 @@ const BrandStore = () => {
     }, [processedProducts, currentPage]);
 
     const availableCategories = useMemo(() => {
-        const cats = new Set(products.map(p => p.category?.name).filter(Boolean));
+        const safeProducts = Array.isArray(products) ? products : [];
+        const cats = new Set(safeProducts.map(p => p.category?.name).filter(Boolean));
         return Array.from(cats);
     }, [products]);
 
