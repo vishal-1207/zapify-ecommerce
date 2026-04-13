@@ -466,7 +466,6 @@ export const updateProductAggregates = async (productId) => {
   if (!productId) return;
 
   try {
-    // 1. Get raw aggregation stats from active offers
     const stats = await db.Offer.findOne({
       where: { productId, status: "active" },
       attributes: [
@@ -490,19 +489,20 @@ export const updateProductAggregates = async (productId) => {
 
     const aggregateData = stats || {};
 
-    // 2. Resolve final values with fallbacks
     const totalStock = parseInt(aggregateData.totalStock, 10) || 0;
     const offerCount = parseInt(aggregateData.count, 10) || 0;
-    
-    // For price, if no active offers with stock exist, we fallback to the catalog base price
-    let finalMinPrice = aggregateData.minPrice ? parseFloat(aggregateData.minPrice) : null;
-    
+
+    let finalMinPrice = aggregateData.minPrice
+      ? parseFloat(aggregateData.minPrice)
+      : null;
+
     if (finalMinPrice === null) {
-      const product = await db.Product.findByPk(productId, { attributes: ["price"] });
+      const product = await db.Product.findByPk(productId, {
+        attributes: ["price"],
+      });
       finalMinPrice = product ? parseFloat(product.price) : 0;
     }
 
-    // 3. Update the Product record
     await db.Product.update(
       {
         minOfferPrice: finalMinPrice,
@@ -512,13 +512,12 @@ export const updateProductAggregates = async (productId) => {
       { where: { id: productId } },
     );
 
-    // 4. Determine if we need to sync to Algolia (on price change)
-    // For simplicity and correctness with stock sync, we'll always trigger the sync if stock or price changed
-    // as Algolia often tracks stock as well for filtering.
     syncProductToAlgolia(productId).catch(() => {});
-
   } catch (error) {
-    console.error(`[Aggregates] Sync failed for product ${productId}:`, error.message);
+    console.error(
+      `[Aggregates] Sync failed for product ${productId}:`,
+      error.message,
+    );
     throw error;
   }
 };

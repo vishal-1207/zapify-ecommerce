@@ -1,6 +1,6 @@
 # Zapify - Premium E-commerce Platform
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-6366f1?style=for-the-badge&logo=vercel)](https://zapify-three.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-6366f1?style=for-the-badge&logo=vercel)](https://zapify-nu.vercel.app/)
 
 Zapify is a modern, high-performance e-commerce ecosystem built with the MySQL, Express, React, Node.js. It provides a seamless experience for customers, a powerful dashboard for sellers, and a comprehensive moderation suite for administrators.
 
