@@ -73,6 +73,7 @@ const Footer = () => {
       </div>
       <div className="text-center mt-10 pt-6 border-t border-gray-800 text-xs">
         &copy; {new Date().getFullYear()} Zapify, Inc. All rights reserved.
+        Developed by Vishal Chaudhary
       </div>
     </footer>
   );
