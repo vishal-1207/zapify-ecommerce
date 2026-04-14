@@ -424,12 +424,13 @@ const Shop = () => {
           {/* Sidebar Filters */}
           <div
             className={`
-            fixed inset-y-0 left-0 z-50 w-72 bg-white p-6 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto
-            lg:translate-x-0 lg:sticky lg:top-24 lg:z-0 lg:w-60 lg:xl:w-64 lg:p-0 lg:shadow-none lg:bg-transparent lg:h-[calc(100vh-8rem)] scrollbar-hide
+            fixed inset-y-0 left-0 z-50 w-72 bg-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out
+            lg:translate-x-0 lg:sticky lg:top-24 lg:z-0 lg:w-60 lg:xl:w-64 lg:shadow-none lg:bg-transparent lg:h-[calc(100vh-8rem)] lg:block
             ${isMobileFilterOpen ? "translate-x-0" : "-translate-x-full"}
           `}
           >
-            <div className="lg:hidden flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+            {/* Header */}
+            <div className="lg:hidden shrink-0 flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">Filters</h2>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
@@ -439,7 +440,8 @@ const Shop = () => {
               </button>
             </div>
 
-            <div className="space-y-6 pb-20 lg:pb-0">
+            {/* Scrollable Filters Region */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-6 lg:p-0 space-y-6 lg:overflow-visible">
               {/* Active Filters Summary */}
               {(selectedCategorySlugs.length > 0 ||
                 selectedBrandSlugs.length > 0 ||
@@ -680,7 +682,7 @@ const Shop = () => {
             </div>
 
             {/* Mobile Footer Actions */}
-            <div className="lg:hidden absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-4">
+            <div className="lg:hidden shrink-0 p-4 bg-white border-t border-gray-100 flex gap-4">
               <button
                 onClick={clearAllFilters}
                 className="cursor-pointer flex-1 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl"
