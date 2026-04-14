@@ -425,7 +425,7 @@ const Shop = () => {
           <div
             className={`
             fixed inset-y-0 left-0 z-50 w-72 bg-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out
-            lg:translate-x-0 lg:sticky lg:top-24 lg:z-0 lg:w-60 lg:xl:w-64 lg:shadow-none lg:bg-transparent lg:h-[calc(100vh-8rem)] lg:block
+            lg:translate-x-0 lg:sticky lg:top-24 lg:z-0 lg:w-60 lg:xl:w-64 lg:shadow-none lg:bg-transparent lg:h-[calc(100vh-8rem)]
             ${isMobileFilterOpen ? "translate-x-0" : "-translate-x-full"}
           `}
           >
@@ -441,7 +441,7 @@ const Shop = () => {
             </div>
 
             {/* Scrollable Filters Region */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide p-6 lg:p-0 space-y-6 lg:overflow-visible">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-6 lg:p-0 space-y-6">
               {/* Active Filters Summary */}
               {(selectedCategorySlugs.length > 0 ||
                 selectedBrandSlugs.length > 0 ||
