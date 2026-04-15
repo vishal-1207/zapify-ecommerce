@@ -378,7 +378,7 @@ export const getSellerTopProducts = async (userId, days = 30) => {
     include: [{
       model: db.Product,
       as: "product",
-      attributes: ["name"],
+      attributes: ["id", "name"],
       include: [{ model: db.Media, as: "media", attributes: ["url"], limit: 1 }],
     }],
   });

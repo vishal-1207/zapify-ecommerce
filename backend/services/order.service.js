@@ -319,7 +319,7 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
     if (search) {
       if (search.toUpperCase().startsWith("ORD-")) {
         orderWhere = {
-          orderId: { [Op.like]: `%${search}%` },
+          uniqueOrderId: { [Op.like]: `%${search}%` },
         };
       } else {
         productWhere = {
@@ -375,7 +375,6 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
       offset: parseInt(offset),
       order: [["createdAt", "DESC"]],
       distinct: true,
-      subQuery: false,
     });
 
     return {
