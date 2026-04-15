@@ -339,7 +339,7 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
               model: db.Product,
               as: "product",
               where: productWhere,
-              attributes: ["name", "slug"],
+              attributes: ["id", "name", "slug"],
               include: [
                 {
                   model: db.Media,
@@ -359,6 +359,7 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
             "totalAmount",
             "status",
             "shippingAddress",
+            "userId",
           ],
           where: orderWhere,
           include: [
