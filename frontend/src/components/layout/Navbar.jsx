@@ -259,6 +259,22 @@ const Navbar = () => {
                 My Orders
               </Link>
             )}
+            {role === "user" && (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  if (user?.roles?.includes("seller")) {
+                    switchRole("seller");
+                    navigate("/seller/dashboard");
+                  } else {
+                    navigate("/seller/register");
+                  }
+                }}
+                className="cursor-pointer block w-full text-left py-2 font-medium"
+              >
+                {user?.roles?.includes("seller") ? "Seller Dashboard" : "Sell Tech"}
+              </button>
+            )}
           </div>
         )}
       </nav>

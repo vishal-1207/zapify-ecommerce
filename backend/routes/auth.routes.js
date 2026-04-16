@@ -55,16 +55,16 @@ router.get(
       }
       if (!user) {
         const message = info?.message || "Authentication failed";
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
         return res.redirect(
-          `${frontendUrl}/login?error=${encodeURIComponent(message)}`
+          `${frontendUrl}/login?error=${encodeURIComponent(message)}`,
         );
       }
       req.user = user;
       next();
     })(req, res, next);
   },
-  authControllers.socialCallbackHandler
+  authControllers.socialCallbackHandler,
 );
 
 router
@@ -79,16 +79,16 @@ router.get(
       }
       if (!user) {
         const message = info?.message || "Authentication failed";
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
         return res.redirect(
-          `${frontendUrl}/login?error=${encodeURIComponent(message)}`
+          `${frontendUrl}/login?error=${encodeURIComponent(message)}`,
         );
       }
       req.user = user;
       next();
     })(req, res, next);
   },
-  authControllers.socialCallbackHandler
+  authControllers.socialCallbackHandler,
 );
 
 router.post("/social/exchange", authControllers.exchangeTicket);

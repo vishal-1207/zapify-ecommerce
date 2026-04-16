@@ -30,11 +30,15 @@ handlebars.registerHelper("formatDate", (value) => {
  * @param {object} context - Data to pass to the template.
  * @param {string|null} layoutName - Name of the layout to use, or null to skip layout.
  */
-export const renderTemplate = async (templateName, context, layoutName = "layout") => {
+export const renderTemplate = async (
+  templateName,
+  context,
+  layoutName = "layout",
+) => {
   try {
     const templateSource = await fs.readFile(
       path.join(TEMPLATES_DIR, `${templateName}.hbs`),
-      "utf-8"
+      "utf-8",
     );
     const template = handlebars.compile(templateSource);
     const body = template(context);
@@ -45,7 +49,7 @@ export const renderTemplate = async (templateName, context, layoutName = "layout
 
     const layoutSource = await fs.readFile(
       path.join(TEMPLATES_DIR, `${layoutName}.hbs`),
-      "utf-8"
+      "utf-8",
     );
     const layout = handlebars.compile(layoutSource);
     return layout({ ...context, body });
@@ -92,7 +96,7 @@ const sendMail = async (to, subject, content) => {
     if (typeof content === "object" && content.template) {
       html = await renderTemplate(content.template, {
         ...content.context,
-        frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+        frontendUrl: process.env.CLIENT_URL || "http://localhost:5173",
       });
     } else {
       html = content;

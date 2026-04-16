@@ -70,18 +70,28 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
               min="0"
               value={formData.price}
               onChange={handleChange}
-              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full px-4 sm:text-sm border-gray-300 rounded-md py-2 border"
+              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-8 pr-4 sm:text-sm border-gray-300 rounded-md py-2 border"
               placeholder="0.00"
             />
           </div>
-          {product.price > 0 && (
-            <p className="mt-1 text-xs text-gray-500">
-              Lowest listed price:{" "}
-              <span className="font-medium text-green-600">
-                {formatCurrency(product.price)}
-              </span>
-            </p>
-          )}
+          <div className="mt-1 flex flex-col gap-0.5">
+            {product.mrp > 0 && (
+              <p className="text-xs text-gray-500">
+                Product MRP:{" "}
+                <span className="font-medium text-gray-700">
+                  {formatCurrency(product.mrp)}
+                </span>
+              </p>
+            )}
+            {product.price > 0 && (
+              <p className="text-xs text-gray-500">
+                Lowest listed price:{" "}
+                <span className="font-medium text-green-600">
+                  {formatCurrency(product.price)}
+                </span>
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Stock */}

@@ -65,7 +65,6 @@ export const loginController = asyncHandler(async (req, res) => {
   );
 });
 
-
 export const socialCallbackHandler = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -81,7 +80,7 @@ export const socialCallbackHandler = asyncHandler(async (req, res) => {
     EX: 10, // Expires in 10 seconds
   });
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
   return res.redirect(`${frontendUrl}/?ticket=${ticket}`);
 });
 

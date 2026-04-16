@@ -223,7 +223,7 @@ export const forgotPasswordService = async (email) => {
     { expiresIn: "1h" },
   );
 
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
   const subject = "Password Reset Request";
   const html = `<p>Hi ${user.fullname},</p>
