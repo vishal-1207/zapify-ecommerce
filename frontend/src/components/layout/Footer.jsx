@@ -1,7 +1,14 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Footer = () => {
+  const location = useLocation();
+  const isDashboardPath =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/seller");
+
+  if (isDashboardPath) return null;
+
   return (
     <footer className="bg-gray-900 text-gray-400 py-10 mt-auto text-sm">
       <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">

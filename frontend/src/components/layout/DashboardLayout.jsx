@@ -16,7 +16,7 @@ const DashboardLayout = ({
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex h-screen overflow-hidden relative">
+    <div className="bg-gray-100 flex h-[calc(100vh-64px)] overflow-hidden relative">
       {/* Reusable Sidebar */}
       <Sidebar
         title={sidebarTitle}
