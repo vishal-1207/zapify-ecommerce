@@ -70,7 +70,7 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
               min="0"
               value={formData.price}
               onChange={handleChange}
-              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-8 pr-4 sm:text-sm border-gray-300 rounded-md py-2 border"
+              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-6 pr-4 sm:text-sm border-gray-300 rounded-md py-2 border"
               placeholder="0.00"
             />
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMyOffers } from "../../api/offers";
 import { createSellerDeal } from "../../api/discounts";
 import { formatCurrency } from "../../utils/currency";
@@ -7,6 +8,7 @@ import toast from "react-hot-toast";
 import DataTable from "../../components/common/DataTable";
 
 const Offers = () => {
+  const navigate = useNavigate();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -217,7 +219,10 @@ const Offers = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Manage Offers</h1>
-        <button className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        <button
+          onClick={() => navigate("/seller/products/add")}
+          className="cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+        >
           Create New Offer
         </button>
       </div>
