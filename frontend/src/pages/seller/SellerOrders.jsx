@@ -160,6 +160,14 @@ const SellerOrders = () => {
       ),
     },
     {
+      header: "MRP",
+      render: (item) => (
+        <span className="text-gray-400 line-through text-xs">
+          {formatCurrency(item.Offer?.product?.price || 0)}
+        </span>
+      ),
+    },
+    {
       header: "Amount",
       render: (item) => (
         <span className="font-medium">

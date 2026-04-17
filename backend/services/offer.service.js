@@ -66,7 +66,7 @@ export const getActiveOffers = async (userId, status = "active") => {
       {
         model: db.Product,
         as: "product",
-        attributes: ["id", "name", "price", "status"],
+        attributes: ["id", "name", "price", "status", "minOfferPrice"],
       },
     ],
   });
@@ -101,7 +101,16 @@ export const getSellerOffers = async (userId, query) => {
         model: db.Product,
         as: "product",
         where: productWhere,
-        attributes: ["id", "name", "slug", "model", "brandId", "categoryId"],
+        attributes: [
+          "id",
+          "name",
+          "slug",
+          "model",
+          "brandId",
+          "categoryId",
+          "price",
+          "minOfferPrice",
+        ],
         include: [
           {
             model: db.Category,

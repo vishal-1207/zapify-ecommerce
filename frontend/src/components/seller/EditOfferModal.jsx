@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { CURRENCY_SYMBOL } from "../../utils/currency";
+import { formatCurrency, CURRENCY_SYMBOL } from "../../utils/currency";
 
 const EditOfferModal = ({ offer, isOpen, onClose, onSave }) => {
   const [price, setPrice] = useState(offer?.price || "");
@@ -46,6 +46,24 @@ const EditOfferModal = ({ offer, isOpen, onClose, onSave }) => {
             <p className="text-sm text-gray-500 bg-gray-50 p-2 rounded-lg">
               {offer.product.name}
             </p>
+            <div className="mt-2 flex flex-col gap-1">
+              {offer.product.price > 0 && (
+                <p className="text-xs text-gray-500">
+                  Product MRP:{" "}
+                  <span className="font-medium text-gray-700">
+                    {formatCurrency(offer.product.price)}
+                  </span>
+                </p>
+              )}
+              {offer.product.minOfferPrice > 0 && (
+                <p className="text-xs text-gray-500">
+                  Lowest listed price:{" "}
+                  <span className="font-medium text-green-600">
+                    {formatCurrency(offer.product.minOfferPrice)}
+                  </span>
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

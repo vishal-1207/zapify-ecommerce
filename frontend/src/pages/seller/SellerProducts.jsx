@@ -124,9 +124,19 @@ const SellerProducts = () => {
       render: (offer) => offer.product.category?.name || "N/A",
     },
     {
+      header: "MRP",
+      render: (offer) => (
+        <span className="text-gray-500 line-through text-xs">
+          {formatCurrency(offer.product.price)}
+        </span>
+      ),
+    },
+    {
       header: "Price",
       render: (offer) => (
-        <span className="font-medium">{formatCurrency(offer.price)}</span>
+        <span className="font-medium text-indigo-600">
+          {formatCurrency(offer.price)}
+        </span>
       ),
     },
     {

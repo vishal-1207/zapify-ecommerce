@@ -449,6 +449,9 @@ const SellerDashboard = () => {
                     <th className="px-6 py-3 font-semibold text-center">
                       Units Sold
                     </th>
+                    <th className="px-6 py-3 font-semibold text-center">
+                      MRP
+                    </th>
                     <th className="px-6 py-3 font-semibold text-right">
                       Revenue
                     </th>
@@ -481,6 +484,9 @@ const SellerDashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-center font-medium text-gray-600">
                         {p.sold}
+                      </td>
+                      <td className="px-6 py-4 text-center text-gray-400 line-through text-xs">
+                        {formatCurrency(p.mrp)}
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-gray-900">
                         {formatCurrency(p.revenue)}

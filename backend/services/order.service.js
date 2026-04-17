@@ -339,7 +339,7 @@ export const getSellerOrdersHistory = async (userId, query = {}) => {
               model: db.Product,
               as: "product",
               where: productWhere,
-              attributes: ["id", "name", "slug"],
+              attributes: ["id", "name", "slug", "price"],
               include: [
                 {
                   model: db.Media,

@@ -378,7 +378,7 @@ export const getSellerTopProducts = async (userId, days = 30) => {
     include: [{
       model: db.Product,
       as: "product",
-      attributes: ["id", "name"],
+      attributes: ["id", "name", "price", "minOfferPrice"],
       include: [{ model: db.Media, as: "media", attributes: ["url"], limit: 1 }],
     }],
   });
@@ -395,6 +395,8 @@ export const getSellerTopProducts = async (userId, days = 30) => {
       imageUrl: offer?.product?.media?.[0]?.url || null,
       revenue: parseFloat(agg.totalRevenue) || 0,
       sold: parseInt(agg.sold) || 0,
+      mrp: parseFloat(offer?.product?.price) || 0,
+      lowestPrice: parseFloat(offer?.product?.minOfferPrice) || 0,
     };
   });
 };

@@ -75,11 +75,11 @@ const OfferForm = ({ product, onSubmit, onCancel, isLoading }) => {
             />
           </div>
           <div className="mt-1 flex flex-col gap-0.5">
-            {product.mrp > 0 && (
+            {product.mrpPrice > 0 && (
               <p className="text-xs text-gray-500">
                 Product MRP:{" "}
                 <span className="font-medium text-gray-700">
-                  {formatCurrency(product.mrp)}
+                  {formatCurrency(product.mrpPrice)}
                 </span>
               </p>
             )}

@@ -132,9 +132,17 @@ const Offers = () => {
       ),
     },
     {
+      header: "MRP",
+      render: (offer) => (
+        <div className="text-xs text-gray-400 line-through">
+          {formatCurrency(offer.product?.price)}
+        </div>
+      ),
+    },
+    {
       header: "Price",
       render: (offer) => (
-        <div className="text-sm text-gray-900 font-medium">
+        <div className="text-sm text-indigo-600 font-bold">
           {formatCurrency(offer.price)}
         </div>
       ),
