@@ -83,26 +83,6 @@ const getDevelopmentTransporter = async () => {
   return developmentTransporter;
 };
 
-let smtpTransporter = null;
-
-/**
- * Gets or creates a transporter using SMTP configuration if present in .env.
- * @private
- */
-const getSMTPTransporter = () => {
-  if (!smtpTransporter) {
-    smtpTransporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: parseInt(process.env.EMAIL_PORT || "587", 10),
-      secure: process.env.EMAIL_SECURE === "true" || parseInt(process.env.EMAIL_PORT || "587", 10) === 465,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  }
-  return smtpTransporter;
-};
 
 /**
  * A generic, reusable function to send emails.
@@ -123,19 +103,7 @@ const sendMail = async (to, subject, content) => {
       html = content;
     }
 
-    if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const transporter = getSMTPTransporter();
-
-      const mailOptions = {
-        from: `"Zapify" <${process.env.EMAIL_FROM || "noreply.zapify@gmail.com"}>`,
-        to,
-        subject,
-        html,
-      };
-
-      const info = await transporter.sendMail(mailOptions);
-      return info;
-    } else if (process.env.BREVO_API_KEY) {
+    if (process.env.BREVO_API_KEY) {
       const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
