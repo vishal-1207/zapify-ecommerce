@@ -234,6 +234,11 @@ const Navbar = () => {
           </div>
         </div>
 
+        {/* Mobile Search Bar */}
+        <div className="block md:hidden px-4 pb-3">
+          <SearchComponent />
+        </div>
+
         {isMenuOpen && (
           <div className="md:hidden bg-indigo-800 p-4 space-y-4 shadow-inner">
             <Link
