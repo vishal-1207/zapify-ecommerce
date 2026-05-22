@@ -138,7 +138,7 @@ const CustomSearchBox = ({
   return (
     <div className="flex w-full h-10 rounded-md shadow-sm bg-white overflow-hidden border-2 border-transparent focus-within:border-orange-400 transition-colors">
       {/* Category Dropdown */}
-      <div className="relative bg-gray-100 border-r border-gray-300 hover:bg-gray-200 transition-colors w-32 md:w-auto">
+      <div className="hidden md:block relative bg-gray-100 border-r border-gray-300 hover:bg-gray-200 transition-colors w-32 md:w-auto">
         <select
           value={selectedCategorySlug}
           onChange={(e) => setSelectedCategorySlug(e.target.value)}
